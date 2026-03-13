@@ -54,7 +54,46 @@ export class AudioManager {
   }
 
   missile() {
-    this.tone({ freq: 720, type: 'square', duration: 0.08, gain: 0.12 });
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const boomGain = this.ctx.createGain();
+    boomGain.gain.setValueAtTime(0.0001, now);
+    boomGain.gain.exponentialRampToValueAtTime(0.26 * this.settings.seVolume, now + 0.03);
+    boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+    boomGain.connect(this.master);
+
+    const sub = this.ctx.createOscillator();
+    sub.type = 'triangle';
+    sub.frequency.setValueAtTime(120, now);
+    sub.frequency.exponentialRampToValueAtTime(42, now + 0.45);
+    sub.connect(boomGain);
+
+    const mid = this.ctx.createOscillator();
+    mid.type = 'sawtooth';
+    mid.frequency.setValueAtTime(280, now);
+    mid.frequency.exponentialRampToValueAtTime(90, now + 0.35);
+    mid.connect(boomGain);
+
+    const noiseBuffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.9, this.ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i += 1) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.setValueAtTime(420, now);
+    noiseFilter.frequency.exponentialRampToValueAtTime(120, now + 0.8);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(boomGain);
+
+    sub.start(now);
+    mid.start(now);
+    noise.start(now);
+    sub.stop(now + 0.8);
+    mid.stop(now + 0.8);
+    noise.stop(now + 0.8);
   }
   hit() {
     this.tone({ freq: 180, type: 'triangle', duration: 0.2, gain: 0.16 });
