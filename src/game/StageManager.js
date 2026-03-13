@@ -99,13 +99,25 @@ export class StageManager {
     this.scene.add(sea);
     this.stageObjects.push(sea);
 
-    for (let i = 0; i < 6; i++) {
-      const ship = this.makeShip();
-      ship.position.set((Math.random() - 0.5) * 900, 6, -350 - i * 220);
+    const fleetSpecs = [
+      { role: 'destroyer', x: -360, z: -360, health: 2, speed: 13, radius: 26 },
+      { role: 'frigate', x: -130, z: -530, health: 2, speed: 12, radius: 24 },
+      { role: 'carrier', x: 160, z: -680, health: 4, speed: 8, radius: 42 },
+      { role: 'cruiser', x: 360, z: -860, health: 3, speed: 10, radius: 32 },
+      { role: 'destroyer', x: -260, z: -1030, health: 2, speed: 12, radius: 26 },
+      { role: 'frigate', x: 90, z: -1210, health: 2, speed: 11, radius: 24 },
+      { role: 'carrier', x: -420, z: -1380, health: 4, speed: 7, radius: 42 },
+      { role: 'cruiser', x: 300, z: -1540, health: 3, speed: 9, radius: 32 },
+    ];
+
+    fleetSpecs.forEach((spec, index) => {
+      const ship = this.makeShip(spec.role);
+      ship.position.set(spec.x, 6, spec.z);
+      ship.rotation.y = (Math.sin(index * 1.3) * 0.08);
       this.scene.add(ship);
-      this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: 2, speed: 10 }));
-      this.targets.push({ mesh: ship, radius: 20, type: 'ship' });
-    }
+      this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: spec.health, speed: spec.speed }));
+      this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
+    });
   }
 
   createBaseBattle() {
@@ -422,12 +434,108 @@ export class StageManager {
     return group;
   }
 
-  makeShip() {
+  makeShip(role = 'destroyer') {
     const group = new THREE.Group();
-    const hull = new THREE.Mesh(new THREE.BoxGeometry(32, 8, 70), new THREE.MeshStandardMaterial({ color: 0x5f6770 }));
-    const tower = new THREE.Mesh(new THREE.BoxGeometry(12, 11, 16), new THREE.MeshStandardMaterial({ color: 0x8c949d }));
-    tower.position.y = 9;
-    group.add(hull, tower);
+
+    const hullMat = new THREE.MeshStandardMaterial({ color: 0x56606b, metalness: 0.3, roughness: 0.66 });
+    const deckMat = new THREE.MeshStandardMaterial({ color: 0x79838d, metalness: 0.2, roughness: 0.72 });
+    const superMat = new THREE.MeshStandardMaterial({ color: 0x98a3ad, metalness: 0.28, roughness: 0.6 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x323941, metalness: 0.35, roughness: 0.56 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x7ea6c4, metalness: 0.45, roughness: 0.15 });
+
+    if (role === 'carrier') {
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(42, 10, 124), hullMat);
+      hull.position.y = 2;
+      const bow = new THREE.Mesh(new THREE.ConeGeometry(12, 18, 5), hullMat);
+      bow.rotation.x = Math.PI / 2;
+      bow.rotation.y = Math.PI;
+      bow.position.set(0, 2, -70);
+
+      const flightDeck = new THREE.Mesh(new THREE.BoxGeometry(46, 2.4, 136), deckMat);
+      flightDeck.position.y = 8;
+      const runwayStripe = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, 112), new THREE.MeshStandardMaterial({ color: 0xe7e9eb }));
+      runwayStripe.position.set(0, 9.4, -2);
+
+      const island = new THREE.Mesh(new THREE.BoxGeometry(11, 17, 20), superMat);
+      island.position.set(12, 17, 16);
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(8, 6, 13), superMat);
+      bridge.position.set(14, 24, 15);
+      const windows = new THREE.Mesh(new THREE.BoxGeometry(8.4, 2.1, 13.4), glassMat);
+      windows.position.set(14, 24.6, 15);
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 13, 8), darkMat);
+      mast.position.set(14.5, 31, 14);
+
+      for (let i = 0; i < 3; i++) {
+        const ciws = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.5, 1.6, 10), darkMat);
+        ciws.position.set((i - 1) * 13, 9.8, 50 - i * 38);
+        group.add(ciws);
+      }
+
+      group.add(hull, bow, flightDeck, runwayStripe, island, bridge, windows, mast);
+      return group;
+    }
+
+    const hullLength = role === 'cruiser' ? 94 : role === 'frigate' ? 78 : 84;
+    const hullWidth = role === 'frigate' ? 19 : 22;
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(hullWidth, 8.5, hullLength), hullMat);
+    hull.position.y = 1.5;
+
+    const bow = new THREE.Mesh(new THREE.ConeGeometry(hullWidth * 0.28, 13, 6), hullMat);
+    bow.rotation.x = Math.PI / 2;
+    bow.rotation.y = Math.PI;
+    bow.position.set(0, 1.6, -hullLength * 0.52);
+
+    const sternDeck = new THREE.Mesh(new THREE.BoxGeometry(hullWidth - 3, 1.8, 20), deckMat);
+    sternDeck.position.set(0, 6.2, hullLength * 0.24);
+    const mainDeck = new THREE.Mesh(new THREE.BoxGeometry(hullWidth - 2, 1.7, hullLength - 14), deckMat);
+    mainDeck.position.set(0, 6.1, -2);
+
+    const bridgeBase = new THREE.Mesh(new THREE.BoxGeometry(12, 8, 14), superMat);
+    bridgeBase.position.set(0, 10.8, -10);
+    const bridgeTop = new THREE.Mesh(new THREE.BoxGeometry(9, 5, 10), superMat);
+    bridgeTop.position.set(0, 16.5, -9);
+    const bridgeWindows = new THREE.Mesh(new THREE.BoxGeometry(9.2, 1.7, 10.2), glassMat);
+    bridgeWindows.position.set(0, 17.3, -8.8);
+
+    const funnel = new THREE.Mesh(new THREE.BoxGeometry(6, 8, 6), darkMat);
+    funnel.position.set(0, 13.2, 8);
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 11, 8), darkMat);
+    mast.position.set(0, 19.4, -2);
+
+    const turretMat = new THREE.MeshStandardMaterial({ color: 0x4f5861, metalness: 0.35, roughness: 0.55 });
+    const turretLayout = role === 'cruiser'
+      ? [-34, -16, 16, 34]
+      : [-28, -12, 18];
+
+    turretLayout.forEach((zPos) => {
+      const turret = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 3, 2.2, 12), turretMat);
+      turret.position.set(0, 8.3, zPos);
+      const gunL = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 8, 8), darkMat);
+      gunL.rotation.x = Math.PI / 2;
+      gunL.position.set(-0.8, 8.9, zPos - 4);
+      const gunR = gunL.clone();
+      gunR.position.x = 0.8;
+      group.add(turret, gunL, gunR);
+    });
+
+    const aaGunL = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.2, 1.8), darkMat);
+    aaGunL.position.set(-hullWidth * 0.35, 8, 2);
+    const aaGunR = aaGunL.clone();
+    aaGunR.position.x = hullWidth * 0.35;
+
+    group.add(
+      hull,
+      bow,
+      sternDeck,
+      mainDeck,
+      bridgeBase,
+      bridgeTop,
+      bridgeWindows,
+      funnel,
+      mast,
+      aaGunL,
+      aaGunR,
+    );
     return group;
   }
 
