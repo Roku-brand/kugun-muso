@@ -21,12 +21,12 @@ export class HUD {
         <div class="reticle-v"></div>
       </div>
       <div class="lock-guide hidden" id="lockGuide"></div>
-      <div class="left-bottom controls-panel">
+      <div class="hud-corner hud-corner-left controls-panel">
         <div id="stick-zone" class="stick-zone">
           <div id="stick-knob" class="stick-knob"></div>
         </div>
       </div>
-      <div class="right-bottom controls-panel">
+      <div class="hud-corner hud-corner-right controls-panel">
         <div class="control-row">
           <button id="fireBtn" class="missile-fire-btn" aria-label="ミサイル発射">
             <span class="missile-icon" aria-hidden="true"></span>
