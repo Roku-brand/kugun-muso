@@ -12,6 +12,20 @@ let selectedStage = STAGES[0].id;
 let settings = loadSettings();
 let gameScene = null;
 
+
+window.addEventListener('gesturestart', (event) => {
+  event.preventDefault();
+});
+
+window.addEventListener(
+  'wheel',
+  (event) => {
+    if (event.ctrlKey) event.preventDefault();
+  },
+  { passive: false },
+);
+
+
 renderTop();
 
 function renderTop() {
@@ -156,7 +170,9 @@ function bindSettingInputs(root) {
   });
 }
 
-function startBattle() {
+async function startBattle() {
+  await enforceLandscapeMode();
+
   app.innerHTML = `
     <div id="battle-root">
       <canvas id="game-canvas"></canvas>
@@ -194,4 +210,14 @@ window.addEventListener('beforeunload', () => {
 
 if (!localStorage.getItem('kugun_settings')) {
   saveSettings(SETTINGS_DEFAULTS);
+}
+
+
+async function enforceLandscapeMode() {
+  if (!screen.orientation?.lock) return;
+  try {
+    await screen.orientation.lock('landscape');
+  } catch {
+    // モバイルブラウザの制約で失敗する場合はそのまま続行
+  }
 }
