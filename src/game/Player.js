@@ -3,6 +3,7 @@ import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 const SENS_MAP = { low: 0.6, medium: 1, high: 1.5 };
 const MAX_PITCH_ANGLE = 1.05;
 const MAX_ALTITUDE = 1082;
+const DEFAULT_HORIZONTAL_BOUND = 280;
 
 export class Player {
   constructor(camera, settings) {
@@ -18,6 +19,7 @@ export class Player {
     this.minSpeed = 42;
     this.maxSpeed = 165;
     this.throttle = 0.45;
+    this.horizontalBound = DEFAULT_HORIZONTAL_BOUND;
     this.maxArmor = 100;
     this.armor = this.maxArmor;
     this.maxMissiles = 5;
@@ -55,7 +57,7 @@ export class Player {
     this.speed = THREE.MathUtils.lerp(this.minSpeed, this.maxSpeed, this.throttle);
     this.position.addScaledVector(this.forward, this.speed * dt);
 
-    this.position.x = THREE.MathUtils.clamp(this.position.x, -280, 280);
+    this.position.x = THREE.MathUtils.clamp(this.position.x, -this.horizontalBound, this.horizontalBound);
     this.position.y = THREE.MathUtils.clamp(this.position.y, 0, MAX_ALTITUDE);
 
     this.missileReloadTimer += dt;
@@ -71,6 +73,11 @@ export class Player {
     }
 
     this.syncCamera();
+  }
+
+  setHorizontalBound(bound) {
+    this.horizontalBound = Math.max(DEFAULT_HORIZONTAL_BOUND, bound);
+    this.position.x = THREE.MathUtils.clamp(this.position.x, -this.horizontalBound, this.horizontalBound);
   }
 
   syncCamera() {
