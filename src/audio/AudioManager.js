@@ -3,7 +3,6 @@ export class AudioManager {
     this.settings = settings;
     this.ctx = null;
     this.master = null;
-    this.engineOsc = null;
     this.noiseBuffer = null;
   }
 
@@ -13,7 +12,6 @@ export class AudioManager {
     this.master = this.ctx.createGain();
     this.master.gain.value = this.settings.masterVolume;
     this.master.connect(this.ctx.destination);
-    this.startEngine();
   }
 
   updateVolumes(settings) {
@@ -61,25 +59,6 @@ export class AudioManager {
     const source = this.ctx.createBufferSource();
     source.buffer = this.getNoiseBuffer(duration);
     return source;
-  }
-
-  startEngine() {
-    if (!this.ctx || this.engineOsc) return;
-    const osc = this.ctx.createOscillator();
-    const g = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.value = 80;
-    g.gain.value = 0.02 * this.settings.bgmVolume;
-    osc.connect(g);
-    g.connect(this.master);
-    osc.start();
-    this.engineOsc = { osc, g };
-  }
-
-  updateEngine(speedRatio) {
-    if (!this.engineOsc) return;
-    this.engineOsc.osc.frequency.value = 70 + speedRatio * 130;
-    this.engineOsc.g.gain.value = (0.015 + speedRatio * 0.03) * this.settings.bgmVolume;
   }
 
   missile() {
@@ -199,10 +178,6 @@ export class AudioManager {
   }
 
   dispose() {
-    if (this.engineOsc) {
-      this.engineOsc.osc.stop();
-      this.engineOsc = null;
-    }
     if (this.ctx) {
       this.ctx.close();
       this.ctx = null;
