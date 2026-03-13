@@ -1,6 +1,7 @@
 import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 
 const SENS_MAP = { low: 0.6, medium: 1, high: 1.5 };
+const MAX_PITCH_ANGLE = 1.05;
 
 export class Player {
   constructor(camera, settings) {
@@ -34,7 +35,7 @@ export class Player {
 
     this.yaw -= this.input.yaw * yawSpeed * dt;
     this.pitch += this.input.pitch * pitchSpeed * dt;
-    this.pitch = THREE.MathUtils.clamp(this.pitch, -0.55, 0.55);
+    this.pitch = THREE.MathUtils.clamp(this.pitch, -MAX_PITCH_ANGLE, MAX_PITCH_ANGLE);
 
     const cosPitch = Math.cos(this.pitch);
     this.forward.set(
