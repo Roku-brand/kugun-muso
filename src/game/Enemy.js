@@ -14,6 +14,7 @@ export class Enemy {
     this.type = type;
     this.mesh = mesh;
     this.health = health;
+    this.maxHealth = health;
     this.speed = speed;
     this.cooldown = Math.random() * 2;
     this.alive = true;

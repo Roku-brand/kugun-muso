@@ -458,6 +458,19 @@ export class GameScene {
     });
 
     const lockCandidate = this.getLockCandidate(this.player.position, this.player.forward);
+    const enemyGauges = this.enemies
+      .filter((enemy) => enemy.alive)
+      .map((enemy) => {
+        const screen = this.toScreenPoint(enemy.mesh.position.clone().add(new THREE.Vector3(0, 8, 0)));
+        if (!screen) return null;
+        return {
+          x: screen.x,
+          y: screen.y,
+          ratio: THREE.MathUtils.clamp(enemy.health / Math.max(1, enemy.maxHealth), 0, 1),
+        };
+      })
+      .filter(Boolean);
+
     this.hud.update({
       speed: this.player.speed,
       altitude: this.player.position.y,
@@ -468,6 +481,7 @@ export class GameScene {
       throttle: this.player.throttle,
       radar: radarObjects,
       lockGuide: lockCandidate ? this.toScreenPoint(lockCandidate.mesh.position) : null,
+      enemyGauges,
     });
   }
 

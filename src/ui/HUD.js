@@ -26,6 +26,7 @@ export class HUD {
         <div class="reticle-v"></div>
       </div>
       <div class="lock-guide hidden" id="lockGuide"></div>
+      <div id="enemyGaugeLayer" class="enemy-gauge-layer"></div>
       <div class="hud-corner hud-corner-left controls-panel">
         <div id="stick-zone" class="stick-zone">
           <div id="stick-knob" class="stick-knob"></div>
@@ -66,6 +67,7 @@ export class HUD {
       stickKnob: this.root.querySelector('#stick-knob'),
       aimReticle: this.root.querySelector('#aimReticle'),
       lockGuide: this.root.querySelector('#lockGuide'),
+      enemyGaugeLayer: this.root.querySelector('#enemyGaugeLayer'),
     };
 
     this.bindTouchControls();
@@ -161,6 +163,7 @@ export class HUD {
     this.elements.throttleFill.style.height = `${throttlePercent}%`;
     this.drawRadar(state.radar);
     this.updateLockGuide(state.lockGuide);
+    this.drawEnemyGauges(state.enemyGauges ?? []);
   }
 
 
@@ -172,6 +175,23 @@ export class HUD {
     this.elements.lockGuide.classList.remove('hidden');
     this.elements.lockGuide.style.left = `${lockGuide.x}px`;
     this.elements.lockGuide.style.top = `${lockGuide.y}px`;
+  }
+
+  drawEnemyGauges(enemyGauges) {
+    const layer = this.elements.enemyGaugeLayer;
+    layer.innerHTML = '';
+    enemyGauges.forEach((gauge) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'enemy-gauge';
+      wrap.style.left = `${gauge.x}px`;
+      wrap.style.top = `${gauge.y}px`;
+
+      const fill = document.createElement('div');
+      fill.className = 'enemy-gauge-fill';
+      fill.style.width = `${Math.round(gauge.ratio * 100)}%`;
+      wrap.appendChild(fill);
+      layer.appendChild(wrap);
+    });
   }
 
   drawRadar(radarState) {
