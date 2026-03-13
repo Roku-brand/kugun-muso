@@ -38,7 +38,7 @@ export class GameScene {
     this.touchThrottle = 0;
     this.touchStick = { x: 0, y: 0 };
     this.missiles = [];
-    this.missileLockDistance = 180;
+    this.missileLockDistance = 360;
     this.enemyBullets = [];
     this.effects = [];
     this.lockOnTimer = 0;
@@ -87,7 +87,7 @@ export class GameScene {
 
     this.audio.updateEngine((this.player.speed - this.player.minSpeed) / (this.player.maxSpeed - this.player.minSpeed));
     this.lockOnTimer += dt;
-    if (this.lockOnTimer > 1.8 && this.nearestEnemyDistance() < 220) {
+    if (this.lockOnTimer > 1.8 && this.nearestEnemyDistance() < 420) {
       this.audio.lockOn();
       this.lockOnTimer = 0;
     }
@@ -106,7 +106,7 @@ export class GameScene {
     this.missiles.push({
       pos,
       vel,
-      life: 4,
+      life: 7,
       mesh: missileMesh.group,
       flame: missileMesh.flame,
       homing: Boolean(lockTarget),
