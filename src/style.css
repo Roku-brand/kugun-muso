@@ -126,47 +126,69 @@ input[type='range'] { width: 100%; }
 .right-bottom {
   right: calc(12px + env(safe-area-inset-right));
   bottom: calc(12px + env(safe-area-inset-bottom));
-  width: 90px;
+  width: 130px;
   display: grid;
   justify-items: end;
-  gap: 10px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  backdrop-filter: none;
+  gap: 8px;
 }
+.controls-panel { pointer-events: auto; }
 
-.stick-zone { width: 90px; height: 90px; border-radius: 50%; margin: 0 auto; border: 1px solid #70e9ff; position: relative; }
-.stick-knob { width: 28px; height: 28px; border-radius: 50%; background: #70e9ff; position: absolute; top: 31px; left: 31px; }
-.missile-fire-btn {
-  width: 72px;
-  height: 72px;
+.stick-zone {
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  border: 2px solid #7dd5ff;
-  background:
-    radial-gradient(circle at 30% 30%, #b5ebff, #32657f 68%),
-    linear-gradient(140deg, rgba(255, 255, 255, 0.2), transparent 50%);
-  box-shadow: 0 0 16px rgba(109, 216, 255, 0.38);
+  margin: 0 auto;
+  border: 1px solid #70e9ff;
   position: relative;
+  background: rgba(2, 12, 23, 0.25);
 }
-.missile-fire-btn::before {
+.stick-knob { width: 28px; height: 28px; border-radius: 50%; background: #70e9ff; position: absolute; top: 31px; left: 31px; }
+.control-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.missile-fire-btn {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 2px solid #89e4ff;
+  background: radial-gradient(circle at 30% 30%, #8addff, #1c4d6c 75%);
+  box-shadow: 0 0 16px rgba(109, 216, 255, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.missile-icon {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  display: block;
+  transform: rotate(35deg);
+  background:
+    linear-gradient(45deg, transparent 44%, #f4fbff 44%, #f4fbff 56%, transparent 56%) 8px 24px / 12px 10px no-repeat,
+    linear-gradient(-45deg, transparent 44%, #f4fbff 44%, #f4fbff 56%, transparent 56%) 20px 24px / 12px 10px no-repeat;
+  filter: drop-shadow(0 0 4px rgba(188, 232, 255, 0.7));
+}
+.missile-icon::before {
   content: '';
   position: absolute;
-  top: 14px;
-  left: 34px;
-  width: 4px;
-  height: 32px;
-  background: #06293b;
-  border-radius: 2px;
+  top: 8px;
+  left: 16px;
+  width: 8px;
+  height: 22px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f7fdff, #8dbfd6);
+  box-shadow: 0 0 6px rgba(190, 238, 255, 0.8);
 }
-.missile-fire-btn::after {
+.missile-icon::after {
   content: '';
   position: absolute;
-  top: 10px;
-  left: 29px;
+  top: 3px;
+  left: 13px;
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-bottom: 11px solid #06293b;
+  border-bottom: 10px solid #f4fbff;
 }
 .throttle-bar {
   width: 36px;
@@ -194,7 +216,7 @@ input[type='range'] { width: 100%; }
   background: rgba(255, 255, 255, 0.8);
   z-index: 1;
 }
-.right-bottom > div:last-child {
+.throttle-label {
   width: max-content;
   padding: 3px 6px;
   border-radius: 6px;
@@ -218,9 +240,10 @@ input[type='range'] { width: 100%; }
   }
   .left-top { left: calc(8px + env(safe-area-inset-left)); top: calc(8px + env(safe-area-inset-top)); }
   .left-bottom { width: 180px; }
-  .right-bottom { right: calc(8px + env(safe-area-inset-right)); bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .right-bottom { right: calc(8px + env(safe-area-inset-right)); bottom: calc(8px + env(safe-area-inset-bottom)); width: 118px; }
   .throttle-bar { height: 142px; }
-  .missile-fire-btn { width: 66px; height: 66px; }
+  .missile-fire-btn { width: 64px; height: 64px; }
+  .missile-icon { transform: rotate(35deg) scale(0.92); }
 }
 
 @media (orientation: portrait) {

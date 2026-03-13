@@ -21,18 +21,22 @@ export class HUD {
         <div class="reticle-v"></div>
       </div>
       <div class="lock-guide hidden" id="lockGuide"></div>
-      <div class="hud left-bottom">
+      <div class="left-bottom controls-panel">
         <div id="stick-zone" class="stick-zone">
           <div id="stick-knob" class="stick-knob"></div>
         </div>
       </div>
-      <div class="hud right-bottom">
-        <button id="fireBtn" class="missile-fire-btn" aria-label="ミサイル発射"></button>
-        <div id="throttleBar" class="throttle-bar" aria-label="速度バー">
-          <div class="throttle-bar-center"></div>
-          <div id="throttleFill" class="throttle-fill"></div>
+      <div class="right-bottom controls-panel">
+        <div class="control-row">
+          <button id="fireBtn" class="missile-fire-btn" aria-label="ミサイル発射">
+            <span class="missile-icon" aria-hidden="true"></span>
+          </button>
+          <div id="throttleBar" class="throttle-bar" aria-label="速度バー">
+            <div class="throttle-bar-center"></div>
+            <div id="throttleFill" class="throttle-fill"></div>
+          </div>
         </div>
-        <div>スロットル: <span id="throttle">45</span>%</div>
+        <div class="throttle-label">スロットル: <span id="throttle">45</span>%</div>
       </div>
     `;
 
