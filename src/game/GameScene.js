@@ -335,8 +335,6 @@ export class GameScene {
       if (b.mesh) b.mesh.position.copy(b.pos);
     });
 
-    this.updateAllies(dt);
-
     this.playerBullets.forEach((b) => {
       b.pos.addScaledVector(b.vel, dt);
       b.life -= dt;
@@ -354,7 +352,7 @@ export class GameScene {
       }
     });
     this.updateEffects(dt);
-    this.handleCollisions();
+    this.handleCollisions(dt);
 
     this.missiles = this.missiles.filter((m) => {
       if (m.life <= 0) {
@@ -507,7 +505,7 @@ export class GameScene {
     this.effects.push({ mesh, life: 0.6, maxLife: 0.6 });
   }
 
-  handleCollisions() {
+  handleCollisions(dt) {
     this.missiles.forEach((m) => {
       this.enemies.forEach((enemy) => {
         if (!enemy.alive) return;
