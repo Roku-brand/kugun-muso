@@ -29,10 +29,23 @@ export class StageManager {
     this.stageObjects.push(ambient);
   }
 
+  scalePoint([x, y, z], scaleXZ, scaleY = 1) {
+    return [x * scaleXZ, y * scaleY, z * scaleXZ];
+  }
+
+  scaleFleetSpecs(fleetSpecs, scaleXZ) {
+    return fleetSpecs.map((spec) => ({
+      ...spec,
+      x: spec.x * scaleXZ,
+      z: spec.z * scaleXZ,
+    }));
+  }
+
   createAirBattle() {
+    const areaScale = 1.35;
     this.createSkyCommon();
     const sea = new THREE.Mesh(
-      new THREE.CircleGeometry(6000, 96),
+      new THREE.CircleGeometry(6000 * areaScale, 96),
       new THREE.MeshStandardMaterial({
         color: 0x0f4f7a,
         metalness: 0.38,
@@ -54,7 +67,7 @@ export class StageManager {
       [410, 350, -1450],
       [-360, 400, -1180],
       [340, 280, -1120],
-    ];
+    ].map((point) => this.scalePoint(point, areaScale, 1.06));
 
     const spreadTargets = [
       [-620, 340, -520],
@@ -65,7 +78,7 @@ export class StageManager {
       [620, 380, -920],
       [-540, 440, -1220],
       [560, 310, -1180],
-    ];
+    ].map((point) => this.scalePoint(point, areaScale, 1.06));
 
     for (let i = 0; i < 8; i++) {
       const mesh = this.makeFighter();
@@ -91,16 +104,17 @@ export class StageManager {
   }
 
   createSeaBattle() {
+    const areaScale = 1.45;
     this.createSkyCommon();
     const sea = new THREE.Mesh(
-      new THREE.PlaneGeometry(8000, 8000, 50, 50),
+      new THREE.PlaneGeometry(8000 * areaScale, 8000 * areaScale, 50, 50),
       new THREE.MeshStandardMaterial({ color: 0x0d3452, metalness: 0.3, roughness: 0.6 }),
     );
     sea.rotation.x = -Math.PI / 2;
     this.scene.add(sea);
     this.stageObjects.push(sea);
 
-    const fleetSpecs = [
+    const fleetSpecs = this.scaleFleetSpecs([
       { role: 'destroyer', x: -360, z: -360, health: 2, speed: 13, radius: 26 },
       { role: 'frigate', x: -130, z: -530, health: 2, speed: 12, radius: 24 },
       { role: 'carrier', x: 160, z: -680, health: 4, speed: 8, radius: 42 },
@@ -109,7 +123,7 @@ export class StageManager {
       { role: 'frigate', x: 90, z: -1210, health: 2, speed: 11, radius: 24 },
       { role: 'carrier', x: -420, z: -1380, health: 4, speed: 7, radius: 42 },
       { role: 'cruiser', x: 300, z: -1540, health: 3, speed: 9, radius: 32 },
-    ];
+    ], areaScale);
 
     fleetSpecs.forEach((spec, index) => {
       const ship = this.makeShip(spec.role);
@@ -124,10 +138,11 @@ export class StageManager {
 
 
   createTotalWarBattle() {
+    const areaScale = 1.3;
     this.createSkyCommon();
 
     const sea = new THREE.Mesh(
-      new THREE.PlaneGeometry(12000, 12000, 80, 80),
+      new THREE.PlaneGeometry(12000 * areaScale, 12000 * areaScale, 80, 80),
       new THREE.MeshStandardMaterial({ color: 0x0b2f4a, metalness: 0.32, roughness: 0.58 }),
     );
     sea.rotation.x = -Math.PI / 2;
@@ -135,27 +150,27 @@ export class StageManager {
     this.stageObjects.push(sea);
 
     const island = new THREE.Mesh(
-      new THREE.CylinderGeometry(340, 430, 90, 30),
+      new THREE.CylinderGeometry(340 * areaScale, 430 * areaScale, 90, 30),
       new THREE.MeshStandardMaterial({ color: 0x425f3d, roughness: 0.88, metalness: 0.08 }),
     );
-    island.position.set(0, 45, -1180);
+    island.position.set(0, 45, -1180 * areaScale);
     this.scene.add(island);
     this.stageObjects.push(island);
 
     const fortress = this.makeFortressComplex();
-    fortress.position.set(0, 90, -1180);
+    fortress.position.set(0, 90, -1180 * areaScale);
     this.scene.add(fortress);
     this.stageObjects.push(fortress);
 
     const hq = this.makeHeadquarters();
-    hq.position.set(0, 98, -1240);
+    hq.position.set(0, 98, -1240 * areaScale);
     hq.scale.setScalar(1.35);
     this.scene.add(hq);
     this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: 8 }));
     this.targets.push({ mesh: hq, radius: 56, type: 'building', objective: 'hq' });
 
     const port = this.makeMegaPortFacility();
-    port.position.set(-150, 78, -1040);
+    port.position.set(-150 * areaScale, 78, -1040 * areaScale);
     this.scene.add(port);
     this.enemies.push(new Enemy({ type: 'turret', mesh: port, health: 5, canFire: false }));
     this.targets.push({
@@ -167,7 +182,7 @@ export class StageManager {
     });
 
     const runway = this.makeAirfieldRunway();
-    runway.position.set(150, 76, -1110);
+    runway.position.set(150 * areaScale, 76, -1110 * areaScale);
     this.scene.add(runway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: 5, canFire: false }));
     this.targets.push({
@@ -185,7 +200,7 @@ export class StageManager {
       [230, 86, -1190],
       [-40, 86, -1360],
       [50, 86, -980],
-    ];
+    ].map((point) => this.scalePoint(point, areaScale));
 
     defensePositions.forEach((pos) => {
       const turret = this.makeGroundTurret();
@@ -202,7 +217,7 @@ export class StageManager {
       [220, 88, -1040],
       [-100, 88, -1360],
       [110, 88, -1360],
-    ];
+    ].map((point) => this.scalePoint(point, areaScale));
 
     samPositions.forEach((pos) => {
       const sam = this.makeSamBattery();
@@ -212,7 +227,7 @@ export class StageManager {
       this.targets.push({ mesh: sam, radius: 11, type: 'building' });
     });
 
-    const fleetSpecs = [
+    const fleetSpecs = this.scaleFleetSpecs([
       { role: 'carrier', x: -520, z: -960, health: 5, speed: 8, radius: 48 },
       { role: 'cruiser', x: -700, z: -1160, health: 3, speed: 10, radius: 34 },
       { role: 'destroyer', x: -520, z: -1360, health: 2, speed: 13, radius: 26 },
@@ -221,7 +236,7 @@ export class StageManager {
       { role: 'destroyer', x: 500, z: -1380, health: 2, speed: 13, radius: 26 },
       { role: 'frigate', x: 0, z: -1600, health: 2, speed: 12, radius: 24 },
       { role: 'cruiser', x: 0, z: -820, health: 3, speed: 9, radius: 34 },
-    ];
+    ], areaScale);
 
     fleetSpecs.forEach((spec, index) => {
       const ship = this.makeShip(spec.role);
@@ -246,7 +261,7 @@ export class StageManager {
       [780, 350, -1860],
       [-340, 420, -1450],
       [350, 420, -1430],
-    ];
+    ].map((point) => this.scalePoint(point, areaScale, 1.05));
 
     fighterSpawns.forEach((spawn, index) => {
       const mesh = this.makeFighter();
@@ -256,7 +271,7 @@ export class StageManager {
       const spreadPoint = new THREE.Vector3(
         spawn[0] * 0.48,
         280 + (index % 4) * 40,
-        -1020 - (index % 5) * 120,
+        (-1020 - (index % 5) * 120) * areaScale,
       );
       this.enemies.push(new Enemy({
         type: 'fighter',
@@ -274,9 +289,10 @@ export class StageManager {
     });
   }
   createBaseBattle() {
+    const areaScale = 1.35;
     this.createSkyCommon();
     const sea = new THREE.Mesh(
-      new THREE.PlaneGeometry(9000, 9000),
+      new THREE.PlaneGeometry(9000 * areaScale, 9000 * areaScale),
       new THREE.MeshStandardMaterial({ color: 0x103b58 }),
     );
     sea.rotation.x = -Math.PI / 2;
@@ -284,20 +300,20 @@ export class StageManager {
     this.stageObjects.push(sea);
 
     const island = new THREE.Mesh(
-      new THREE.CylinderGeometry(220, 300, 70, 24),
+      new THREE.CylinderGeometry(220 * areaScale, 300 * areaScale, 70, 24),
       new THREE.MeshStandardMaterial({ color: 0x3f5a3a }),
     );
-    island.position.set(0, 35, -900);
+    island.position.set(0, 35, -900 * areaScale);
     this.scene.add(island);
     this.stageObjects.push(island);
     const hq = this.makeHeadquarters();
-    hq.position.set(0, 82, -930);
+    hq.position.set(0, 82, -930 * areaScale);
     this.scene.add(hq);
     this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: 4 }));
     this.targets.push({ mesh: hq, radius: 42, type: 'building' });
 
     const port = this.makePortFacility();
-    port.position.set(0, 70, -790);
+    port.position.set(0, 70, -790 * areaScale);
     this.scene.add(port);
     this.targets.push({
       mesh: port,
@@ -311,7 +327,7 @@ export class StageManager {
       [160, 74, -870],
       [-145, 74, -1020],
       [150, 74, -1015],
-    ];
+    ].map((point) => this.scalePoint(point, areaScale));
 
     towerPositions.forEach((pos) => {
       const tower = this.makeWatchTower();
@@ -323,7 +339,7 @@ export class StageManager {
 
     for (let i = 0; i < 4; i++) {
       const turret = this.makeGroundTurret();
-      turret.position.set(-88 + i * 56, 74, -925 + (i % 2) * 76);
+      turret.position.set((-88 + i * 56) * areaScale, 74, (-925 + (i % 2) * 76) * areaScale);
       this.scene.add(turret);
       this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: 2 }));
       this.targets.push({ mesh: turret, radius: 14, type: 'building' });
@@ -336,7 +352,7 @@ export class StageManager {
       [116, 80, -836],
       [-92, 80, -1068],
       [86, 80, -1070],
-    ];
+    ].map((point) => this.scalePoint(point, areaScale));
 
     samPositions.forEach((pos) => {
       const sam = this.makeSamBattery();
