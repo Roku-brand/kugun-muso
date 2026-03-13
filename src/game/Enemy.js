@@ -47,6 +47,28 @@ export class Enemy {
     }
   }
 
+  getWeaponProfile(distanceToPlayer) {
+    if (this.type === 'fighter') {
+      if (distanceToPlayer > 210) {
+        return { key: 'enemyMissile', speed: 150, damage: 32, radius: 2.6, cooldown: 4.8 };
+      }
+      return { key: 'enemyMachineGun', speed: 128, damage: 8, radius: 1.3, cooldown: 0.2 };
+    }
+
+    if (this.type === 'ship') {
+      return { key: 'enemyCannon', speed: 78, damage: 20, radius: 3.4, cooldown: 2.8 };
+    }
+
+    if (this.type === 'turret') {
+      if (distanceToPlayer > 250) {
+        return { key: 'enemyMissile', speed: 140, damage: 30, radius: 2.8, cooldown: 4.2 };
+      }
+      return { key: 'enemyCannon', speed: 88, damage: 18, radius: 3, cooldown: 1.9 };
+    }
+
+    return { key: 'enemyMachineGun', speed: 90, damage: 8, radius: 1.4, cooldown: 0.35 };
+  }
+
   update(dt, playerPos, bullets, createBulletMesh) {
     if (!this.alive) return;
     this.elapsed += dt;
@@ -140,13 +162,16 @@ export class Enemy {
     const shotDistance = playerPos.distanceTo(this.mesh.position);
     const inFiringRange = this.type !== 'fighter' || (shotDistance > 130 && shotDistance < 420);
     if (this.cooldown <= 0 && inFiringRange) {
-      this.cooldown = this.type === 'fighter' ? 3.6 : 4.6;
+      const weapon = this.getWeaponProfile(shotDistance);
+      this.cooldown = weapon.cooldown;
       const dir = playerPos.clone().sub(this.mesh.position).normalize();
       bullets.push({
         pos: this.mesh.position.clone(),
-        vel: dir.multiplyScalar(this.type === 'fighter' ? 78 : 58),
-        radius: 2,
-        mesh: createBulletMesh ? createBulletMesh() : null,
+        vel: dir.multiplyScalar(weapon.speed),
+        radius: weapon.radius,
+        damage: weapon.damage,
+        kind: weapon.key,
+        mesh: createBulletMesh ? createBulletMesh(weapon.key) : null,
       });
       const bullet = bullets.at(-1);
       if (bullet.mesh) bullet.mesh.position.copy(bullet.pos);

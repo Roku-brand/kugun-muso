@@ -115,8 +115,22 @@ export class AudioManager {
     thrust.stop(now + 1.1);
     crackle.stop(now + 0.2);
   }
-  hit() {
-    this.tone({ freq: 180, type: 'triangle', duration: 0.2, gain: 0.16 });
+  machineGun() {
+    this.tone({ freq: 760 + Math.random() * 120, type: 'square', duration: 0.045, gain: 0.05 });
+  }
+
+  enemyShot(kind = 'enemyMachineGun') {
+    if (kind === 'enemyMissile') {
+      this.tone({ freq: 220, type: 'sawtooth', duration: 0.2, gain: 0.1 });
+      return;
+    }
+
+    if (kind === 'enemyCannon') {
+      this.tone({ freq: 120, type: 'triangle', duration: 0.24, gain: 0.13 });
+      return;
+    }
+
+    this.tone({ freq: 300, type: 'square', duration: 0.08, gain: 0.07 });
   }
   explosion() {
     if (!this.ctx) return;
