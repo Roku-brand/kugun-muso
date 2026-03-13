@@ -8,6 +8,10 @@ export class Player {
     this.settings = settings;
     this.position = new THREE.Vector3(0, 220, 0);
     this.forward = new THREE.Vector3(0, 0, -1);
+    this.right = new THREE.Vector3(1, 0, 0);
+    this.worldUp = new THREE.Vector3(0, 1, 0);
+    this.yaw = Math.PI;
+    this.pitch = 0;
     this.speed = 180;
     this.minSpeed = 110;
     this.maxSpeed = 360;
@@ -15,7 +19,7 @@ export class Player {
     this.health = 3;
     this.ammo = 20;
     this.ammoTimer = 0;
-    this.input = { x: 0, y: 0, throttle: 0 };
+    this.input = { yaw: 0, pitch: 0, throttle: 0 };
     this.syncCamera();
   }
 
@@ -25,9 +29,20 @@ export class Player {
 
   update(dt) {
     const sens = SENS_MAP[this.settings.controlSensitivity] ?? 1;
-    const strafeSpeed = 140 * sens;
-    this.position.x += this.input.x * strafeSpeed * dt;
-    this.position.y += this.input.y * strafeSpeed * dt;
+    const yawSpeed = 1.6 * sens;
+    const pitchSpeed = 1.2 * sens;
+
+    this.yaw -= this.input.yaw * yawSpeed * dt;
+    this.pitch += this.input.pitch * pitchSpeed * dt;
+    this.pitch = THREE.MathUtils.clamp(this.pitch, -0.55, 0.55);
+
+    const cosPitch = Math.cos(this.pitch);
+    this.forward.set(
+      Math.sin(this.yaw) * cosPitch,
+      Math.sin(this.pitch),
+      Math.cos(this.yaw) * cosPitch,
+    ).normalize();
+    this.right.crossVectors(this.forward, this.worldUp).normalize();
 
     this.throttle = THREE.MathUtils.clamp(this.throttle + this.input.throttle * dt * 0.5, 0, 1);
     this.speed = THREE.MathUtils.lerp(this.minSpeed, this.maxSpeed, this.throttle);
