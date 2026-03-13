@@ -12,11 +12,13 @@ export class HUD {
         <button id="homeBtn" class="menu-btn" aria-label="一時停止メニューを開く">ホーム</button>
       </div>
       <div class="hud top-status">
-        <div>体力: <span id="hp">❤❤❤</span></div>
-        <div>残弾: <span id="ammo">20</span></div>
+        <div>装甲: <span id="armorText">100%</span></div>
+        <div>ミサイル: <span id="missiles">5</span>/5</div>
+        <div>機関銃: <span id="mgAmmo">100</span>/100</div>
         <div>速度: <span id="speed">0</span> km/h</div>
         <div>高度: <span id="altitude">0</span> m</div>
       </div>
+      <div class="hud armor-gauge"><div id="armorGaugeFill" class="armor-gauge-fill"></div></div>
       <div class="hud left-top radar-wrap"><canvas id="radar" width="96" height="96"></canvas></div>
       <div class="aim-reticle" id="aimReticle">
         <div class="reticle-ring"></div>
@@ -34,6 +36,9 @@ export class HUD {
           <button id="fireBtn" class="missile-fire-btn" aria-label="ミサイル発射">
             <span class="missile-icon" aria-hidden="true"></span>
           </button>
+          <button id="gunBtn" class="gun-fire-btn" aria-label="機関銃連射">
+            <span class="gun-icon" aria-hidden="true"></span>
+          </button>
           <div id="throttleBar" class="throttle-bar" aria-label="速度バー">
             <div class="throttle-bar-center"></div>
             <div id="throttleFill" class="throttle-fill"></div>
@@ -46,13 +51,16 @@ export class HUD {
     this.elements = {
       speed: this.root.querySelector('#speed'),
       altitude: this.root.querySelector('#altitude'),
-      ammo: this.root.querySelector('#ammo'),
-      hp: this.root.querySelector('#hp'),
+      missiles: this.root.querySelector('#missiles'),
+      mgAmmo: this.root.querySelector('#mgAmmo'),
+      armorText: this.root.querySelector('#armorText'),
+      armorGaugeFill: this.root.querySelector('#armorGaugeFill'),
       throttle: this.root.querySelector('#throttle'),
       throttleBar: this.root.querySelector('#throttleBar'),
       throttleFill: this.root.querySelector('#throttleFill'),
       radar: this.root.querySelector('#radar'),
       fireBtn: this.root.querySelector('#fireBtn'),
+      gunBtn: this.root.querySelector('#gunBtn'),
       homeBtn: this.root.querySelector('#homeBtn'),
       stickZone: this.root.querySelector('#stick-zone'),
       stickKnob: this.root.querySelector('#stick-knob'),
@@ -62,8 +70,23 @@ export class HUD {
 
     this.bindTouchControls();
     this.elements.fireBtn.addEventListener('click', this.actions.onFire);
+    this.bindGunButton();
     this.elements.homeBtn.addEventListener('click', this.actions.onMenu);
     this.bindThrottleBar();
+  }
+
+  bindGunButton() {
+    const gun = this.elements.gunBtn;
+    const stop = () => this.actions.onGunStop();
+    gun.addEventListener('pointerdown', (e) => {
+      gun.setPointerCapture(e.pointerId);
+      this.actions.onGunStart();
+    });
+    gun.addEventListener('pointerup', stop);
+    gun.addEventListener('pointercancel', stop);
+    gun.addEventListener('pointerleave', (e) => {
+      if (e.buttons === 0) stop();
+    });
   }
 
   bindTouchControls() {
@@ -128,8 +151,11 @@ export class HUD {
   update(state) {
     this.elements.speed.textContent = Math.round(state.speed);
     this.elements.altitude.textContent = Math.round(state.altitude);
-    this.elements.ammo.textContent = state.ammo;
-    this.elements.hp.textContent = '❤'.repeat(state.health) + '・'.repeat(3 - state.health);
+    this.elements.missiles.textContent = state.missiles;
+    this.elements.mgAmmo.textContent = state.machineGunAmmo;
+    const armorRatio = state.armor / Math.max(1, state.armorMax);
+    this.elements.armorText.textContent = `${Math.round(armorRatio * 100)}%`;
+    this.elements.armorGaugeFill.style.width = `${Math.round(armorRatio * 100)}%`;
     const throttlePercent = Math.round(state.throttle * 100);
     this.elements.throttle.textContent = throttlePercent;
     this.elements.throttleFill.style.height = `${throttlePercent}%`;

@@ -130,10 +130,25 @@ input[type='range'] { width: 100%; }
   min-width: min(92vw, 720px);
   padding: 6px 12px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   text-align: center;
   font-size: clamp(0.72rem, 1.8vw, 0.9rem);
+}
+.armor-gauge {
+  top: calc(62px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(54vw, 360px);
+  height: 12px;
+  padding: 1px;
+}
+.armor-gauge-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #56d26c, #f2d963 65%, #f56060);
+  transition: width 0.2s linear;
 }
 .radar-wrap {
   padding: 6px;
@@ -184,6 +199,44 @@ input[type='range'] { width: 100%; }
   display: grid;
   place-items: center;
   padding: 0;
+}
+.gun-fire-btn {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 2px solid #ffe08a;
+  background: radial-gradient(circle at 35% 30%, #ffdb89, #6b4520 75%);
+  box-shadow: 0 0 12px rgba(255, 187, 82, 0.36);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.gun-icon {
+  width: 30px;
+  height: 7px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #ffeec8, #9f7540);
+  position: relative;
+}
+.gun-icon::before {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: -2px;
+  width: 12px;
+  height: 11px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fff6de, #c58b48);
+}
+.gun-icon::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 2px;
+  width: 8px;
+  height: 3px;
+  background: #fff2d6;
+  box-shadow: 0 0 8px rgba(255, 233, 173, 0.8);
 }
 .missile-icon {
   width: 40px;
@@ -265,6 +318,10 @@ input[type='range'] { width: 100%; }
     gap: 6px;
     padding: 5px 10px;
   }
+  .armor-gauge {
+    top: calc(52px + env(safe-area-inset-top));
+    width: min(60vw, 300px);
+  }
   .left-top { left: calc(8px + env(safe-area-inset-left)); top: calc(8px + env(safe-area-inset-top)); }
   .top-right-menu { top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); }
   .hud-corner { bottom: calc(8px + env(safe-area-inset-bottom)); }
@@ -272,6 +329,7 @@ input[type='range'] { width: 100%; }
   .hud-corner-right { right: calc(8px + env(safe-area-inset-right)); width: 118px; }
   .throttle-bar { height: 142px; }
   .missile-fire-btn { width: 64px; height: 64px; }
+  .gun-fire-btn { width: 56px; height: 56px; }
   .missile-icon { transform: rotate(35deg) scale(0.92); }
 }
 

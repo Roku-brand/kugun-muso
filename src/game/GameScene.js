@@ -32,6 +32,8 @@ export class GameScene {
     this.audio = new AudioManager(settings);
     this.hud = new HUD(hudRoot, {
       onFire: () => this.fireMissile(),
+      onGunStart: () => (this.touchGunHeld = true),
+      onGunStop: () => (this.touchGunHeld = false),
       onThrottle: (v) => (this.touchThrottle = v),
       onStick: (x, y) => (this.touchStick = { x, y }),
       onMenu: () => this.togglePauseMenu(),
@@ -41,12 +43,16 @@ export class GameScene {
     this.touchThrottle = 0;
     this.touchStick = { x: 0, y: 0 };
     this.missiles = [];
+    this.playerBullets = [];
     this.missileLockDistance = 360;
     this.enemyBullets = [];
     this.effects = [];
     this.lockOnTimer = 0;
     this.finished = false;
     this.paused = false;
+    this.gunTriggerHeld = false;
+    this.touchGunHeld = false;
+    this.machineGunCooldown = 0;
     this.last = performance.now();
     this.bindEvents();
   }
@@ -65,12 +71,12 @@ export class GameScene {
     };
     this.onDown = (e) => {
       const key = e.key.toLowerCase();
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) e.preventDefault();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'x'].includes(key)) e.preventDefault();
       this.keys[key] = true;
     };
     this.onUp = (e) => {
       const key = e.key.toLowerCase();
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) e.preventDefault();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'x'].includes(key)) e.preventDefault();
       this.keys[key] = false;
     };
     window.addEventListener('resize', this.onResize);
@@ -89,6 +95,8 @@ export class GameScene {
       this.keys[' '] = false;
     }
 
+    this.gunTriggerHeld = Boolean(this.keys.x || this.touchGunHeld);
+
     this.lockOnTimer += dt;
     if (this.lockOnTimer > 1.8 && this.nearestEnemyDistance() < 420) {
       this.audio.lockOn();
@@ -97,7 +105,7 @@ export class GameScene {
   }
 
   fireMissile() {
-    if (this.finished || !this.player.consumeAmmo()) return;
+    if (this.finished || !this.player.consumeMissile()) return;
     const lockTarget = this.getLockCandidate(this.player.position, this.player.forward);
     const pos = this.player.position
       .clone()
@@ -118,6 +126,31 @@ export class GameScene {
     });
     this.scene.add(this.missiles.at(-1).mesh);
     this.audio.missile();
+  }
+
+  fireMachineGun(dt) {
+    this.machineGunCooldown -= dt;
+    if (!this.gunTriggerHeld || this.machineGunCooldown > 0 || !this.player.consumeMachineGun()) return;
+    this.machineGunCooldown = 0.08;
+
+    const pos = this.player.position
+      .clone()
+      .add(this.player.forward.clone().multiplyScalar(9))
+      .add(this.player.right.clone().multiplyScalar(-0.35 + Math.random() * 0.7))
+      .add(this.player.worldUp.clone().multiplyScalar(-1.2 + Math.random() * 0.3));
+    const spread = this.player.right.clone().multiplyScalar((Math.random() - 0.5) * 0.12)
+      .add(this.player.worldUp.clone().multiplyScalar((Math.random() - 0.5) * 0.08));
+    const vel = this.player.forward.clone().add(spread).normalize().multiplyScalar(380);
+    const bullet = {
+      pos,
+      vel,
+      life: 1.5,
+      damage: 10,
+      mesh: this.makePlayerMachineGunMesh(),
+    };
+    this.playerBullets.push(bullet);
+    bullet.mesh.position.copy(bullet.pos);
+    this.audio.machineGun();
   }
 
   makeMissileMesh() {
@@ -178,6 +211,7 @@ export class GameScene {
       const combatDt = dt * COMBAT_SPEED_SCALE;
       this.readInput(combatDt);
       this.player.update(combatDt);
+      this.fireMachineGun(combatDt);
       this.updateWorld(combatDt);
       this.checkGameState();
       this.updateHUD();
@@ -225,7 +259,7 @@ export class GameScene {
   }
 
   updateWorld(dt) {
-    this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, () => this.makeEnemyBulletMesh(enemy.type)));
+    this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
 
     this.missiles.forEach((m) => {
       if (m.homing) {
@@ -250,6 +284,15 @@ export class GameScene {
       b.pos.addScaledVector(b.vel, dt);
       if (b.mesh) b.mesh.position.copy(b.pos);
     });
+
+    this.playerBullets.forEach((b) => {
+      b.pos.addScaledVector(b.vel, dt);
+      b.life -= dt;
+      if (b.mesh) {
+        b.mesh.position.copy(b.pos);
+        b.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), b.vel.clone().normalize());
+      }
+    });
     this.updateEffects(dt);
     this.handleCollisions();
 
@@ -266,16 +309,35 @@ export class GameScene {
       if (!keep && b.mesh) this.scene.remove(b.mesh);
       return keep;
     });
+
+    this.playerBullets = this.playerBullets.filter((b) => {
+      const keep = b.life > 0;
+      if (!keep && b.mesh) this.scene.remove(b.mesh);
+      return keep;
+    });
   }
 
-  makeEnemyBulletMesh(type) {
-    const color = type === 'fighter' ? 0xff7a4f : 0xffcf5c;
-    const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.95, 8, 8),
-      new THREE.MeshBasicMaterial({ color }),
-    );
+  makeEnemyBulletMesh(kind) {
+    const visuals = {
+      enemyMissile: { geo: new THREE.CylinderGeometry(0.2, 0.26, 2.8, 10), mat: new THREE.MeshBasicMaterial({ color: 0xff8a5b }) },
+      enemyMachineGun: { geo: new THREE.SphereGeometry(0.72, 8, 8), mat: new THREE.MeshBasicMaterial({ color: 0xffd96d }) },
+      enemyCannon: { geo: new THREE.SphereGeometry(1.3, 10, 10), mat: new THREE.MeshBasicMaterial({ color: 0xff5238 }) },
+    };
+    const style = visuals[kind] ?? visuals.enemyMachineGun;
+    const mesh = new THREE.Mesh(style.geo, style.mat);
     this.scene.add(mesh);
+    if (kind === 'enemyMissile') mesh.rotation.z = Math.PI / 2;
     return mesh;
+  }
+
+  makePlayerMachineGunMesh() {
+    const tracer = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.1, 1.8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x9ce6ff }),
+    );
+    tracer.rotation.z = Math.PI / 2;
+    this.scene.add(tracer);
+    return tracer;
   }
 
   updateEffects(dt) {
@@ -308,7 +370,7 @@ export class GameScene {
       this.enemies.forEach((enemy) => {
         if (!enemy.alive) return;
         if (m.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 10 : 16)) {
-          enemy.applyDamage(1);
+          enemy.applyDamage(52);
           m.life = 0;
           this.spawnExplosion(enemy.mesh.position);
           this.audio.explosion();
@@ -321,27 +383,42 @@ export class GameScene {
       if (b.pos.distanceTo(this.player.position) < 8) {
         b.pos.set(99999, 99999, 99999);
         if (b.mesh) this.scene.remove(b.mesh);
-        this.player.hit();
-        this.audio.hit();
+        this.player.applyDamage(b.damage ?? 10);
+        this.audio.enemyShot(b.kind);
         this.spawnExplosion(this.player.position, 0xff4040);
       }
     });
 
+    this.playerBullets.forEach((b) => {
+      this.enemies.forEach((enemy) => {
+        if (!enemy.alive) return;
+        if (b.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 8 : 14)) {
+          enemy.applyDamage(b.damage);
+          b.life = 0;
+          if (!enemy.alive) {
+            this.audio.explosion();
+            this.spawnExplosion(enemy.mesh.position, 0xffb777);
+            this.scene.remove(enemy.mesh);
+          }
+        }
+      });
+    });
+
     for (const enemy of this.enemies) {
       if (enemy.alive && enemy.mesh.position.distanceTo(this.player.position) < 9) {
-        this.player.health = 0;
+        this.player.armor = 0;
       }
     }
 
     for (const target of this.stageManager.targets) {
       if (target.mesh.position.distanceTo(this.player.position) < target.radius) {
-        this.player.health = 0;
+        this.player.armor = 0;
       }
     }
   }
 
   checkGameState() {
-    if (this.player.position.y <= 0 || this.player.health <= 0) {
+    if (this.player.position.y <= 0 || this.player.armor <= 0) {
       this.finish(false, 'ゲームオーバー');
       return;
     }
@@ -384,8 +461,10 @@ export class GameScene {
     this.hud.update({
       speed: this.player.speed,
       altitude: this.player.position.y,
-      ammo: this.player.ammo,
-      health: this.player.health,
+      missiles: this.player.missiles,
+      machineGunAmmo: this.player.machineGunAmmo,
+      armor: this.player.armor,
+      armorMax: this.player.maxArmor,
       throttle: this.player.throttle,
       radar: radarObjects,
       lockGuide: lockCandidate ? this.toScreenPoint(lockCandidate.mesh.position) : null,
@@ -456,6 +535,7 @@ export class GameScene {
     window.removeEventListener('keyup', this.onUp);
     this.stageManager.cleanup();
     this.missiles.forEach((m) => this.scene.remove(m.mesh));
+    this.playerBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.audio.dispose();
     this.renderer.dispose();

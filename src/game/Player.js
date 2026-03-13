@@ -17,9 +17,14 @@ export class Player {
     this.minSpeed = 42;
     this.maxSpeed = 165;
     this.throttle = 0.45;
-    this.health = 3;
-    this.ammo = 20;
-    this.ammoTimer = 0;
+    this.maxArmor = 100;
+    this.armor = this.maxArmor;
+    this.maxMissiles = 5;
+    this.missiles = this.maxMissiles;
+    this.maxMachineGunAmmo = 100;
+    this.machineGunAmmo = this.maxMachineGunAmmo;
+    this.missileReloadTimer = 0;
+    this.machineGunReloadTimer = 0;
     this.input = { yaw: 0, pitch: 0, throttle: 0 };
     this.syncCamera();
   }
@@ -52,10 +57,16 @@ export class Player {
     this.position.x = THREE.MathUtils.clamp(this.position.x, -280, 280);
     this.position.y = THREE.MathUtils.clamp(this.position.y, 0, 420);
 
-    this.ammoTimer += dt;
-    if (this.ammo < 20 && this.ammoTimer >= 3) {
-      this.ammo += 1;
-      this.ammoTimer = 0;
+    this.missileReloadTimer += dt;
+    if (this.missiles < this.maxMissiles && this.missileReloadTimer >= 6) {
+      this.missiles += 1;
+      this.missileReloadTimer = 0;
+    }
+
+    this.machineGunReloadTimer += dt;
+    if (this.machineGunAmmo < this.maxMachineGunAmmo && this.machineGunReloadTimer >= 0.1) {
+      this.machineGunAmmo = Math.min(this.maxMachineGunAmmo, this.machineGunAmmo + 1);
+      this.machineGunReloadTimer = 0;
     }
 
     this.syncCamera();
@@ -68,17 +79,28 @@ export class Player {
     this.camera.lookAt(lookAt);
   }
 
-  canShoot() {
-    return this.ammo > 0;
+  canFireMissile() {
+    return this.missiles > 0;
   }
 
-  consumeAmmo() {
-    if (!this.canShoot()) return false;
-    this.ammo -= 1;
+  consumeMissile() {
+    if (!this.canFireMissile()) return false;
+    this.missiles -= 1;
     return true;
   }
 
-  hit() {
-    this.health -= 1;
+  canFireMachineGun() {
+    return this.machineGunAmmo > 0;
+  }
+
+  consumeMachineGun() {
+    if (!this.canFireMachineGun()) return false;
+    this.machineGunAmmo -= 1;
+    this.machineGunReloadTimer = 0;
+    return true;
+  }
+
+  applyDamage(power) {
+    this.armor = Math.max(0, this.armor - power);
   }
 }
