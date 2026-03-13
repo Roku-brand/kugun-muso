@@ -303,7 +303,7 @@ export class GameScene {
   }
 
   checkGameState() {
-    if (this.player.position.y <= 1 || this.player.health <= 0) {
+    if (this.player.position.y <= 0 || this.player.health <= 0) {
       this.finish(false, 'ゲームオーバー');
       return;
     }
