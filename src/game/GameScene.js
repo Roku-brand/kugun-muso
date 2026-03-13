@@ -273,11 +273,46 @@ export class GameScene {
       index,
       cooldown: 0.5 + index * 0.2,
       offset: new THREE.Vector3(20 + index * 6, 6 + (index % 2) * 3, index % 2 === 0 ? -16 : 16),
+      mesh: this.stageManager.makeFighter(),
     }));
+
+    this.allies.forEach((ally) => {
+      ally.mesh.scale.setScalar(0.75);
+      ally.mesh.traverse((part) => {
+        if (!part.isMesh || !part.material?.color) return;
+        const hex = part.material.color.getHex();
+        if (hex === 0x89b2d6) {
+          part.material = part.material.clone();
+          part.material.color.setHex(0x7ddcff);
+          part.material.opacity = 0.7;
+          return;
+        }
+        part.material = part.material.clone();
+        part.material.color.offsetHSL(0.08, 0.2, 0.15);
+      });
+      this.scene.add(ally.mesh);
+    });
+  }
+
+  getAllyWorldPosition(ally) {
+    const side = ally.index % 2 === 0 ? -1 : 1;
+    return this.player.position
+      .clone()
+      .add(this.player.right.clone().multiplyScalar(ally.offset.x * side))
+      .add(this.player.worldUp.clone().multiplyScalar(ally.offset.y))
+      .add(this.player.forward.clone().multiplyScalar(ally.offset.z));
   }
 
   updateAllies(dt) {
     if (!this.allies.length) return;
+
+    this.allies.forEach((ally) => {
+      const anchor = this.getAllyWorldPosition(ally);
+      ally.mesh.position.copy(anchor);
+      const lookTarget = anchor.clone().add(this.player.forward.clone().multiplyScalar(60));
+      ally.mesh.lookAt(lookTarget);
+    });
+
     const target = this.getClosestLivingEnemy(this.player.position);
     if (!target) return;
 
@@ -286,12 +321,7 @@ export class GameScene {
       if (ally.cooldown > 0) return;
       ally.cooldown = 0.24 + idx * 0.02;
 
-      const side = idx % 2 === 0 ? -1 : 1;
-      const shootPos = this.player.position
-        .clone()
-        .add(this.player.right.clone().multiplyScalar(ally.offset.x * side))
-        .add(this.player.worldUp.clone().multiplyScalar(ally.offset.y))
-        .add(this.player.forward.clone().multiplyScalar(ally.offset.z));
+      const shootPos = this.getAllyWorldPosition(ally);
 
       const aim = target.mesh.position.clone().sub(shootPos).normalize();
       const bullet = {
@@ -698,6 +728,14 @@ export class GameScene {
       radarObjects.push({ x: THREE.MathUtils.clamp(rightDot * scale, -72, 72), y: THREE.MathUtils.clamp(-forwardDot * scale, -72, 72), kind: 'enemy' });
     });
 
+    this.allies.forEach((ally) => {
+      const relative = ally.mesh.position.clone().sub(this.player.position);
+      const forwardDot = relative.dot(this.player.forward);
+      const rightDot = relative.dot(this.player.right);
+      const scale = 0.08;
+      radarObjects.push({ x: THREE.MathUtils.clamp(rightDot * scale, -72, 72), y: THREE.MathUtils.clamp(-forwardDot * scale, -72, 72), kind: 'ally' });
+    });
+
     const lockCandidate = this.getLockCandidate(this.player.position, this.player.forward);
     const enemyGauges = this.enemies
       .filter((enemy) => enemy.alive)
@@ -792,6 +830,7 @@ export class GameScene {
     this.missiles.forEach((m) => this.scene.remove(m.mesh));
     this.playerBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.allyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
+    this.allies.forEach((ally) => ally.mesh && this.scene.remove(ally.mesh));
     this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.audio.dispose();
     this.renderer.dispose();

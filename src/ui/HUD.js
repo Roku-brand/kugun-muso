@@ -216,7 +216,7 @@ export class HUD {
     c.fill();
 
     radarState.forEach((obj) => {
-      c.fillStyle = obj.kind === 'enemy' ? '#ff5151' : '#ffe97a';
+      c.fillStyle = obj.kind === 'enemy' ? '#ff5151' : obj.kind === 'ally' ? '#4db7ff' : '#ffe97a';
       const targetX = radius + obj.x * 0.6;
       const targetY = radius + obj.y * 0.6;
       if (Math.hypot(targetX - radius, targetY - radius) > radius - 3) return;
