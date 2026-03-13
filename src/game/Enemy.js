@@ -26,9 +26,9 @@ export class Enemy {
         .normalize()
         .multiplyScalar(this.speed);
       this.flightProfile = {
-        minSpeed: Math.max(38, this.speed * 0.78),
-        maxSpeed: this.speed * 1.28,
-        accel: 26,
+        minSpeed: Math.max(52, this.speed * 0.9),
+        maxSpeed: this.speed * 1.45,
+        accel: 30,
         maxTurnRate: 1.18,
         maxPitchRate: 0.68,
         cruiseAltitude: this.mesh.position.y,
@@ -79,7 +79,7 @@ export class Enemy {
       if (right.lengthSq() > 0.01) this.velocity.applyAxisAngle(right, pitchRate * dt);
 
       const targetSpeed = THREE.MathUtils.clamp(
-        this.speed + (distanceToPlayer > 220 ? 10 : -4),
+        this.speed + (distanceToPlayer > 220 ? 16 : -2),
         profile.minSpeed,
         profile.maxSpeed,
       );
