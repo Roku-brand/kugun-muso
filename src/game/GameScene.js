@@ -74,15 +74,14 @@ export class GameScene {
   }
 
   readInput(dt) {
-    const horizontal = (this.keys['d'] || this.keys['arrowright'] ? 1 : 0) + (this.keys['a'] || this.keys['arrowleft'] ? -1 : 0);
-    const vertical = (this.keys['w'] || this.keys['arrowup'] ? 1 : 0) + (this.keys['s'] || this.keys['arrowdown'] ? -1 : 0);
+    const yaw = (this.keys['arrowright'] ? 1 : 0) + (this.keys['arrowleft'] ? -1 : 0);
+    const pitch = (this.keys['arrowup'] ? 1 : 0) + (this.keys['arrowdown'] ? -1 : 0);
     const throttle = (this.keys['shift'] ? 1 : 0) + (this.keys['control'] ? -1 : 0) + this.touchThrottle;
-    this.player.setInput({ x: horizontal + this.touchStick.x, y: vertical - this.touchStick.y, throttle });
+    this.player.setInput({ yaw: yaw + this.touchStick.x, pitch: pitch - this.touchStick.y, throttle });
 
-    if (this.keys[' '] || this.keys['enter']) {
+    if (this.keys[' ']) {
       this.fireMissile();
       this.keys[' '] = false;
-      this.keys.enter = false;
     }
 
     this.audio.updateEngine((this.player.speed - this.player.minSpeed) / (this.player.maxSpeed - this.player.minSpeed));
