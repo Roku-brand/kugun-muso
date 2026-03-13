@@ -166,8 +166,17 @@ export class StageManager {
     canopy.position.set(2.8, 0.96, 0);
 
     const wingMat = new THREE.MeshStandardMaterial({ color: 0x36414f, metalness: 0.45, roughness: 0.55 });
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.2, 3.7), wingMat);
-    wing.position.set(-0.6, 0.05, 0);
+    const wingRoot = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.22, 2.9), wingMat);
+    wingRoot.position.set(0.2, 0.03, 0);
+
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.12, 2.5), wingMat);
+    wingL.position.set(-1.4, -0.02, -2.6);
+    wingL.rotation.y = 0.38;
+    wingL.rotation.z = -0.08;
+    const wingR = wingL.clone();
+    wingR.position.z = 2.6;
+    wingR.rotation.y = -0.38;
+    wingR.rotation.z = 0.08;
 
     const mainWingL = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.16, 2.3), wingMat);
     mainWingL.position.set(-1.0, 0.04, -2.4);
@@ -224,7 +233,9 @@ export class StageManager {
       body,
       nose,
       canopy,
-      wing,
+      wingRoot,
+      wingL,
+      wingR,
       mainWingL,
       mainWingR,
       wingTipL,
