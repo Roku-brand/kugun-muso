@@ -58,19 +58,26 @@ export class GameScene {
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     };
-    this.onDown = (e) => (this.keys[e.key.toLowerCase()] = true);
-    this.onUp = (e) => (this.keys[e.key.toLowerCase()] = false);
+    this.onDown = (e) => {
+      const key = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) e.preventDefault();
+      this.keys[key] = true;
+    };
+    this.onUp = (e) => {
+      const key = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) e.preventDefault();
+      this.keys[key] = false;
+    };
     window.addEventListener('resize', this.onResize);
     window.addEventListener('keydown', this.onDown);
     window.addEventListener('keyup', this.onUp);
   }
 
   readInput(dt) {
-    const pitch = (this.keys['w'] ? 1 : 0) + (this.keys['s'] ? -1 : 0) - this.touchStick.y;
-    const yaw = (this.keys['a'] ? -1 : 0) + (this.keys['d'] ? 1 : 0) + this.touchStick.x;
-    const roll = (this.keys['q'] ? -1 : 0) + (this.keys['e'] ? 1 : 0);
-    const throttle = (this.keys['arrowup'] ? 1 : 0) + (this.keys['arrowdown'] ? -1 : 0) + this.touchThrottle;
-    this.player.setInput({ pitch, yaw, roll, throttle });
+    const horizontal = (this.keys['d'] || this.keys['arrowright'] ? 1 : 0) + (this.keys['a'] || this.keys['arrowleft'] ? -1 : 0);
+    const vertical = (this.keys['w'] || this.keys['arrowup'] ? 1 : 0) + (this.keys['s'] || this.keys['arrowdown'] ? -1 : 0);
+    const throttle = (this.keys['shift'] ? 1 : 0) + (this.keys['control'] ? -1 : 0) + this.touchThrottle;
+    this.player.setInput({ x: horizontal + this.touchStick.x, y: vertical - this.touchStick.y, throttle });
 
     if (this.keys[' '] || this.keys['enter']) {
       this.fireMissile();
