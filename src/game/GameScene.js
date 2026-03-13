@@ -33,6 +33,7 @@ export class GameScene {
 
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 12000);
     this.player = new Player(this.camera, settings);
+    this.player.setHorizontalBound(stage === 'totalWar' ? 620 : 380);
 
     this.stageManager = new StageManager(this.scene);
     this.enemies = this.stageManager.createStage(stage);
