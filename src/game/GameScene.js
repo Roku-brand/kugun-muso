@@ -1,6 +1,7 @@
 import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 import { Player } from './Player.js';
 import { StageManager } from './StageManager.js';
+import { Enemy } from './Enemy.js';
 import { HUD } from '../ui/HUD.js';
 import { AudioManager } from '../audio/AudioManager.js';
 
@@ -53,6 +54,7 @@ export class GameScene {
     this.gunTriggerHeld = false;
     this.touchGunHeld = false;
     this.machineGunCooldown = 0;
+    this.spawnerTimers = { port: 0, runway: 0 };
     this.last = performance.now();
     this.bindEvents();
   }
@@ -260,6 +262,7 @@ export class GameScene {
 
   updateWorld(dt) {
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
+    this.updateTotalWarSpawners(dt);
 
     this.missiles.forEach((m) => {
       if (m.homing) {
@@ -317,6 +320,72 @@ export class GameScene {
     });
   }
 
+
+
+  updateTotalWarSpawners(dt) {
+    if (this.stage !== 'totalWar') return;
+
+    const port = this.findObjectiveTarget('portSpawner');
+    const runway = this.findObjectiveTarget('runwaySpawner');
+
+    if (port) {
+      this.spawnerTimers.port -= dt;
+      if (this.spawnerTimers.port <= 0) {
+        this.spawnerTimers.port = 6.5;
+        this.spawnReinforcementShip(port.mesh.position.clone());
+      }
+    }
+
+    if (runway) {
+      this.spawnerTimers.runway -= dt;
+      if (this.spawnerTimers.runway <= 0) {
+        this.spawnerTimers.runway = 5.2;
+        this.spawnReinforcementFighter(runway.mesh.position.clone());
+      }
+    }
+  }
+
+  findObjectiveTarget(objective) {
+    return this.stageManager.targets.find((target) => {
+      if (target.objective !== objective) return false;
+      return this.enemies.some((enemy) => enemy.alive && enemy.mesh === target.mesh);
+    });
+  }
+
+  spawnReinforcementShip(origin) {
+    const ship = this.stageManager.makeShip(Math.random() > 0.5 ? 'destroyer' : 'frigate');
+    ship.position.set(origin.x + (Math.random() - 0.5) * 120, 6, origin.z + 160 + Math.random() * 120);
+    ship.rotation.y = Math.PI + (Math.random() - 0.5) * 0.3;
+    this.scene.add(ship);
+    const enemy = new Enemy({ type: 'ship', mesh: ship, health: 2, speed: 10 + Math.random() * 3 });
+    this.enemies.push(enemy);
+    this.stageManager.enemies.push(enemy);
+    this.stageManager.targets.push({ mesh: ship, radius: 24, type: 'ship' });
+  }
+
+  spawnReinforcementFighter(origin) {
+    const fighter = this.stageManager.makeFighter();
+    fighter.position.set(origin.x + (Math.random() - 0.5) * 90, 92 + Math.random() * 32, origin.z + 10 + Math.random() * 55);
+    fighter.lookAt(this.player.position);
+    this.scene.add(fighter);
+
+    const spreadPoint = fighter.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 120, 60, -260));
+    const enemy = new Enemy({
+      type: 'fighter',
+      mesh: fighter,
+      health: 1,
+      speed: 82 + Math.random() * 16,
+      behavior: {
+        engageTime: 1.5 + Math.random() * 1.2,
+        spreadWeight: 0.78,
+        spreadPoint,
+        preferredRange: 280,
+        rangeTolerance: 95,
+      },
+    });
+    this.enemies.push(enemy);
+    this.stageManager.enemies.push(enemy);
+  }
   makeEnemyBulletMesh(kind) {
     const visuals = {
       enemyMissile: { geo: new THREE.CylinderGeometry(0.2, 0.26, 2.8, 10), mat: new THREE.MeshBasicMaterial({ color: 0xff8a5b }) },
@@ -433,6 +502,16 @@ export class GameScene {
       this.finish(false, 'ゲームオーバー');
       return;
     }
+
+    if (this.stage === 'totalWar') {
+      const hqAlive = this.enemies.some((enemy) => enemy.alive
+        && this.stageManager.targets.some((target) => target.objective === 'hq' && target.mesh === enemy.mesh));
+      if (!hqAlive) {
+        this.finish(true, 'ミッションクリア');
+      }
+      return;
+    }
+
     if (this.enemies.every((e) => !e.alive)) {
       this.finish(true, 'ステージクリア');
     }
@@ -445,7 +524,7 @@ export class GameScene {
     this.overlayRoot.innerHTML = `
       <div class="result-panel ${success ? 'clear' : 'over'}">
         <h2>${title}</h2>
-        <p>${success ? '敵戦力を殲滅しました。' : '任務失敗。機体を喪失しました。'}</p>
+        <p>${success ? (this.stage === 'totalWar' ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : '任務失敗。機体を喪失しました。'}</p>
         <button id="retry">リトライ</button>
         <button id="back">トップへ戻る</button>
       </div>

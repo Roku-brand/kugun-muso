@@ -4,7 +4,8 @@ import { SETTINGS_DEFAULTS, loadSettings, resetSettings, saveSettings } from './
 const STAGES = [
   { id: 'air', name: '空中戦', desc: '多数の敵戦闘機とドッグファイトを行う。' },
   { id: 'sea', name: '海上戦', desc: '敵艦隊を攻撃。海面と対空砲火に注意。' },
-  { id: 'base', name: '軍事基地', desc: '島の基地と地対空防衛網を突破する。' },
+  { id: 'base', name: '要塞戦', desc: '島の基地と地対空防衛網を突破する。' },
+  { id: 'totalWar', name: '総力戦', desc: '要塞島の港と滑走路を破壊し、軍事本部を撃破せよ。' },
 ];
 
 const app = document.getElementById('app');
@@ -69,9 +70,9 @@ function renderStagePanel() {
   panel.innerHTML = `
     <div class="card-grid">
       ${STAGES.map(
-        (s) => `
+        (s, index) => `
           <article class="stage-card ${selectedStage === s.id ? 'selected' : ''}" data-stage="${s.id}">
-            <h3>${s.name}</h3>
+            <h3>${s.name} <span>（第${index + 1}ステージ）</span></h3>
             <p>${s.desc}</p>
           </article>
         `,

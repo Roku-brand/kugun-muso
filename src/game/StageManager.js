@@ -14,6 +14,7 @@ export class StageManager {
     if (stage === 'air') this.createAirBattle();
     if (stage === 'sea') this.createSeaBattle();
     if (stage === 'base') this.createBaseBattle();
+    if (stage === 'totalWar') this.createTotalWarBattle();
     return this.enemies;
   }
 
@@ -120,6 +121,158 @@ export class StageManager {
     });
   }
 
+
+
+  createTotalWarBattle() {
+    this.createSkyCommon();
+
+    const sea = new THREE.Mesh(
+      new THREE.PlaneGeometry(12000, 12000, 80, 80),
+      new THREE.MeshStandardMaterial({ color: 0x0b2f4a, metalness: 0.32, roughness: 0.58 }),
+    );
+    sea.rotation.x = -Math.PI / 2;
+    this.scene.add(sea);
+    this.stageObjects.push(sea);
+
+    const island = new THREE.Mesh(
+      new THREE.CylinderGeometry(340, 430, 90, 30),
+      new THREE.MeshStandardMaterial({ color: 0x425f3d, roughness: 0.88, metalness: 0.08 }),
+    );
+    island.position.set(0, 45, -1180);
+    this.scene.add(island);
+    this.stageObjects.push(island);
+
+    const fortress = this.makeFortressComplex();
+    fortress.position.set(0, 90, -1180);
+    this.scene.add(fortress);
+    this.stageObjects.push(fortress);
+
+    const hq = this.makeHeadquarters();
+    hq.position.set(0, 98, -1240);
+    hq.scale.setScalar(1.35);
+    this.scene.add(hq);
+    this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: 8 }));
+    this.targets.push({ mesh: hq, radius: 56, type: 'building', objective: 'hq' });
+
+    const port = this.makeMegaPortFacility();
+    port.position.set(-150, 78, -1040);
+    this.scene.add(port);
+    this.enemies.push(new Enemy({ type: 'turret', mesh: port, health: 5, canFire: false }));
+    this.targets.push({
+      mesh: port,
+      radius: 180,
+      type: 'building',
+      objective: 'portSpawner',
+      collisionHalfExtents: { x: 165, y: 34, z: 80 },
+    });
+
+    const runway = this.makeAirfieldRunway();
+    runway.position.set(150, 76, -1110);
+    this.scene.add(runway);
+    this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: 5, canFire: false }));
+    this.targets.push({
+      mesh: runway,
+      radius: 170,
+      type: 'building',
+      objective: 'runwaySpawner',
+      collisionHalfExtents: { x: 175, y: 24, z: 54 },
+    });
+
+    const defensePositions = [
+      [-220, 86, -1190],
+      [-130, 86, -1320],
+      [130, 86, -1325],
+      [230, 86, -1190],
+      [-40, 86, -1360],
+      [50, 86, -980],
+    ];
+
+    defensePositions.forEach((pos) => {
+      const turret = this.makeGroundTurret();
+      turret.position.set(...pos);
+      this.scene.add(turret);
+      this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: 2 }));
+      this.targets.push({ mesh: turret, radius: 14, type: 'building' });
+    });
+
+    const samPositions = [
+      [-210, 88, -1040],
+      [-140, 88, -980],
+      [120, 88, -980],
+      [220, 88, -1040],
+      [-100, 88, -1360],
+      [110, 88, -1360],
+    ];
+
+    samPositions.forEach((pos) => {
+      const sam = this.makeSamBattery();
+      sam.position.set(...pos);
+      this.scene.add(sam);
+      this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: 1 }));
+      this.targets.push({ mesh: sam, radius: 11, type: 'building' });
+    });
+
+    const fleetSpecs = [
+      { role: 'carrier', x: -520, z: -960, health: 5, speed: 8, radius: 48 },
+      { role: 'cruiser', x: -700, z: -1160, health: 3, speed: 10, radius: 34 },
+      { role: 'destroyer', x: -520, z: -1360, health: 2, speed: 13, radius: 26 },
+      { role: 'carrier', x: 520, z: -980, health: 5, speed: 8, radius: 48 },
+      { role: 'cruiser', x: 680, z: -1180, health: 3, speed: 10, radius: 34 },
+      { role: 'destroyer', x: 500, z: -1380, health: 2, speed: 13, radius: 26 },
+      { role: 'frigate', x: 0, z: -1600, health: 2, speed: 12, radius: 24 },
+      { role: 'cruiser', x: 0, z: -820, health: 3, speed: 9, radius: 34 },
+    ];
+
+    fleetSpecs.forEach((spec, index) => {
+      const ship = this.makeShip(spec.role);
+      ship.position.set(spec.x, 6, spec.z);
+      ship.rotation.y = Math.sin(index * 1.5) * 0.12;
+      this.scene.add(ship);
+      this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: spec.health, speed: spec.speed }));
+      this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
+    });
+
+    const playerStart = new THREE.Vector3(0, 220, 120);
+    const fighterSpawns = [
+      [-760, 320, -1700],
+      [-610, 370, -1500],
+      [-450, 340, -1870],
+      [-260, 390, -1600],
+      [-80, 350, -1760],
+      [120, 400, -1660],
+      [280, 330, -1820],
+      [460, 360, -1530],
+      [620, 310, -1680],
+      [780, 350, -1860],
+      [-340, 420, -1450],
+      [350, 420, -1430],
+    ];
+
+    fighterSpawns.forEach((spawn, index) => {
+      const mesh = this.makeFighter();
+      mesh.position.set(...spawn);
+      mesh.lookAt(playerStart);
+      this.scene.add(mesh);
+      const spreadPoint = new THREE.Vector3(
+        spawn[0] * 0.48,
+        280 + (index % 4) * 40,
+        -1020 - (index % 5) * 120,
+      );
+      this.enemies.push(new Enemy({
+        type: 'fighter',
+        mesh,
+        health: 1,
+        speed: 78 + Math.random() * 20,
+        behavior: {
+          engageTime: 3.8 + index * 0.22,
+          spreadWeight: 0.72 + (index % 3) * 0.08,
+          spreadPoint,
+          preferredRange: 300 + (index % 4) * 24,
+          rangeTolerance: 90,
+        },
+      }));
+    });
+  }
   createBaseBattle() {
     this.createSkyCommon();
     const sea = new THREE.Mesh(
@@ -280,6 +433,82 @@ export class StageManager {
     return group;
   }
 
+
+
+  makeFortressComplex() {
+    const group = new THREE.Group();
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x787f87, roughness: 0.72, metalness: 0.18 });
+    const bunkerMat = new THREE.MeshStandardMaterial({ color: 0x676f78, roughness: 0.66, metalness: 0.22 });
+
+    const outerWall = new THREE.Mesh(new THREE.BoxGeometry(420, 26, 320), wallMat);
+    outerWall.position.y = 13;
+    const innerCut = new THREE.Mesh(new THREE.BoxGeometry(340, 28, 240), wallMat);
+    innerCut.position.y = 14;
+    innerCut.material = new THREE.MeshStandardMaterial({ color: 0x425f3d, roughness: 0.9, metalness: 0.02 });
+
+    const bunkerL = new THREE.Mesh(new THREE.BoxGeometry(64, 24, 52), bunkerMat);
+    bunkerL.position.set(-140, 12, 95);
+    const bunkerR = bunkerL.clone();
+    bunkerR.position.x = 140;
+    const center = new THREE.Mesh(new THREE.BoxGeometry(92, 30, 70), bunkerMat);
+    center.position.set(0, 15, -70);
+
+    group.add(outerWall, innerCut, bunkerL, bunkerR, center);
+    return group;
+  }
+
+  makeMegaPortFacility() {
+    const group = new THREE.Group();
+    const concrete = new THREE.MeshStandardMaterial({ color: 0x6f7882, roughness: 0.76, metalness: 0.12 });
+    const steel = new THREE.MeshStandardMaterial({ color: 0x8e99a3, roughness: 0.52, metalness: 0.36 });
+
+    const mainPier = new THREE.Mesh(new THREE.BoxGeometry(320, 8, 52), concrete);
+    mainPier.position.y = 4;
+    const sidePier = new THREE.Mesh(new THREE.BoxGeometry(150, 6, 26), concrete);
+    sidePier.position.set(-105, 7, -34);
+
+    const dockedShip = new THREE.Mesh(new THREE.BoxGeometry(90, 16, 22), new THREE.MeshStandardMaterial({ color: 0x334250, roughness: 0.5, metalness: 0.35 }));
+    dockedShip.position.set(68, 12, 19);
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 16), steel);
+    bridge.position.set(74, 24, 20);
+
+    const craneBase = new THREE.Mesh(new THREE.BoxGeometry(18, 14, 18), steel);
+    craneBase.position.set(-120, 10, 2);
+    const craneArm = new THREE.Mesh(new THREE.BoxGeometry(72, 3.2, 4), steel);
+    craneArm.position.set(-90, 30, 2);
+    craneArm.rotation.z = -0.28;
+
+    group.add(mainPier, sidePier, dockedShip, bridge, craneBase, craneArm);
+    return group;
+  }
+
+  makeAirfieldRunway() {
+    const group = new THREE.Group();
+    const tarmac = new THREE.MeshStandardMaterial({ color: 0x3b4047, roughness: 0.82, metalness: 0.1 });
+    const paint = new THREE.MeshStandardMaterial({ color: 0xd7d9dc, roughness: 0.36, metalness: 0.18 });
+
+    const runway = new THREE.Mesh(new THREE.BoxGeometry(340, 2.8, 86), tarmac);
+    runway.position.y = 1.4;
+
+    for (let i = -3; i <= 3; i++) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(24, 0.3, 3.2), paint);
+      stripe.position.set(i * 44, 2.95, 0);
+      group.add(stripe);
+    }
+
+    const hangarL = new THREE.Mesh(new THREE.BoxGeometry(58, 18, 30), new THREE.MeshStandardMaterial({ color: 0x6d737c, roughness: 0.66, metalness: 0.2 }));
+    hangarL.position.set(-116, 9, -44);
+    const hangarR = hangarL.clone();
+    hangarR.position.x = 116;
+
+    const parkedJet = this.makeFighter();
+    parkedJet.scale.setScalar(1.1);
+    parkedJet.rotation.y = Math.PI;
+    parkedJet.position.set(0, 6, 28);
+
+    group.add(runway, hangarL, hangarR, parkedJet);
+    return group;
+  }
   makeGroundTurret() {
     const group = new THREE.Group();
     const base = new THREE.Mesh(
