@@ -73,7 +73,7 @@ export class StageManager {
         type: 'fighter',
         mesh,
         health: 1,
-        speed: 56 + Math.random() * 14,
+        speed: 74 + Math.random() * 18,
         behavior: {
           engageTime: 4.5 + i * 0.4,
           spreadWeight: 0.65 + (i % 3) * 0.1,
