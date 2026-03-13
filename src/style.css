@@ -1,0 +1,52 @@
+:root {
+  font-family: 'Segoe UI', 'Yu Gothic UI', sans-serif;
+  color: #dbf7ff;
+  background: radial-gradient(circle at 50% 0%, #1e2d46, #090f18 75%);
+}
+* { box-sizing: border-box; }
+body, html, #app { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+
+.top-shell { max-width: 1100px; margin: 0 auto; padding: 20px; height: 100%; }
+.title-panel { border: 1px solid #4fd8ff7e; background: #04111ccf; padding: 16px; border-radius: 10px; }
+.title-panel h1 { margin: 0; font-size: 2rem; color: #7bf4ff; }
+.tabs { display: flex; gap: 8px; margin-top: 14px; }
+.tab { background: #0d1b2c; border: 1px solid #3a7ca1; color: #c2ebff; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
+.tab.active { background: #10334f; border-color: #65ddff; }
+.tab-panel { margin-top: 14px; padding: 16px; border-radius: 10px; background: #08131ecc; border: 1px solid #2f5672; }
+.hidden { display: none !important; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.stage-card { border: 1px solid #4d728d; padding: 14px; border-radius: 10px; cursor: pointer; background: #102030; min-height: 130px; }
+.stage-card.selected { outline: 2px solid #65ddff; background: #123049; }
+.sortie-btn, .reset-btn { margin-top: 16px; background: linear-gradient(135deg, #1a5e8e, #27c0d8); border: none; color: white; padding: 12px 20px; border-radius: 10px; font-size: 1rem; cursor: pointer; }
+.setting-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+input, select, button { font: inherit; }
+input[type='range'] { width: 100%; }
+
+#battle-root { width: 100%; height: 100%; position: relative; }
+#game-canvas { width: 100%; height: 100%; display: block; }
+#hud { position: absolute; inset: 0; pointer-events: none; }
+.hud { position: absolute; background: rgba(2, 12, 23, 0.5); border: 1px solid rgba(91, 220, 255, 0.6); border-radius: 10px; padding: 10px; backdrop-filter: blur(2px); pointer-events: auto; }
+.left-top { left: 12px; top: 12px; }
+.right-top { right: 12px; top: 12px; min-width: 160px; }
+.right-mid { right: 12px; top: 120px; min-width: 130px; }
+.left-bottom { left: 12px; bottom: 12px; width: 220px; }
+.right-bottom { right: 12px; bottom: 12px; width: 190px; display: grid; gap: 8px; }
+
+.stick-zone { width: 90px; height: 90px; border-radius: 50%; margin: 0 auto; border: 1px solid #70e9ff; position: relative; }
+.stick-knob { width: 28px; height: 28px; border-radius: 50%; background: #70e9ff; position: absolute; top: 31px; left: 31px; }
+.throttle-row { display: flex; gap: 8px; }
+.right-bottom button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #6cc7e2; background: #14374b; color: #ecfaff; }
+
+#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.6); }
+.result-panel { padding: 26px; min-width: 300px; border-radius: 12px; text-align: center; background: rgba(7, 20, 34, 0.9); border: 1px solid #66deff; }
+.result-panel.over { border-color: #ff5e5e; }
+.result-panel h2 { margin-top: 0; }
+.result-panel button { margin: 6px; padding: 10px 18px; border-radius: 8px; border: 1px solid #7fd9ff; background: #1e4762; color: white; }
+
+@media (max-width: 860px) {
+  .right-top { right: 8px; top: 8px; }
+  .right-mid { top: 98px; }
+  .left-bottom { width: 180px; }
+  .right-bottom { width: 172px; }
+}
