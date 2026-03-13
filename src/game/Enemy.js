@@ -33,7 +33,7 @@ export class Enemy {
         accel: 30,
         maxTurnRate: 1.18,
         maxPitchRate: 0.68,
-        cruiseAltitude: this.mesh.position.y,
+        cruiseAltitude: Math.max(this.mesh.position.y + 90, 260),
         cruiseBand: 90,
         passDistance: 200,
       };

@@ -50,7 +50,7 @@ export class Player {
     this.position.addScaledVector(this.forward, this.speed * dt);
 
     this.position.x = THREE.MathUtils.clamp(this.position.x, -280, 280);
-    this.position.y = THREE.MathUtils.clamp(this.position.y, 8, 420);
+    this.position.y = THREE.MathUtils.clamp(this.position.y, 0, 420);
 
     this.ammoTimer += dt;
     if (this.ammo < 20 && this.ammoTimer >= 3) {
