@@ -459,9 +459,10 @@ export class StageManager {
     this.scene.add(islandTop);
     islandAssets.push(islandTop);
 
+    const shelfDepth = Math.max(height + 6, 24);
     const islandShelf = new THREE.Mesh(
       new THREE.ExtrudeGeometry(new THREE.Shape(contour), {
-        depth: height - 8,
+        depth: shelfDepth,
         bevelEnabled: true,
         bevelSegments: 2,
         bevelSize: 16 * areaScale,
@@ -470,7 +471,7 @@ export class StageManager {
       new THREE.MeshStandardMaterial({ color: 0x8d846f, roughness: 0.94, metalness: 0.04 }),
     );
     islandShelf.rotation.x = -Math.PI / 2;
-    islandShelf.position.set(x, height - 2, z);
+    islandShelf.position.set(x, (height - 1) - shelfDepth, z);
     this.scene.add(islandShelf);
     islandAssets.push(islandShelf);
 
