@@ -7,6 +7,10 @@ import { AudioManager } from '../audio/AudioManager.js';
 
 const COMBAT_SPEED_SCALE = 0.6;
 const DIFFICULTY_ALLY_COUNT = { easy: 3, normal: 1, hard: 0 };
+const TOTAL_WAR_MAX_ACTIVE_REINFORCEMENTS = {
+  ship: 14,
+  fighter: 24,
+};
 const ALLY_FLIGHT_BOUNDS = {
   minX: -320,
   maxX: 320,
@@ -462,7 +466,7 @@ export class GameScene {
 
     if (port) {
       this.spawnerTimers.port -= dt;
-      if (this.spawnerTimers.port <= 0) {
+      if (this.spawnerTimers.port <= 0 && this.countLivingEnemiesByType('ship') < TOTAL_WAR_MAX_ACTIVE_REINFORCEMENTS.ship) {
         this.spawnerTimers.port = 6.5;
         this.spawnReinforcementShip(port.mesh.position.clone());
       }
@@ -470,11 +474,19 @@ export class GameScene {
 
     if (runway) {
       this.spawnerTimers.runway -= dt;
-      if (this.spawnerTimers.runway <= 0) {
+      if (this.spawnerTimers.runway <= 0 && this.countLivingEnemiesByType('fighter') < TOTAL_WAR_MAX_ACTIVE_REINFORCEMENTS.fighter) {
         this.spawnerTimers.runway = 5.2;
         this.spawnReinforcementFighter(runway.mesh.position.clone());
       }
     }
+  }
+
+  countLivingEnemiesByType(type) {
+    let count = 0;
+    this.enemies.forEach((enemy) => {
+      if (enemy.alive && enemy.type === type) count += 1;
+    });
+    return count;
   }
 
   findObjectiveTarget(objective) {
@@ -491,7 +503,6 @@ export class GameScene {
     this.scene.add(ship);
     const enemy = new Enemy({ type: 'ship', mesh: ship, health: 2, speed: 10 + Math.random() * 3 });
     this.enemies.push(enemy);
-    this.stageManager.enemies.push(enemy);
     this.stageManager.targets.push({ mesh: ship, radius: 24, type: 'ship' });
   }
 
@@ -516,7 +527,6 @@ export class GameScene {
       },
     });
     this.enemies.push(enemy);
-    this.stageManager.enemies.push(enemy);
   }
   makeEnemyBulletMesh(kind) {
     const visuals = {
