@@ -17,7 +17,7 @@ html, body {
   .stage-card,
   .sortie-btn,
   .reset-btn,
-  .right-bottom button,
+  .hud-corner-right button,
   .result-panel button {
     -webkit-user-select: none;
     user-select: none;
@@ -122,10 +122,17 @@ input[type='range'] { width: 100%; }
   overflow: hidden;
 }
 .radar-wrap canvas { display: block; }
-.left-bottom { left: calc(12px + env(safe-area-inset-left)); bottom: calc(12px + env(safe-area-inset-bottom)); width: 220px; }
-.right-bottom {
-  right: calc(12px + env(safe-area-inset-right));
+.hud-corner {
+  position: absolute;
   bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 3;
+}
+.hud-corner-left {
+  left: calc(12px + env(safe-area-inset-left));
+  width: 220px;
+}
+.hud-corner-right {
+  right: calc(12px + env(safe-area-inset-right));
   width: 130px;
   display: grid;
   justify-items: end;
@@ -239,8 +246,9 @@ input[type='range'] { width: 100%; }
     padding: 5px 10px;
   }
   .left-top { left: calc(8px + env(safe-area-inset-left)); top: calc(8px + env(safe-area-inset-top)); }
-  .left-bottom { width: 180px; }
-  .right-bottom { right: calc(8px + env(safe-area-inset-right)); bottom: calc(8px + env(safe-area-inset-bottom)); width: 118px; }
+  .hud-corner { bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .hud-corner-left { left: calc(8px + env(safe-area-inset-left)); width: 180px; }
+  .hud-corner-right { right: calc(8px + env(safe-area-inset-right)); width: 118px; }
   .throttle-bar { height: 142px; }
   .missile-fire-btn { width: 64px; height: 64px; }
   .missile-icon { transform: rotate(35deg) scale(0.92); }
