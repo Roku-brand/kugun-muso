@@ -665,9 +665,13 @@ export class GameScene {
     for (const target of this.stageManager.targets) {
       const box = target.collisionHalfExtents;
       if (box) {
-        const dx = Math.abs(this.player.position.x - target.mesh.position.x);
-        const dy = Math.abs(this.player.position.y - target.mesh.position.y);
-        const dz = Math.abs(this.player.position.z - target.mesh.position.z);
+        const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
+        const centerX = target.mesh.position.x + offset.x;
+        const centerY = target.mesh.position.y + offset.y;
+        const centerZ = target.mesh.position.z + offset.z;
+        const dx = Math.abs(this.player.position.x - centerX);
+        const dy = Math.abs(this.player.position.y - centerY);
+        const dz = Math.abs(this.player.position.z - centerZ);
         if (dx < box.x && dy < box.y && dz < box.z) {
           this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
           this.player.armor = 0;
@@ -675,7 +679,17 @@ export class GameScene {
         continue;
       }
 
-      if (target.mesh.position.distanceTo(this.player.position) < target.radius) {
+      const radius = target.radius ?? 0;
+      const verticalRadius = target.collisionVerticalRadius ?? radius;
+      if (radius <= 0 || verticalRadius <= 0) continue;
+      const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
+      const cx = target.mesh.position.x + offset.x;
+      const cy = target.mesh.position.y + offset.y;
+      const cz = target.mesh.position.z + offset.z;
+      const nx = (this.player.position.x - cx) / radius;
+      const ny = (this.player.position.y - cy) / verticalRadius;
+      const nz = (this.player.position.z - cz) / radius;
+      if ((nx * nx) + (ny * ny) + (nz * nz) < 1) {
         this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
         this.player.armor = 0;
       }

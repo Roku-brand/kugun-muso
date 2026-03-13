@@ -144,7 +144,7 @@ export class StageManager {
       ship.rotation.y = (Math.sin(index * 1.3) * 0.08);
       this.scene.add(ship);
       this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: spec.health, speed: spec.speed }));
-      this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
+      this.targets.push({ mesh: ship, radius: spec.radius, collisionVerticalRadius: spec.collisionVerticalRadius, type: spec.role });
     });
   }
 
@@ -214,7 +214,7 @@ export class StageManager {
     hq.scale.setScalar(1.35);
     this.scene.add(hq);
     this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: ENEMY_DURABILITY.headquarters }));
-    this.targets.push({ mesh: hq, radius: 56, type: 'building', objective: 'hq' });
+    this.targets.push({ mesh: hq, radius: 56, collisionVerticalRadius: 30, type: 'building', objective: 'hq' });
 
     const port = this.makeMegaPortFacility();
     port.position.set(-240 * areaScale, 52, -1090 * areaScale);
@@ -272,7 +272,7 @@ export class StageManager {
       turret.position.set(...pos);
       this.scene.add(turret);
       this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: ENEMY_DURABILITY.turret }));
-      this.targets.push({ mesh: turret, radius: 14, type: 'building' });
+      this.targets.push({ mesh: turret, radius: 14, collisionVerticalRadius: 10, type: 'building' });
     });
 
     const samPositions = [
@@ -293,7 +293,7 @@ export class StageManager {
       sam.position.set(...pos);
       this.scene.add(sam);
       this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: ENEMY_DURABILITY.turret }));
-      this.targets.push({ mesh: sam, radius: 11, type: 'building' });
+      this.targets.push({ mesh: sam, radius: 11, collisionVerticalRadius: 8, type: 'building' });
     });
 
     const guardTowerPositions = [
@@ -309,18 +309,18 @@ export class StageManager {
       tower.scale.setScalar(1.08);
       this.scene.add(tower);
       this.enemies.push(new Enemy({ type: 'turret', mesh: tower, health: ENEMY_DURABILITY.turret }));
-      this.targets.push({ mesh: tower, radius: 18, type: 'building' });
+      this.targets.push({ mesh: tower, radius: 18, collisionVerticalRadius: 24, type: 'building' });
     });
 
     const fleetSpecs = this.scaleFleetSpecs([
-      { role: 'carrier', x: -520, z: -960, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8, radius: 48 },
-      { role: 'cruiser', x: -700, z: -1160, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10, radius: 34 },
-      { role: 'destroyer', x: -520, z: -1360, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13, radius: 26 },
-      { role: 'carrier', x: 520, z: -980, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8, radius: 48 },
-      { role: 'cruiser', x: 680, z: -1180, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10, radius: 34 },
-      { role: 'destroyer', x: 500, z: -1380, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13, radius: 26 },
-      { role: 'frigate', x: 0, z: -1600, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 12, radius: 24 },
-      { role: 'cruiser', x: 0, z: -820, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 9, radius: 34 },
+      { role: 'carrier', x: -520, z: -960, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8, radius: 48, collisionVerticalRadius: 20 },
+      { role: 'cruiser', x: -700, z: -1160, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10, radius: 34, collisionVerticalRadius: 16 },
+      { role: 'destroyer', x: -520, z: -1360, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13, radius: 26, collisionVerticalRadius: 14 },
+      { role: 'carrier', x: 520, z: -980, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8, radius: 48, collisionVerticalRadius: 20 },
+      { role: 'cruiser', x: 680, z: -1180, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10, radius: 34, collisionVerticalRadius: 16 },
+      { role: 'destroyer', x: 500, z: -1380, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13, radius: 26, collisionVerticalRadius: 14 },
+      { role: 'frigate', x: 0, z: -1600, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 12, radius: 24, collisionVerticalRadius: 13 },
+      { role: 'cruiser', x: 0, z: -820, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 9, radius: 34, collisionVerticalRadius: 16 },
     ], areaScale);
 
     fleetSpecs.forEach((spec, index) => {
@@ -329,7 +329,7 @@ export class StageManager {
       ship.rotation.y = Math.sin(index * 1.5) * 0.12;
       this.scene.add(ship);
       this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: spec.health, speed: spec.speed }));
-      this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
+      this.targets.push({ mesh: ship, radius: spec.radius, collisionVerticalRadius: spec.collisionVerticalRadius ?? 16, type: spec.role });
     });
 
     const playerStart = new THREE.Vector3(0, 220, 120);
@@ -407,7 +407,7 @@ export class StageManager {
     hq.position.set(0, 82, -930 * areaScale);
     this.scene.add(hq);
     this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: ENEMY_DURABILITY.headquarters }));
-    this.targets.push({ mesh: hq, radius: 42, type: 'building' });
+    this.targets.push({ mesh: hq, radius: 42, collisionVerticalRadius: 24, type: 'building' });
 
     const port = this.makePortFacility();
     port.position.set(0, 70, -790 * areaScale);
@@ -431,7 +431,7 @@ export class StageManager {
       tower.position.set(...pos);
       this.scene.add(tower);
       this.enemies.push(new Enemy({ type: 'turret', mesh: tower, health: ENEMY_DURABILITY.turret }));
-      this.targets.push({ mesh: tower, radius: 16, type: 'building' });
+      this.targets.push({ mesh: tower, radius: 16, collisionVerticalRadius: 22, type: 'building' });
     });
 
     for (let i = 0; i < 4; i++) {
@@ -439,7 +439,7 @@ export class StageManager {
       turret.position.set((-88 + i * 56) * areaScale, 74, (-925 + (i % 2) * 76) * areaScale);
       this.scene.add(turret);
       this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: ENEMY_DURABILITY.turret }));
-      this.targets.push({ mesh: turret, radius: 14, type: 'building' });
+      this.targets.push({ mesh: turret, radius: 14, collisionVerticalRadius: 10, type: 'building' });
     }
 
     const samPositions = [
@@ -456,7 +456,7 @@ export class StageManager {
       sam.position.set(...pos);
       this.scene.add(sam);
       this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: ENEMY_DURABILITY.turret }));
-      this.targets.push({ mesh: sam, radius: 11, type: 'building' });
+      this.targets.push({ mesh: sam, radius: 11, collisionVerticalRadius: 8, type: 'building' });
     });
   }
 
