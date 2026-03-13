@@ -8,6 +8,9 @@ export class HUD {
 
   mount() {
     this.root.innerHTML = `
+      <div class="hud top-right-menu">
+        <button id="homeBtn" class="menu-btn" aria-label="一時停止メニューを開く">ホーム</button>
+      </div>
       <div class="hud top-status">
         <div>体力: <span id="hp">❤❤❤</span></div>
         <div>残弾: <span id="ammo">20</span></div>
@@ -50,6 +53,7 @@ export class HUD {
       throttleFill: this.root.querySelector('#throttleFill'),
       radar: this.root.querySelector('#radar'),
       fireBtn: this.root.querySelector('#fireBtn'),
+      homeBtn: this.root.querySelector('#homeBtn'),
       stickZone: this.root.querySelector('#stick-zone'),
       stickKnob: this.root.querySelector('#stick-knob'),
       aimReticle: this.root.querySelector('#aimReticle'),
@@ -58,6 +62,7 @@ export class HUD {
 
     this.bindTouchControls();
     this.elements.fireBtn.addEventListener('click', this.actions.onFire);
+    this.elements.homeBtn.addEventListener('click', this.actions.onMenu);
     this.bindThrottleBar();
   }
 
