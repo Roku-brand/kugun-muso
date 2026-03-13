@@ -146,7 +146,12 @@ export class StageManager {
     const port = this.makePortFacility();
     port.position.set(0, 70, -790);
     this.scene.add(port);
-    this.targets.push({ mesh: port, radius: 130, type: 'building' });
+    this.targets.push({
+      mesh: port,
+      radius: 130,
+      type: 'building',
+      collisionHalfExtents: { x: 116, y: 26, z: 46 },
+    });
 
     const towerPositions = [
       [-155, 74, -855],

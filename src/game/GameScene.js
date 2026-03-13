@@ -411,6 +411,17 @@ export class GameScene {
     }
 
     for (const target of this.stageManager.targets) {
+      const box = target.collisionHalfExtents;
+      if (box) {
+        const dx = Math.abs(this.player.position.x - target.mesh.position.x);
+        const dy = Math.abs(this.player.position.y - target.mesh.position.y);
+        const dz = Math.abs(this.player.position.z - target.mesh.position.z);
+        if (dx < box.x && dy < box.y && dz < box.z) {
+          this.player.armor = 0;
+        }
+        continue;
+      }
+
       if (target.mesh.position.distanceTo(this.player.position) < target.radius) {
         this.player.armor = 0;
       }
