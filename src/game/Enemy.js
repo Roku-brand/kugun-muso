@@ -15,12 +15,14 @@ export class Enemy {
     if (!this.alive) return;
 
     if (this.type === 'fighter') {
-      const dir = playerPos.clone().sub(this.mesh.position).normalize();
-      const side = new THREE.Vector3(Math.sin(this.phase), 0, Math.cos(this.phase)).multiplyScalar(0.16);
-      dir.add(side).normalize();
+      const toPlayer = playerPos.clone().sub(this.mesh.position).normalize();
+      const swirl = new THREE.Vector3(Math.sin(this.phase), Math.sin(this.phase * 1.8) * 0.4, Math.cos(this.phase)).multiplyScalar(0.28);
+      const dir = toPlayer.add(swirl).normalize();
       this.mesh.position.addScaledVector(dir, this.speed * dt);
+      this.mesh.position.y += Math.sin(this.phase * 2.1) * dt * 3.4;
       this.mesh.lookAt(this.mesh.position.clone().add(dir));
-      this.phase += dt * 0.75;
+      this.mesh.rotateZ(Math.sin(this.phase * 2.4) * dt * 0.45);
+      this.phase += dt * 1.05;
     }
 
     if (this.type === 'ship') {
@@ -30,11 +32,11 @@ export class Enemy {
 
     this.cooldown -= dt;
     if (this.cooldown <= 0) {
-      this.cooldown = this.type === 'fighter' ? 3 : 4;
+      this.cooldown = this.type === 'fighter' ? 3.6 : 4.6;
       const dir = playerPos.clone().sub(this.mesh.position).normalize();
       bullets.push({
         pos: this.mesh.position.clone(),
-        vel: dir.multiplyScalar(this.type === 'fighter' ? 105 : 75),
+        vel: dir.multiplyScalar(this.type === 'fighter' ? 78 : 58),
         radius: 2,
       });
     }
