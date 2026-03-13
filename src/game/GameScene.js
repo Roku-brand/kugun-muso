@@ -154,7 +154,7 @@ export class GameScene {
   };
 
   updateWorld(dt) {
-    this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets));
+    this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, () => this.makeEnemyBulletMesh(enemy.type)));
 
     this.missiles.forEach((m) => {
       const target = this.getClosestLivingEnemy(m.pos);
@@ -168,7 +168,10 @@ export class GameScene {
       m.mesh.lookAt(m.pos.clone().add(m.vel));
     });
 
-    this.enemyBullets.forEach((b) => b.pos.addScaledVector(b.vel, dt));
+    this.enemyBullets.forEach((b) => {
+      b.pos.addScaledVector(b.vel, dt);
+      if (b.mesh) b.mesh.position.copy(b.pos);
+    });
     this.updateEffects(dt);
     this.handleCollisions();
 
@@ -180,7 +183,21 @@ export class GameScene {
       return true;
     });
 
-    this.enemyBullets = this.enemyBullets.filter((b) => b.pos.distanceTo(this.player.position) < 2500);
+    this.enemyBullets = this.enemyBullets.filter((b) => {
+      const keep = b.pos.distanceTo(this.player.position) < 2500;
+      if (!keep && b.mesh) this.scene.remove(b.mesh);
+      return keep;
+    });
+  }
+
+  makeEnemyBulletMesh(type) {
+    const color = type === 'fighter' ? 0xff7a4f : 0xffcf5c;
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.95, 8, 8),
+      new THREE.MeshBasicMaterial({ color }),
+    );
+    this.scene.add(mesh);
+    return mesh;
   }
 
   updateEffects(dt) {
@@ -225,6 +242,7 @@ export class GameScene {
     this.enemyBullets.forEach((b) => {
       if (b.pos.distanceTo(this.player.position) < 8) {
         b.pos.set(99999, 99999, 99999);
+        if (b.mesh) this.scene.remove(b.mesh);
         this.player.hit();
         this.audio.hit();
         this.spawnExplosion(this.player.position, 0xff4040);
@@ -274,7 +292,7 @@ export class GameScene {
 
   updateHUD() {
     const radarObjects = [];
-    [...this.enemies.filter((e) => e.alive), ...this.stageManager.targets].forEach((obj) => {
+    this.enemies.filter((e) => e.alive).forEach((obj) => {
       const pos = obj.mesh.position || obj.position;
       const relative = pos.clone().sub(this.player.position);
       const forwardDot = relative.dot(this.player.forward);
@@ -319,6 +337,7 @@ export class GameScene {
     window.removeEventListener('keyup', this.onUp);
     this.stageManager.cleanup();
     this.missiles.forEach((m) => this.scene.remove(m.mesh));
+    this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.audio.dispose();
     this.renderer.dispose();
   }

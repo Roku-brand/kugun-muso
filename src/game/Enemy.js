@@ -11,7 +11,7 @@ export class Enemy {
     this.phase = Math.random() * Math.PI * 2;
   }
 
-  update(dt, playerPos, bullets) {
+  update(dt, playerPos, bullets, createBulletMesh) {
     if (!this.alive) return;
 
     if (this.type === 'fighter') {
@@ -38,7 +38,10 @@ export class Enemy {
         pos: this.mesh.position.clone(),
         vel: dir.multiplyScalar(this.type === 'fighter' ? 78 : 58),
         radius: 2,
+        mesh: createBulletMesh ? createBulletMesh() : null,
       });
+      const bullet = bullets.at(-1);
+      if (bullet.mesh) bullet.mesh.position.copy(bullet.pos);
     }
   }
 
