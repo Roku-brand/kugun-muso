@@ -17,6 +17,8 @@ export class Enemy {
       engageTime: behavior.engageTime ?? 0,
       spreadWeight: behavior.spreadWeight ?? 0,
       spreadPoint: behavior.spreadPoint ?? null,
+      preferredRange: behavior.preferredRange ?? 260,
+      rangeTolerance: behavior.rangeTolerance ?? 70,
     };
     this.elapsed = 0;
 
@@ -33,7 +35,7 @@ export class Enemy {
         maxPitchRate: 0.68,
         cruiseAltitude: this.mesh.position.y,
         cruiseBand: 90,
-        passDistance: 120,
+        passDistance: 200,
       };
       this.passOffset = (Math.random() - 0.5) * 0.7;
     }
@@ -57,12 +59,20 @@ export class Enemy {
         : forward.clone();
       const approachDir = spreadDir.clone().lerp(toPlayer.clone().normalize(), engageRatio).normalize();
 
+      const rangeOffset = (distanceToPlayer - this.behavior.preferredRange) / Math.max(this.behavior.rangeTolerance, 1);
+      const rangeBlend = THREE.MathUtils.clamp((rangeOffset + 1) * 0.5, 0, 1);
+      const standoffDir = toPlayer.clone().normalize().multiplyScalar(-1);
+      const spacingDir = standoffDir.clone().lerp(toPlayer.clone().normalize(), rangeBlend).normalize();
+
       const leadTarget = playerPos.clone().add(new THREE.Vector3(this.passOffset * 70, 0, 0));
       const pursuitDir = leadTarget
         .sub(this.mesh.position.clone().add(forward.clone().multiplyScalar(profile.passDistance * 0.35)))
         .normalize();
 
-      const desiredDir = approachDir.lerp(pursuitDir, THREE.MathUtils.clamp(distanceToPlayer / 420, 0.2, 0.85)).normalize();
+      const desiredDir = approachDir
+        .lerp(spacingDir, 0.72)
+        .lerp(pursuitDir, THREE.MathUtils.clamp(distanceToPlayer / 420, 0.08, 0.45))
+        .normalize();
 
       const turnAxis = new THREE.Vector3().crossVectors(forward, desiredDir);
       const turnMag = turnAxis.length();
@@ -79,7 +89,7 @@ export class Enemy {
       if (right.lengthSq() > 0.01) this.velocity.applyAxisAngle(right, pitchRate * dt);
 
       const targetSpeed = THREE.MathUtils.clamp(
-        this.speed + (distanceToPlayer > 220 ? 16 : -2),
+        this.speed + (distanceToPlayer > this.behavior.preferredRange ? 18 : -6),
         profile.minSpeed,
         profile.maxSpeed,
       );
@@ -104,7 +114,9 @@ export class Enemy {
     }
 
     this.cooldown -= dt;
-    if (this.cooldown <= 0) {
+    const shotDistance = playerPos.distanceTo(this.mesh.position);
+    const inFiringRange = this.type !== 'fighter' || (shotDistance > 130 && shotDistance < 420);
+    if (this.cooldown <= 0 && inFiringRange) {
       this.cooldown = this.type === 'fighter' ? 3.6 : 4.6;
       const dir = playerPos.clone().sub(this.mesh.position).normalize();
       bullets.push({

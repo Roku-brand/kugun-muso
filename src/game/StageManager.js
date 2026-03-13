@@ -78,6 +78,8 @@ export class StageManager {
           engageTime: 4.5 + i * 0.4,
           spreadWeight: 0.65 + (i % 3) * 0.1,
           spreadPoint,
+          preferredRange: 280 + (i % 3) * 25,
+          rangeTolerance: 80,
         },
       }));
     }
