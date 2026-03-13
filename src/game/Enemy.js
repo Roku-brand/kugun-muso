@@ -16,11 +16,11 @@ export class Enemy {
 
     if (this.type === 'fighter') {
       const dir = playerPos.clone().sub(this.mesh.position).normalize();
-      const side = new THREE.Vector3(Math.sin(this.phase), 0, Math.cos(this.phase)).multiplyScalar(0.2);
+      const side = new THREE.Vector3(Math.sin(this.phase), 0, Math.cos(this.phase)).multiplyScalar(0.16);
       dir.add(side).normalize();
       this.mesh.position.addScaledVector(dir, this.speed * dt);
       this.mesh.lookAt(this.mesh.position.clone().add(dir));
-      this.phase += dt;
+      this.phase += dt * 0.75;
     }
 
     if (this.type === 'ship') {
@@ -30,11 +30,11 @@ export class Enemy {
 
     this.cooldown -= dt;
     if (this.cooldown <= 0) {
-      this.cooldown = this.type === 'fighter' ? 2.4 : 3.4;
+      this.cooldown = this.type === 'fighter' ? 3 : 4;
       const dir = playerPos.clone().sub(this.mesh.position).normalize();
       bullets.push({
         pos: this.mesh.position.clone(),
-        vel: dir.multiplyScalar(this.type === 'fighter' ? 130 : 90),
+        vel: dir.multiplyScalar(this.type === 'fighter' ? 105 : 75),
         radius: 2,
       });
     }

@@ -95,17 +95,45 @@ export class GameScene {
   fireMissile() {
     if (this.finished || !this.player.consumeAmmo()) return;
     const pos = this.player.position.clone().add(this.player.forward.clone().multiplyScalar(6));
-    const vel = this.player.forward.clone().multiplyScalar(420);
+    const vel = this.player.forward.clone().multiplyScalar(320);
     this.missiles.push({ pos, vel, life: 4, mesh: this.makeMissileMesh() });
     this.scene.add(this.missiles.at(-1).mesh);
     this.audio.missile();
   }
 
   makeMissileMesh() {
-    return new THREE.Mesh(
-      new THREE.CylinderGeometry(0.3, 0.3, 2, 8),
-      new THREE.MeshBasicMaterial({ color: this.settings.missileColor }),
+    const group = new THREE.Group();
+
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.3, 2.8, 12),
+      new THREE.MeshStandardMaterial({ color: this.settings.missileColor, metalness: 0.75, roughness: 0.35 }),
     );
+    body.rotation.z = Math.PI / 2;
+
+    const nose = new THREE.Mesh(
+      new THREE.ConeGeometry(0.24, 0.7, 12),
+      new THREE.MeshStandardMaterial({ color: 0xdedede, metalness: 0.8, roughness: 0.25 }),
+    );
+    nose.rotation.z = -Math.PI / 2;
+    nose.position.x = 1.7;
+
+    const finMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.65, roughness: 0.5 });
+    for (let i = 0; i < 4; i++) {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.32), finMat);
+      fin.position.x = -1.05;
+      fin.rotation.x = (Math.PI / 2) * i;
+      group.add(fin);
+    }
+
+    const exhaust = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.18, 0.25, 10),
+      new THREE.MeshStandardMaterial({ color: 0x232323, metalness: 0.4, roughness: 0.6 }),
+    );
+    exhaust.rotation.z = Math.PI / 2;
+    exhaust.position.x = -1.5;
+
+    group.add(body, nose, exhaust);
+    return group;
   }
 
   loop = () => {
@@ -131,8 +159,8 @@ export class GameScene {
     this.missiles.forEach((m) => {
       const target = this.getClosestLivingEnemy(m.pos);
       if (target) {
-        const desired = target.mesh.position.clone().sub(m.pos).normalize().multiplyScalar(420);
-        m.vel.lerp(desired, 0.05);
+        const desired = target.mesh.position.clone().sub(m.pos).normalize().multiplyScalar(320);
+        m.vel.lerp(desired, 0.035);
       }
       m.pos.addScaledVector(m.vel, dt);
       m.life -= dt;
