@@ -95,7 +95,7 @@ export class GameScene {
   fireMissile() {
     if (this.finished || !this.player.consumeAmmo()) return;
     const pos = this.player.position.clone().add(this.player.forward.clone().multiplyScalar(6));
-    const vel = this.player.forward.clone().multiplyScalar(320);
+    const vel = this.player.forward.clone().multiplyScalar(240);
     this.missiles.push({ pos, vel, life: 4, mesh: this.makeMissileMesh() });
     this.scene.add(this.missiles.at(-1).mesh);
     this.audio.missile();
@@ -159,7 +159,7 @@ export class GameScene {
     this.missiles.forEach((m) => {
       const target = this.getClosestLivingEnemy(m.pos);
       if (target) {
-        const desired = target.mesh.position.clone().sub(m.pos).normalize().multiplyScalar(320);
+        const desired = target.mesh.position.clone().sub(m.pos).normalize().multiplyScalar(240);
         m.vel.lerp(desired, 0.035);
       }
       m.pos.addScaledVector(m.vel, dt);
