@@ -7,6 +7,12 @@ import { AudioManager } from '../audio/AudioManager.js';
 
 const COMBAT_SPEED_SCALE = 0.6;
 const DIFFICULTY_ALLY_COUNT = { easy: 3, normal: 1, hard: 0 };
+const ALLY_FLIGHT_BOUNDS = {
+  minX: -320,
+  maxX: 320,
+  minY: 40,
+  maxY: 430,
+};
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit }) {
@@ -272,11 +278,23 @@ export class GameScene {
     this.allies = Array.from({ length: allyCount }, (_, index) => ({
       index,
       cooldown: 0.5 + index * 0.2,
-      offset: new THREE.Vector3(20 + index * 6, 6 + (index % 2) * 3, index % 2 === 0 ? -16 : 16),
+      speed: 82 + Math.random() * 16,
+      turnRate: 1.1 + Math.random() * 0.3,
+      chaseWeight: 0.7 + Math.random() * 0.15,
+      driftSeed: Math.random() * Math.PI * 2,
+      velocity: new THREE.Vector3(),
       mesh: this.stageManager.makeFighter(),
     }));
 
     this.allies.forEach((ally) => {
+      const side = ally.index % 2 === 0 ? -1 : 1;
+      const spawnPos = this.player.position
+        .clone()
+        .add(this.player.right.clone().multiplyScalar(side * (40 + ally.index * 7)))
+        .add(this.player.worldUp.clone().multiplyScalar(16 + (ally.index % 2) * 6))
+        .add(this.player.forward.clone().multiplyScalar(-80 - ally.index * 16));
+      ally.mesh.position.copy(spawnPos);
+
       ally.mesh.scale.setScalar(0.75);
       ally.mesh.traverse((part) => {
         if (!part.isMesh || !part.material?.color) return;
@@ -290,38 +308,60 @@ export class GameScene {
         part.material = part.material.clone();
         part.material.color.offsetHSL(0.08, 0.2, 0.15);
       });
+
+      const initialDir = this.player.forward
+        .clone()
+        .add(this.player.right.clone().multiplyScalar(side * 0.1))
+        .add(this.player.worldUp.clone().multiplyScalar(0.05))
+        .normalize();
+      ally.velocity.copy(initialDir.multiplyScalar(ally.speed));
+      ally.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), ally.velocity.clone().normalize());
+
       this.scene.add(ally.mesh);
     });
-  }
-
-  getAllyWorldPosition(ally) {
-    const side = ally.index % 2 === 0 ? -1 : 1;
-    return this.player.position
-      .clone()
-      .add(this.player.right.clone().multiplyScalar(ally.offset.x * side))
-      .add(this.player.worldUp.clone().multiplyScalar(ally.offset.y))
-      .add(this.player.forward.clone().multiplyScalar(ally.offset.z));
   }
 
   updateAllies(dt) {
     if (!this.allies.length) return;
 
     this.allies.forEach((ally) => {
-      const anchor = this.getAllyWorldPosition(ally);
-      ally.mesh.position.copy(anchor);
-      const lookTarget = anchor.clone().add(this.player.forward.clone().multiplyScalar(60));
-      ally.mesh.lookAt(lookTarget);
+      const target = this.getClosestLivingEnemy(ally.mesh.position);
+      const toPlayer = this.player.position.clone().sub(ally.mesh.position);
+      const distanceToPlayer = toPlayer.length();
+      const returnDir = distanceToPlayer > 190 ? toPlayer.normalize() : null;
+      const wander = new THREE.Vector3(
+        Math.sin((this.last * 0.0015) + ally.driftSeed),
+        Math.sin((this.last * 0.0011) + ally.driftSeed * 1.9) * 0.6,
+        Math.cos((this.last * 0.0017) + ally.driftSeed),
+      ).normalize();
+
+      let desiredDir = this.player.forward.clone().multiplyScalar(0.4).add(wander.clone().multiplyScalar(0.6));
+      if (returnDir) desiredDir = desiredDir.lerp(returnDir, 0.7);
+      if (target) {
+        const chaseDir = target.mesh.position.clone().sub(ally.mesh.position).normalize();
+        desiredDir = desiredDir.lerp(chaseDir, ally.chaseWeight);
+      }
+
+      desiredDir.normalize();
+      const currentDir = ally.velocity.clone().normalize();
+      const lerpedDir = currentDir.lerp(desiredDir, Math.min(1, ally.turnRate * dt)).normalize();
+      ally.velocity.copy(lerpedDir.multiplyScalar(ally.speed));
+
+      ally.mesh.position.addScaledVector(ally.velocity, dt);
+      ally.mesh.position.x = THREE.MathUtils.clamp(ally.mesh.position.x, ALLY_FLIGHT_BOUNDS.minX, ALLY_FLIGHT_BOUNDS.maxX);
+      ally.mesh.position.y = THREE.MathUtils.clamp(ally.mesh.position.y, ALLY_FLIGHT_BOUNDS.minY, ALLY_FLIGHT_BOUNDS.maxY);
+      ally.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), ally.velocity.clone().normalize());
     });
 
-    const target = this.getClosestLivingEnemy(this.player.position);
-    if (!target) return;
-
     this.allies.forEach((ally, idx) => {
+      const target = this.getClosestLivingEnemy(ally.mesh.position);
+      if (!target) return;
+
       ally.cooldown -= dt;
       if (ally.cooldown > 0) return;
       ally.cooldown = 0.24 + idx * 0.02;
 
-      const shootPos = this.getAllyWorldPosition(ally);
+      const shootPos = ally.mesh.position.clone().add(ally.velocity.clone().normalize().multiplyScalar(4));
 
       const aim = target.mesh.position.clone().sub(shootPos).normalize();
       const bullet = {
