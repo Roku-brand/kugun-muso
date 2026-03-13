@@ -2,8 +2,8 @@ import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 
 let ENEMY_SERIAL = 1;
 const FLIGHT_BOUNDS = {
-  minX: -280,
-  maxX: 280,
+  minX: -1400,
+  maxX: 1400,
   minY: 0,
   maxY: 420,
 };
