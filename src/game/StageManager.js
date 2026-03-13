@@ -137,8 +137,6 @@ export class StageManager {
     island.position.set(0, 35, -900);
     this.scene.add(island);
     this.stageObjects.push(island);
-    this.targets.push({ mesh: island, radius: 240, type: 'island' });
-
     const hq = this.makeHeadquarters();
     hq.position.set(0, 82, -930);
     this.scene.add(hq);
