@@ -39,11 +39,47 @@ export class StageManager {
     this.scene.add(ground);
     this.stageObjects.push(ground);
 
+    const playerStart = new THREE.Vector3(0, 220, 0);
+    const airSpawnPoints = [
+      [-420, 210, -1500],
+      [-280, 250, -1380],
+      [-120, 180, -1260],
+      [90, 270, -1520],
+      [260, 200, -1340],
+      [410, 240, -1450],
+      [-360, 290, -1180],
+      [340, 170, -1120],
+    ];
+
+    const spreadTargets = [
+      [-620, 220, -520],
+      [-500, 280, -920],
+      [-180, 160, -460],
+      [120, 300, -540],
+      [360, 170, -700],
+      [620, 260, -920],
+      [-540, 330, -1220],
+      [560, 190, -1180],
+    ];
+
     for (let i = 0; i < 8; i++) {
       const mesh = this.makeFighter(0xff6f6f);
-      mesh.position.set((Math.random() - 0.5) * 900, 180 + Math.random() * 160, -400 - Math.random() * 1000);
+      const [x, y, z] = airSpawnPoints[i];
+      mesh.position.set(x, y, z);
+      mesh.lookAt(playerStart);
       this.scene.add(mesh);
-      this.enemies.push(new Enemy({ type: 'fighter', mesh, health: 1, speed: 48 + Math.random() * 18 }));
+      const spreadPoint = new THREE.Vector3(...spreadTargets[i]);
+      this.enemies.push(new Enemy({
+        type: 'fighter',
+        mesh,
+        health: 1,
+        speed: 42 + Math.random() * 14,
+        behavior: {
+          engageTime: 4.5 + i * 0.4,
+          spreadWeight: 0.65 + (i % 3) * 0.1,
+          spreadPoint,
+        },
+      }));
     }
   }
 

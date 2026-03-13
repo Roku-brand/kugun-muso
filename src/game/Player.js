@@ -12,9 +12,9 @@ export class Player {
     this.worldUp = new THREE.Vector3(0, 1, 0);
     this.yaw = Math.PI;
     this.pitch = 0;
-    this.speed = 102;
-    this.minSpeed = 60;
-    this.maxSpeed = 210;
+    this.speed = 74;
+    this.minSpeed = 42;
+    this.maxSpeed = 165;
     this.throttle = 0.45;
     this.health = 3;
     this.ammo = 20;
