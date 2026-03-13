@@ -34,6 +34,7 @@ export class GameScene {
       onFire: () => this.fireMissile(),
       onThrottle: (v) => (this.touchThrottle = v),
       onStick: (x, y) => (this.touchStick = { x, y }),
+      onMenu: () => this.togglePauseMenu(),
     });
 
     this.keys = {};
@@ -45,6 +46,7 @@ export class GameScene {
     this.effects = [];
     this.lockOnTimer = 0;
     this.finished = false;
+    this.paused = false;
     this.last = performance.now();
     this.bindEvents();
   }
@@ -173,7 +175,7 @@ export class GameScene {
     const dt = Math.min((now - this.last) / 1000, 0.03);
     this.last = now;
 
-    if (!this.finished) {
+    if (!this.finished && !this.paused) {
       const combatDt = dt * COMBAT_SPEED_SCALE;
       this.readInput(combatDt);
       this.player.update(combatDt);
@@ -185,6 +187,43 @@ export class GameScene {
     this.renderer.render(this.scene, this.camera);
     this.raf = requestAnimationFrame(this.loop);
   };
+
+  togglePauseMenu() {
+    if (this.finished) return;
+    this.paused = !this.paused;
+    if (this.paused) {
+      this.showPauseMenu();
+    } else {
+      this.hideOverlay();
+      this.last = performance.now();
+    }
+  }
+
+  showPauseMenu() {
+    this.overlayRoot.classList.remove('hidden');
+    this.overlayRoot.innerHTML = `
+      <div class="result-panel pause">
+        <h2>一時停止</h2>
+        <p>ゲームを再開するかホームへ戻るか選択してください。</p>
+        <button id="resume">再開</button>
+        <button id="back">ホームへ戻る</button>
+      </div>
+    `;
+    this.overlayRoot.querySelector('#resume').addEventListener('click', () => {
+      this.paused = false;
+      this.hideOverlay();
+      this.last = performance.now();
+    });
+    this.overlayRoot.querySelector('#back').addEventListener('click', () => {
+      this.paused = false;
+      this.onExit();
+    });
+  }
+
+  hideOverlay() {
+    this.overlayRoot.classList.add('hidden');
+    this.overlayRoot.innerHTML = '';
+  }
 
   updateWorld(dt) {
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, () => this.makeEnemyBulletMesh(enemy.type)));
@@ -314,6 +353,7 @@ export class GameScene {
 
   finish(success, title) {
     this.finished = true;
+    this.paused = false;
     this.overlayRoot.classList.remove('hidden');
     this.overlayRoot.innerHTML = `
       <div class="result-panel ${success ? 'clear' : 'over'}">
