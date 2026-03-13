@@ -89,7 +89,6 @@ export class GameScene {
       this.keys[' '] = false;
     }
 
-    this.audio.updateEngine((this.player.speed - this.player.minSpeed) / (this.player.maxSpeed - this.player.minSpeed));
     this.lockOnTimer += dt;
     if (this.lockOnTimer > 1.8 && this.nearestEnemyDistance() < 420) {
       this.audio.lockOn();
