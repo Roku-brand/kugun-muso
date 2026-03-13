@@ -149,13 +149,17 @@ export class StageManager {
     this.scene.add(sea);
     this.stageObjects.push(sea);
 
-    const island = new THREE.Mesh(
-      new THREE.CylinderGeometry(380 * areaScale, 460 * areaScale, 46, 36),
-      new THREE.MeshStandardMaterial({ color: 0x425f3d, roughness: 0.88, metalness: 0.08 }),
-    );
-    island.position.set(0, 23, -1180 * areaScale);
-    this.scene.add(island);
-    this.stageObjects.push(island);
+    const islandCore = this.createFortifiedIslandTerrain({
+      x: 0,
+      z: -1180 * areaScale,
+      areaScale,
+      radiusX: 640,
+      radiusZ: 520,
+      height: 48,
+      seed: 17,
+      shorelineTilt: 0.28,
+    });
+    this.stageObjects.push(...islandCore);
 
     const harborRing = this.makeHarborRing();
     harborRing.position.set(0, 24, -1180 * areaScale);
@@ -364,13 +368,17 @@ export class StageManager {
     this.scene.add(sea);
     this.stageObjects.push(sea);
 
-    const island = new THREE.Mesh(
-      new THREE.CylinderGeometry(220 * areaScale, 300 * areaScale, 70, 24),
-      new THREE.MeshStandardMaterial({ color: 0x3f5a3a }),
-    );
-    island.position.set(0, 35, -900 * areaScale);
-    this.scene.add(island);
-    this.stageObjects.push(island);
+    const islandCore = this.createFortifiedIslandTerrain({
+      x: 0,
+      z: -900 * areaScale,
+      areaScale,
+      radiusX: 430,
+      radiusZ: 320,
+      height: 68,
+      seed: 9,
+      shorelineTilt: 0.33,
+    });
+    this.stageObjects.push(...islandCore);
     const hq = this.makeHeadquarters();
     hq.position.set(0, 82, -930 * areaScale);
     this.scene.add(hq);
@@ -426,6 +434,116 @@ export class StageManager {
       this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: 1 }));
       this.targets.push({ mesh: sam, radius: 11, type: 'building' });
     });
+  }
+
+
+  createFortifiedIslandTerrain({ x, z, areaScale, radiusX, radiusZ, height, seed, shorelineTilt = 0.25 }) {
+    const islandAssets = [];
+    const contour = [];
+    const segments = 48;
+
+    for (let i = 0; i < segments; i += 1) {
+      const t = i / segments;
+      const angle = t * Math.PI * 2;
+      const warp = 1
+        + Math.sin(angle * 2.7 + seed) * 0.13
+        + Math.sin(angle * 5.1 + seed * 0.73) * 0.08
+        + Math.cos(angle * 4.2 + seed * 0.33) * shorelineTilt;
+      contour.push(new THREE.Vector2(
+        Math.cos(angle) * radiusX * warp * areaScale,
+        Math.sin(angle) * radiusZ * warp * areaScale,
+      ));
+    }
+
+    const islandTop = new THREE.Mesh(
+      new THREE.ShapeGeometry(new THREE.Shape(contour)),
+      new THREE.MeshStandardMaterial({ color: 0x4d5d3f, roughness: 0.9, metalness: 0.05 }),
+    );
+    islandTop.rotation.x = -Math.PI / 2;
+    islandTop.position.set(x, height, z);
+    this.scene.add(islandTop);
+    islandAssets.push(islandTop);
+
+    const islandShelf = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(new THREE.Shape(contour), {
+        depth: height - 8,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        bevelSize: 16 * areaScale,
+        bevelThickness: 8,
+      }),
+      new THREE.MeshStandardMaterial({ color: 0x8d846f, roughness: 0.94, metalness: 0.04 }),
+    );
+    islandShelf.rotation.x = -Math.PI / 2;
+    islandShelf.position.set(x, height - 2, z);
+    this.scene.add(islandShelf);
+    islandAssets.push(islandShelf);
+
+    this.addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height, islandAssets, seed });
+    return islandAssets;
+  }
+
+  addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height, islandAssets, seed }) {
+    const sand = new THREE.MeshStandardMaterial({ color: 0xbca97f, roughness: 0.92, metalness: 0.02 });
+    const road = new THREE.MeshStandardMaterial({ color: 0x5d5e5a, roughness: 0.85, metalness: 0.08 });
+    const houseWall = new THREE.MeshStandardMaterial({ color: 0xc7c2b6, roughness: 0.78, metalness: 0.06 });
+    const houseRoof = new THREE.MeshStandardMaterial({ color: 0x7b4135, roughness: 0.72, metalness: 0.1 });
+    const treeLeaf = new THREE.MeshStandardMaterial({ color: 0x436a3f, roughness: 0.88, metalness: 0.04 });
+    const treeTrunk = new THREE.MeshStandardMaterial({ color: 0x6b4a33, roughness: 0.9, metalness: 0.04 });
+
+    const beach = new THREE.Mesh(new THREE.RingGeometry(radiusX * 0.8 * areaScale, radiusX * 1.06 * areaScale, 60), sand);
+    beach.rotation.x = -Math.PI / 2;
+    beach.position.set(x + 14 * areaScale, 2.1, z + 6 * areaScale);
+    this.scene.add(beach);
+    islandAssets.push(beach);
+
+    const roadLoop = new THREE.Mesh(new THREE.RingGeometry(radiusX * 0.42 * areaScale, radiusX * 0.48 * areaScale, 48), road);
+    roadLoop.rotation.x = -Math.PI / 2;
+    roadLoop.position.set(x - 16 * areaScale, height + 0.4, z + 12 * areaScale);
+    this.scene.add(roadLoop);
+    islandAssets.push(roadLoop);
+
+    for (let i = 0; i < 6; i += 1) {
+      const lane = new THREE.Mesh(new THREE.BoxGeometry(120 * areaScale, 1.2, 10 * areaScale), road);
+      lane.position.set(
+        x + Math.cos((i / 6) * Math.PI * 2 + seed) * radiusX * 0.25 * areaScale,
+        height + 0.5,
+        z + Math.sin((i / 6) * Math.PI * 2 + seed) * radiusZ * 0.22 * areaScale,
+      );
+      lane.rotation.y = (i / 6) * Math.PI;
+      this.scene.add(lane);
+      islandAssets.push(lane);
+    }
+
+    for (let i = 0; i < 12; i += 1) {
+      const house = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 12), houseWall);
+      base.position.y = 4;
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(10, 6, 4), houseRoof);
+      roof.position.y = 11;
+      roof.rotation.y = Math.PI * 0.25;
+      house.add(base, roof);
+      const angle = (i / 12) * Math.PI * 2 + seed * 0.2;
+      const r = (radiusX * 0.24 + (i % 3) * 24) * areaScale;
+      house.position.set(x + Math.cos(angle) * r, height + 1, z + Math.sin(angle) * r * (radiusZ / radiusX));
+      house.rotation.y = -angle + Math.PI * 0.5;
+      this.scene.add(house);
+      islandAssets.push(house);
+    }
+
+    for (let i = 0; i < 36; i += 1) {
+      const tree = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 7, 6), treeTrunk);
+      trunk.position.y = 3.5;
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(4.8, 8, 8), treeLeaf);
+      crown.position.y = 8.6;
+      tree.add(trunk, crown);
+      const angle = (i / 36) * Math.PI * 2 + seed * 0.5;
+      const radial = (0.3 + (i % 9) * 0.055) * radiusX * areaScale;
+      tree.position.set(x + Math.cos(angle) * radial, height + 1, z + Math.sin(angle) * radial * (radiusZ / radiusX));
+      this.scene.add(tree);
+      islandAssets.push(tree);
+    }
   }
 
   makeHeadquarters() {

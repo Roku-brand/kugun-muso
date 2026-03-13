@@ -18,6 +18,13 @@ const ALLY_FLIGHT_BOUNDS = {
   maxY: 430,
 };
 
+const PLAYER_HORIZONTAL_BOUNDS = {
+  air: 900,
+  sea: 1200,
+  base: 1100,
+  totalWar: 1650,
+};
+
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit }) {
     this.canvas = canvas;
@@ -37,7 +44,7 @@ export class GameScene {
 
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 12000);
     this.player = new Player(this.camera, settings);
-    this.player.setHorizontalBound(stage === 'totalWar' ? 620 : 380);
+    this.player.setHorizontalBound(PLAYER_HORIZONTAL_BOUNDS[stage] ?? 900);
 
     this.stageManager = new StageManager(this.scene);
     this.enemies = this.stageManager.createStage(stage);
