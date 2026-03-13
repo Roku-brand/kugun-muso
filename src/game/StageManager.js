@@ -1,6 +1,19 @@
 import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 import { Enemy } from './Enemy.js';
 
+export const ENEMY_DURABILITY = {
+  fighter: 24,
+  turret: 38,
+  fortress: 46,
+  headquarters: 120,
+  shipByRole: {
+    frigate: 58,
+    destroyer: 64,
+    cruiser: 74,
+    carrier: 86,
+  },
+};
+
 export class StageManager {
   constructor(scene) {
     this.scene = scene;
@@ -90,7 +103,7 @@ export class StageManager {
       this.enemies.push(new Enemy({
         type: 'fighter',
         mesh,
-        health: 1,
+        health: ENEMY_DURABILITY.fighter,
         speed: 74 + Math.random() * 18,
         behavior: {
           engageTime: 4.5 + i * 0.4,
@@ -115,14 +128,14 @@ export class StageManager {
     this.stageObjects.push(sea);
 
     const fleetSpecs = this.scaleFleetSpecs([
-      { role: 'destroyer', x: -360, z: -360, health: 2, speed: 13, radius: 26 },
-      { role: 'frigate', x: -130, z: -530, health: 2, speed: 12, radius: 24 },
-      { role: 'carrier', x: 160, z: -680, health: 4, speed: 8, radius: 42 },
-      { role: 'cruiser', x: 360, z: -860, health: 3, speed: 10, radius: 32 },
-      { role: 'destroyer', x: -260, z: -1030, health: 2, speed: 12, radius: 26 },
-      { role: 'frigate', x: 90, z: -1210, health: 2, speed: 11, radius: 24 },
-      { role: 'carrier', x: -420, z: -1380, health: 4, speed: 7, radius: 42 },
-      { role: 'cruiser', x: 300, z: -1540, health: 3, speed: 9, radius: 32 },
+      { role: 'destroyer', x: -360, z: -360, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13, radius: 26 },
+      { role: 'frigate', x: -130, z: -530, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 12, radius: 24 },
+      { role: 'carrier', x: 160, z: -680, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8, radius: 42 },
+      { role: 'cruiser', x: 360, z: -860, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10, radius: 32 },
+      { role: 'destroyer', x: -260, z: -1030, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 12, radius: 26 },
+      { role: 'frigate', x: 90, z: -1210, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 11, radius: 24 },
+      { role: 'carrier', x: -420, z: -1380, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 7, radius: 42 },
+      { role: 'cruiser', x: 300, z: -1540, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 9, radius: 32 },
     ], areaScale);
 
     fleetSpecs.forEach((spec, index) => {
@@ -179,7 +192,7 @@ export class StageManager {
     const rearRunway = this.makeRearWingRunwayComplex();
     rearRunway.position.set(0, 56, -1310 * areaScale);
     this.scene.add(rearRunway);
-    this.enemies.push(new Enemy({ type: 'turret', mesh: rearRunway, health: 7, canFire: false }));
+    this.enemies.push(new Enemy({ type: 'turret', mesh: rearRunway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
       mesh: rearRunway,
       radius: 265,
@@ -192,13 +205,13 @@ export class StageManager {
     hq.position.set(0, 74, -1240 * areaScale);
     hq.scale.setScalar(1.35);
     this.scene.add(hq);
-    this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: 16 }));
+    this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: ENEMY_DURABILITY.headquarters }));
     this.targets.push({ mesh: hq, radius: 56, type: 'building', objective: 'hq' });
 
     const port = this.makeMegaPortFacility();
     port.position.set(-240 * areaScale, 52, -1090 * areaScale);
     this.scene.add(port);
-    this.enemies.push(new Enemy({ type: 'turret', mesh: port, health: 5, canFire: false }));
+    this.enemies.push(new Enemy({ type: 'turret', mesh: port, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
       mesh: port,
       radius: 180,
@@ -210,7 +223,7 @@ export class StageManager {
     const runway = this.makeAirfieldRunway();
     runway.position.set(132 * areaScale, 49, -1110 * areaScale);
     this.scene.add(runway);
-    this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: 5, canFire: false }));
+    this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
       mesh: runway,
       radius: 210,
@@ -222,7 +235,7 @@ export class StageManager {
     const airportSupport = this.makeAirportSupportFacilities();
     airportSupport.position.set(180 * areaScale, 50, -1210 * areaScale);
     this.scene.add(airportSupport);
-    this.enemies.push(new Enemy({ type: 'turret', mesh: airportSupport, health: 6, canFire: false }));
+    this.enemies.push(new Enemy({ type: 'turret', mesh: airportSupport, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
       mesh: airportSupport,
       radius: 170,
@@ -250,7 +263,7 @@ export class StageManager {
       const turret = this.makeGroundTurret();
       turret.position.set(...pos);
       this.scene.add(turret);
-      this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: 2 }));
+      this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: ENEMY_DURABILITY.turret }));
       this.targets.push({ mesh: turret, radius: 14, type: 'building' });
     });
 
@@ -271,7 +284,7 @@ export class StageManager {
       const sam = this.makeSamBattery();
       sam.position.set(...pos);
       this.scene.add(sam);
-      this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: 1 }));
+      this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: ENEMY_DURABILITY.turret }));
       this.targets.push({ mesh: sam, radius: 11, type: 'building' });
     });
 
@@ -287,19 +300,19 @@ export class StageManager {
       tower.position.set(...pos);
       tower.scale.setScalar(1.08);
       this.scene.add(tower);
-      this.enemies.push(new Enemy({ type: 'turret', mesh: tower, health: 3 }));
+      this.enemies.push(new Enemy({ type: 'turret', mesh: tower, health: ENEMY_DURABILITY.turret }));
       this.targets.push({ mesh: tower, radius: 18, type: 'building' });
     });
 
     const fleetSpecs = this.scaleFleetSpecs([
-      { role: 'carrier', x: -520, z: -960, health: 5, speed: 8, radius: 48 },
-      { role: 'cruiser', x: -700, z: -1160, health: 3, speed: 10, radius: 34 },
-      { role: 'destroyer', x: -520, z: -1360, health: 2, speed: 13, radius: 26 },
-      { role: 'carrier', x: 520, z: -980, health: 5, speed: 8, radius: 48 },
-      { role: 'cruiser', x: 680, z: -1180, health: 3, speed: 10, radius: 34 },
-      { role: 'destroyer', x: 500, z: -1380, health: 2, speed: 13, radius: 26 },
-      { role: 'frigate', x: 0, z: -1600, health: 2, speed: 12, radius: 24 },
-      { role: 'cruiser', x: 0, z: -820, health: 3, speed: 9, radius: 34 },
+      { role: 'carrier', x: -520, z: -960, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8, radius: 48 },
+      { role: 'cruiser', x: -700, z: -1160, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10, radius: 34 },
+      { role: 'destroyer', x: -520, z: -1360, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13, radius: 26 },
+      { role: 'carrier', x: 520, z: -980, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8, radius: 48 },
+      { role: 'cruiser', x: 680, z: -1180, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10, radius: 34 },
+      { role: 'destroyer', x: 500, z: -1380, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13, radius: 26 },
+      { role: 'frigate', x: 0, z: -1600, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 12, radius: 24 },
+      { role: 'cruiser', x: 0, z: -820, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 9, radius: 34 },
     ], areaScale);
 
     fleetSpecs.forEach((spec, index) => {
@@ -340,7 +353,7 @@ export class StageManager {
       this.enemies.push(new Enemy({
         type: 'fighter',
         mesh,
-        health: 1,
+        health: ENEMY_DURABILITY.fighter,
         speed: 78 + Math.random() * 20,
         behavior: {
           engageTime: 3.8 + index * 0.22,
@@ -377,7 +390,7 @@ export class StageManager {
     const hq = this.makeHeadquarters();
     hq.position.set(0, 82, -930 * areaScale);
     this.scene.add(hq);
-    this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: 4 }));
+    this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: ENEMY_DURABILITY.headquarters }));
     this.targets.push({ mesh: hq, radius: 42, type: 'building' });
 
     const port = this.makePortFacility();
@@ -401,7 +414,7 @@ export class StageManager {
       const tower = this.makeWatchTower();
       tower.position.set(...pos);
       this.scene.add(tower);
-      this.enemies.push(new Enemy({ type: 'turret', mesh: tower, health: 2 }));
+      this.enemies.push(new Enemy({ type: 'turret', mesh: tower, health: ENEMY_DURABILITY.turret }));
       this.targets.push({ mesh: tower, radius: 16, type: 'building' });
     });
 
@@ -409,7 +422,7 @@ export class StageManager {
       const turret = this.makeGroundTurret();
       turret.position.set((-88 + i * 56) * areaScale, 74, (-925 + (i % 2) * 76) * areaScale);
       this.scene.add(turret);
-      this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: 2 }));
+      this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: ENEMY_DURABILITY.turret }));
       this.targets.push({ mesh: turret, radius: 14, type: 'building' });
     }
 
@@ -426,7 +439,7 @@ export class StageManager {
       const sam = this.makeSamBattery();
       sam.position.set(...pos);
       this.scene.add(sam);
-      this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: 1 }));
+      this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: ENEMY_DURABILITY.turret }));
       this.targets.push({ mesh: sam, radius: 11, type: 'building' });
     });
   }
