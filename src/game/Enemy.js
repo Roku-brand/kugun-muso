@@ -12,17 +12,31 @@ export class Enemy {
     this.cooldown = Math.random() * 2;
     this.alive = true;
     this.phase = Math.random() * Math.PI * 2;
-    this.weaveAmp = 0.35 + Math.random() * 0.7;
-    this.weaveSpeed = 0.75 + Math.random() * 0.9;
-    this.verticalAmp = 1.8 + Math.random() * 2.6;
-    this.verticalSpeed = 1.3 + Math.random() * 1.6;
-    this.bankBias = (Math.random() - 0.5) * 0.9;
+    this.bankBias = (Math.random() - 0.5) * 0.45;
     this.behavior = {
       engageTime: behavior.engageTime ?? 0,
       spreadWeight: behavior.spreadWeight ?? 0,
       spreadPoint: behavior.spreadPoint ?? null,
     };
     this.elapsed = 0;
+
+    if (this.type === 'fighter') {
+      this.velocity = new THREE.Vector3(0, 0, 1)
+        .applyQuaternion(this.mesh.quaternion)
+        .normalize()
+        .multiplyScalar(this.speed);
+      this.flightProfile = {
+        minSpeed: Math.max(38, this.speed * 0.78),
+        maxSpeed: this.speed * 1.28,
+        accel: 26,
+        maxTurnRate: 1.18,
+        maxPitchRate: 0.68,
+        cruiseAltitude: this.mesh.position.y,
+        cruiseBand: 90,
+        passDistance: 120,
+      };
+      this.passOffset = (Math.random() - 0.5) * 0.7;
+    }
   }
 
   update(dt, playerPos, bullets, createBulletMesh) {
@@ -30,32 +44,58 @@ export class Enemy {
     this.elapsed += dt;
 
     if (this.type === 'fighter') {
-      const toPlayer = playerPos.clone().sub(this.mesh.position).normalize();
-      const engageRatio = this.behavior.engageTime > 0
-        ? THREE.MathUtils.clamp(1 - this.elapsed / this.behavior.engageTime, 0, 1)
-        : 0;
+      const profile = this.flightProfile;
+      const forward = this.velocity.clone().normalize();
+      const toPlayer = playerPos.clone().sub(this.mesh.position);
+      const distanceToPlayer = Math.max(toPlayer.length(), 1);
 
+      const engageRatio = this.behavior.engageTime > 0
+        ? THREE.MathUtils.clamp(this.elapsed / this.behavior.engageTime, 0, 1)
+        : 1;
       const spreadDir = this.behavior.spreadPoint
         ? this.behavior.spreadPoint.clone().sub(this.mesh.position).normalize()
-        : new THREE.Vector3();
+        : forward.clone();
+      const approachDir = spreadDir.clone().lerp(toPlayer.clone().normalize(), engageRatio).normalize();
 
-      const swirl = new THREE.Vector3(
-        Math.sin(this.phase * this.weaveSpeed),
-        Math.sin(this.phase * this.verticalSpeed) * 0.35,
-        Math.cos(this.phase * (this.weaveSpeed * 0.9) + this.bankBias),
-      ).multiplyScalar(this.weaveAmp);
-
-      const spreadMix = (1 - engageRatio) * this.behavior.spreadWeight;
-      const dir = toPlayer
-        .multiplyScalar(1 - spreadMix)
-        .add(spreadDir.multiplyScalar(spreadMix))
-        .add(swirl)
+      const leadTarget = playerPos.clone().add(new THREE.Vector3(this.passOffset * 70, 0, 0));
+      const pursuitDir = leadTarget
+        .sub(this.mesh.position.clone().add(forward.clone().multiplyScalar(profile.passDistance * 0.35)))
         .normalize();
-      this.mesh.position.addScaledVector(dir, this.speed * dt);
-      this.mesh.position.y += Math.sin(this.phase * this.verticalSpeed + this.bankBias) * dt * this.verticalAmp;
-      this.mesh.lookAt(this.mesh.position.clone().add(dir));
-      this.mesh.rotateZ((Math.sin(this.phase * 2.4) * 0.3 + this.bankBias) * dt);
-      this.phase += dt * (0.8 + this.weaveSpeed * 0.45);
+
+      const desiredDir = approachDir.lerp(pursuitDir, THREE.MathUtils.clamp(distanceToPlayer / 420, 0.2, 0.85)).normalize();
+
+      const turnAxis = new THREE.Vector3().crossVectors(forward, desiredDir);
+      const turnMag = turnAxis.length();
+      if (turnMag > 1e-4) {
+        const turnRate = Math.min(profile.maxTurnRate * dt, Math.asin(Math.min(1, turnMag)));
+        this.velocity.applyAxisAngle(turnAxis.normalize(), turnRate);
+      }
+
+      const nextForward = this.velocity.clone().normalize();
+      const altitudeError = profile.cruiseAltitude - this.mesh.position.y;
+      const altitudeControl = THREE.MathUtils.clamp(altitudeError / profile.cruiseBand, -1, 1);
+      const pitchRate = profile.maxPitchRate * altitudeControl;
+      const right = new THREE.Vector3(0, 1, 0).cross(nextForward).normalize();
+      if (right.lengthSq() > 0.01) this.velocity.applyAxisAngle(right, pitchRate * dt);
+
+      const targetSpeed = THREE.MathUtils.clamp(
+        this.speed + (distanceToPlayer > 220 ? 10 : -4),
+        profile.minSpeed,
+        profile.maxSpeed,
+      );
+      const currentSpeed = this.velocity.length();
+      const adjustedSpeed = THREE.MathUtils.damp(currentSpeed, targetSpeed, profile.accel, dt);
+      this.velocity.setLength(adjustedSpeed);
+      this.mesh.position.addScaledVector(this.velocity, dt);
+
+      const lookDir = this.velocity.clone().normalize();
+      this.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), lookDir);
+
+      const yawRate = new THREE.Vector3().crossVectors(forward, lookDir).y;
+      const bankAngle = THREE.MathUtils.clamp(-(yawRate * 5.4) + this.bankBias, -0.72, 0.72);
+      this.mesh.rotateX(bankAngle);
+
+      this.phase += dt;
     }
 
     if (this.type === 'ship') {
