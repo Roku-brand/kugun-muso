@@ -21,7 +21,9 @@ export class HUD {
         <div id="stick-zone" class="stick-zone">
           <div id="stick-knob" class="stick-knob"></div>
         </div>
-        <p>W/S: ピッチ A/D: ヨー Q/E: ロール</p>
+        <p>移動: WASD / 矢印キー</p>
+        <p>加減速: Shift / Ctrl</p>
+        <p>発射: Space / Enter</p>
       </div>
       <div class="hud right-bottom">
         <button id="fireBtn">ミサイル発射</button>

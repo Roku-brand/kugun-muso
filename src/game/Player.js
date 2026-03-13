@@ -8,8 +8,6 @@ export class Player {
     this.settings = settings;
     this.position = new THREE.Vector3(0, 220, 0);
     this.forward = new THREE.Vector3(0, 0, -1);
-    this.up = new THREE.Vector3(0, 1, 0);
-    this.right = new THREE.Vector3(1, 0, 0);
     this.speed = 180;
     this.minSpeed = 110;
     this.maxSpeed = 360;
@@ -17,7 +15,7 @@ export class Player {
     this.health = 3;
     this.ammo = 20;
     this.ammoTimer = 0;
-    this.input = { pitch: 0, yaw: 0, roll: 0, throttle: 0 };
+    this.input = { x: 0, y: 0, throttle: 0 };
     this.syncCamera();
   }
 
@@ -27,21 +25,16 @@ export class Player {
 
   update(dt) {
     const sens = SENS_MAP[this.settings.controlSensitivity] ?? 1;
-    const pitch = this.input.pitch * sens * dt;
-    const yaw = this.input.yaw * sens * dt;
-    const roll = this.input.roll * sens * dt;
-
-    this.forward.applyAxisAngle(this.right, pitch).normalize();
-    this.forward.applyAxisAngle(this.up, yaw).normalize();
-    this.up.applyAxisAngle(this.forward, roll).normalize();
-    this.right.crossVectors(this.forward, this.up).normalize();
-    this.up.crossVectors(this.right, this.forward).normalize();
+    const strafeSpeed = 140 * sens;
+    this.position.x += this.input.x * strafeSpeed * dt;
+    this.position.y += this.input.y * strafeSpeed * dt;
 
     this.throttle = THREE.MathUtils.clamp(this.throttle + this.input.throttle * dt * 0.5, 0, 1);
     this.speed = THREE.MathUtils.lerp(this.minSpeed, this.maxSpeed, this.throttle);
     this.position.addScaledVector(this.forward, this.speed * dt);
 
-    if (this.position.y < 4) this.position.y = 4;
+    this.position.x = THREE.MathUtils.clamp(this.position.x, -280, 280);
+    this.position.y = THREE.MathUtils.clamp(this.position.y, 8, 420);
 
     this.ammoTimer += dt;
     if (this.ammo < 20 && this.ammoTimer >= 3) {
@@ -55,7 +48,7 @@ export class Player {
   syncCamera() {
     this.camera.position.copy(this.position);
     const lookAt = this.position.clone().add(this.forward.clone().multiplyScalar(40));
-    this.camera.up.copy(this.up);
+    this.camera.up.set(0, 1, 0);
     this.camera.lookAt(lookAt);
   }
 
