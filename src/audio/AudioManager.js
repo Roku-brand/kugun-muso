@@ -215,6 +215,25 @@ export class AudioManager {
     this.tone({ freq: 980, type: 'sine', duration: 0.06, gain: 0.1 });
   }
 
+  altitudeWarning() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12 * this.settings.seVolume, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    gain.connect(this.master);
+
+    const osc = this.ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(720, now);
+    osc.frequency.linearRampToValueAtTime(680, now + 0.18);
+    osc.connect(gain);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+
   dispose() {
     if (this.ctx) {
       this.ctx.close();

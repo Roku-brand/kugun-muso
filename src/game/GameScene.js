@@ -57,6 +57,10 @@ export class GameScene {
     this.touchGunHeld = false;
     this.machineGunCooldown = 0;
     this.spawnerTimers = { port: 0, runway: 0 };
+    this.lastDamageCause = null;
+    this.lastCollisionCause = null;
+    this.lowAltitudeThreshold = 10;
+    this.lowAltitudeWarningCooldown = 0;
     this.last = performance.now();
     this.initAllies();
     this.bindEvents();
@@ -303,6 +307,7 @@ export class GameScene {
   }
 
   updateWorld(dt) {
+    this.lowAltitudeWarningCooldown = Math.max(0, this.lowAltitudeWarningCooldown - dt);
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
     this.updateTotalWarSpawners(dt);
 
@@ -520,6 +525,7 @@ export class GameScene {
       if (b.pos.distanceTo(this.player.position) < 8) {
         b.pos.set(99999, 99999, 99999);
         if (b.mesh) this.scene.remove(b.mesh);
+        this.lastDamageCause = { type: 'shot', weapon: b.kind };
         this.player.applyDamage(b.damage ?? 10);
         this.audio.enemyShot(b.kind);
         this.spawnExplosion(this.player.position, 0xff4040);
@@ -560,6 +566,7 @@ export class GameScene {
 
     for (const enemy of this.enemies) {
       if (enemy.alive && enemy.mesh.position.distanceTo(this.player.position) < 9) {
+        this.lastCollisionCause = { type: 'enemy', enemyType: enemy.type };
         this.player.armor = 0;
       }
     }
@@ -571,20 +578,32 @@ export class GameScene {
         const dy = Math.abs(this.player.position.y - target.mesh.position.y);
         const dz = Math.abs(this.player.position.z - target.mesh.position.z);
         if (dx < box.x && dy < box.y && dz < box.z) {
+          this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
           this.player.armor = 0;
         }
         continue;
       }
 
       if (target.mesh.position.distanceTo(this.player.position) < target.radius) {
+        this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
         this.player.armor = 0;
       }
     }
   }
 
   checkGameState() {
-    if (this.player.position.y <= 0 || this.player.armor <= 0) {
-      this.finish(false, 'ゲームオーバー');
+    if (this.player.position.y > 0 && this.player.position.y <= this.lowAltitudeThreshold && this.lowAltitudeWarningCooldown <= 0) {
+      this.audio.altitudeWarning();
+      this.lowAltitudeWarningCooldown = 0.7;
+    }
+
+    if (this.player.position.y <= 0) {
+      this.finish(false, 'ゲームオーバー', this.getGameOverReason('crash'));
+      return;
+    }
+
+    if (this.player.armor <= 0) {
+      this.finish(false, 'ゲームオーバー', this.getGameOverReason('armorBreak'));
       return;
     }
 
@@ -602,14 +621,14 @@ export class GameScene {
     }
   }
 
-  finish(success, title) {
+  finish(success, title, detailMessage = null) {
     this.finished = true;
     this.paused = false;
     this.overlayRoot.classList.remove('hidden');
     this.overlayRoot.innerHTML = `
       <div class="result-panel ${success ? 'clear' : 'over'}">
         <h2>${title}</h2>
-        <p>${success ? (this.stage === 'totalWar' ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : '任務失敗。機体を喪失しました。'}</p>
+        <p>${success ? (this.stage === 'totalWar' ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : (detailMessage ?? '任務失敗。機体を喪失しました。')}</p>
         <button id="retry">リトライ</button>
         <button id="back">トップへ戻る</button>
       </div>
@@ -619,6 +638,55 @@ export class GameScene {
       location.reload();
     });
     this.overlayRoot.querySelector('#back').addEventListener('click', this.onExit);
+  }
+
+
+  getGameOverReason(reasonType) {
+    if (reasonType === 'crash') {
+      return '墜落：高度を維持できず地表へ激突しました。';
+    }
+
+    if (this.lastCollisionCause) {
+      if (this.lastCollisionCause.type === 'enemy') {
+        return `衝突：${this.enemyTypeLabel(this.lastCollisionCause.enemyType)}と空中衝突しました。`;
+      }
+      return `衝突：${this.objectiveLabel(this.lastCollisionCause.objective)}に接触しました。`;
+    }
+
+    if (this.lastDamageCause?.type === 'shot') {
+      return `銃撃：${this.weaponLabel(this.lastDamageCause.weapon)}で撃墜されました。`;
+    }
+
+    return '機体損壊：敵の攻撃で機体耐久値が尽きました。';
+  }
+
+  enemyTypeLabel(type) {
+    const labels = {
+      fighter: '敵戦闘機',
+      ship: '敵艦艇',
+      turret: '対空砲台',
+    };
+    return labels[type] ?? '敵機';
+  }
+
+  objectiveLabel(objective) {
+    const labels = {
+      hq: '軍事本部施設',
+      portSpawner: '港湾施設',
+      runwaySpawner: '滑走路施設',
+      ship: '艦艇',
+      terrain: '地形障害物',
+    };
+    return labels[objective] ?? '構造物';
+  }
+
+  weaponLabel(kind) {
+    const labels = {
+      enemyMissile: '敵ミサイル',
+      enemyMachineGun: '敵機銃',
+      enemyCannon: '敵艦砲',
+    };
+    return labels[kind] ?? '敵火器';
   }
 
   updateHUD() {
