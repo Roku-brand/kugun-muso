@@ -1,6 +1,12 @@
 import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 
 let ENEMY_SERIAL = 1;
+const FLIGHT_BOUNDS = {
+  minX: -280,
+  maxX: 280,
+  minY: 0,
+  maxY: 420,
+};
 
 export class Enemy {
   constructor({ type, mesh, health = 1, speed = 0, behavior = {} }) {
@@ -97,6 +103,23 @@ export class Enemy {
       const adjustedSpeed = THREE.MathUtils.damp(currentSpeed, targetSpeed, profile.accel, dt);
       this.velocity.setLength(adjustedSpeed);
       this.mesh.position.addScaledVector(this.velocity, dt);
+
+      this.mesh.position.x = THREE.MathUtils.clamp(this.mesh.position.x, FLIGHT_BOUNDS.minX, FLIGHT_BOUNDS.maxX);
+      this.mesh.position.y = THREE.MathUtils.clamp(this.mesh.position.y, FLIGHT_BOUNDS.minY, FLIGHT_BOUNDS.maxY);
+
+      if (
+        (this.mesh.position.x <= FLIGHT_BOUNDS.minX && this.velocity.x < 0)
+        || (this.mesh.position.x >= FLIGHT_BOUNDS.maxX && this.velocity.x > 0)
+      ) {
+        this.velocity.x *= -0.35;
+      }
+
+      if (
+        (this.mesh.position.y <= FLIGHT_BOUNDS.minY && this.velocity.y < 0)
+        || (this.mesh.position.y >= FLIGHT_BOUNDS.maxY && this.velocity.y > 0)
+      ) {
+        this.velocity.y *= -0.35;
+      }
 
       const lookDir = this.velocity.clone().normalize();
       this.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), lookDir);
