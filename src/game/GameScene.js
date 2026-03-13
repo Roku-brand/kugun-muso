@@ -4,6 +4,8 @@ import { StageManager } from './StageManager.js';
 import { HUD } from '../ui/HUD.js';
 import { AudioManager } from '../audio/AudioManager.js';
 
+const COMBAT_SPEED_SCALE = 0.6;
+
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit }) {
     this.canvas = canvas;
@@ -172,9 +174,10 @@ export class GameScene {
     this.last = now;
 
     if (!this.finished) {
-      this.readInput(dt);
-      this.player.update(dt);
-      this.updateWorld(dt);
+      const combatDt = dt * COMBAT_SPEED_SCALE;
+      this.readInput(combatDt);
+      this.player.update(combatDt);
+      this.updateWorld(combatDt);
       this.checkGameState();
       this.updateHUD();
     }
