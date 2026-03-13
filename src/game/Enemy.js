@@ -3,7 +3,7 @@ import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 let ENEMY_SERIAL = 1;
 
 export class Enemy {
-  constructor({ type, mesh, health = 1, speed = 0 }) {
+  constructor({ type, mesh, health = 1, speed = 0, behavior = {} }) {
     this.id = ENEMY_SERIAL++;
     this.type = type;
     this.mesh = mesh;
@@ -17,19 +17,40 @@ export class Enemy {
     this.verticalAmp = 1.8 + Math.random() * 2.6;
     this.verticalSpeed = 1.3 + Math.random() * 1.6;
     this.bankBias = (Math.random() - 0.5) * 0.9;
+    this.behavior = {
+      engageTime: behavior.engageTime ?? 0,
+      spreadWeight: behavior.spreadWeight ?? 0,
+      spreadPoint: behavior.spreadPoint ?? null,
+    };
+    this.elapsed = 0;
   }
 
   update(dt, playerPos, bullets, createBulletMesh) {
     if (!this.alive) return;
+    this.elapsed += dt;
 
     if (this.type === 'fighter') {
       const toPlayer = playerPos.clone().sub(this.mesh.position).normalize();
+      const engageRatio = this.behavior.engageTime > 0
+        ? THREE.MathUtils.clamp(1 - this.elapsed / this.behavior.engageTime, 0, 1)
+        : 0;
+
+      const spreadDir = this.behavior.spreadPoint
+        ? this.behavior.spreadPoint.clone().sub(this.mesh.position).normalize()
+        : new THREE.Vector3();
+
       const swirl = new THREE.Vector3(
         Math.sin(this.phase * this.weaveSpeed),
         Math.sin(this.phase * this.verticalSpeed) * 0.35,
         Math.cos(this.phase * (this.weaveSpeed * 0.9) + this.bankBias),
       ).multiplyScalar(this.weaveAmp);
-      const dir = toPlayer.add(swirl).normalize();
+
+      const spreadMix = (1 - engageRatio) * this.behavior.spreadWeight;
+      const dir = toPlayer
+        .multiplyScalar(1 - spreadMix)
+        .add(spreadDir.multiplyScalar(spreadMix))
+        .add(swirl)
+        .normalize();
       this.mesh.position.addScaledVector(dir, this.speed * dt);
       this.mesh.position.y += Math.sin(this.phase * this.verticalSpeed + this.bankBias) * dt * this.verticalAmp;
       this.mesh.lookAt(this.mesh.position.clone().add(dir));
