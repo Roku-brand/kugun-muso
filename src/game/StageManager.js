@@ -161,11 +161,6 @@ export class StageManager {
     });
     this.stageObjects.push(...islandCore);
 
-    const harborRing = this.makeHarborRing();
-    harborRing.position.set(0, 24, -1180 * areaScale);
-    this.scene.add(harborRing);
-    this.stageObjects.push(harborRing);
-
     const fortress = this.makeFortressComplex();
     fortress.position.set(0, 66, -1180 * areaScale);
     this.scene.add(fortress);
@@ -490,30 +485,6 @@ export class StageManager {
     const houseRoof = new THREE.MeshStandardMaterial({ color: 0x7b4135, roughness: 0.72, metalness: 0.1 });
     const treeLeaf = new THREE.MeshStandardMaterial({ color: 0x436a3f, roughness: 0.88, metalness: 0.04 });
     const treeTrunk = new THREE.MeshStandardMaterial({ color: 0x6b4a33, roughness: 0.9, metalness: 0.04 });
-
-    const beach = new THREE.Mesh(new THREE.RingGeometry(radiusX * 0.8 * areaScale, radiusX * 1.06 * areaScale, 60), sand);
-    beach.rotation.x = -Math.PI / 2;
-    beach.position.set(x + 14 * areaScale, 2.1, z + 6 * areaScale);
-    this.scene.add(beach);
-    islandAssets.push(beach);
-
-    const roadLoop = new THREE.Mesh(new THREE.RingGeometry(radiusX * 0.42 * areaScale, radiusX * 0.48 * areaScale, 48), road);
-    roadLoop.rotation.x = -Math.PI / 2;
-    roadLoop.position.set(x - 16 * areaScale, height + 0.4, z + 12 * areaScale);
-    this.scene.add(roadLoop);
-    islandAssets.push(roadLoop);
-
-    for (let i = 0; i < 6; i += 1) {
-      const lane = new THREE.Mesh(new THREE.BoxGeometry(120 * areaScale, 1.2, 10 * areaScale), road);
-      lane.position.set(
-        x + Math.cos((i / 6) * Math.PI * 2 + seed) * radiusX * 0.25 * areaScale,
-        height + 0.5,
-        z + Math.sin((i / 6) * Math.PI * 2 + seed) * radiusZ * 0.22 * areaScale,
-      );
-      lane.rotation.y = (i / 6) * Math.PI;
-      this.scene.add(lane);
-      islandAssets.push(lane);
-    }
 
     for (let i = 0; i < 12; i += 1) {
       const house = new THREE.Group();
