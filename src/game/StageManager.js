@@ -461,16 +461,25 @@ export class StageManager {
     const group = new THREE.Group();
     const concrete = new THREE.MeshStandardMaterial({ color: 0x6f7882, roughness: 0.76, metalness: 0.12 });
     const steel = new THREE.MeshStandardMaterial({ color: 0x8e99a3, roughness: 0.52, metalness: 0.36 });
+    const hull = new THREE.MeshStandardMaterial({ color: 0x2f3c48, roughness: 0.48, metalness: 0.45 });
+    const trim = new THREE.MeshStandardMaterial({ color: 0xa7b0b8, roughness: 0.5, metalness: 0.32 });
+    const containerColors = [0xb2583f, 0x496aa3, 0x7b8f55, 0x8a5b95, 0x6d757d];
 
     const mainPier = new THREE.Mesh(new THREE.BoxGeometry(320, 8, 52), concrete);
     mainPier.position.y = 4;
     const sidePier = new THREE.Mesh(new THREE.BoxGeometry(150, 6, 26), concrete);
     sidePier.position.set(-105, 7, -34);
 
-    const dockedShip = new THREE.Mesh(new THREE.BoxGeometry(90, 16, 22), new THREE.MeshStandardMaterial({ color: 0x334250, roughness: 0.5, metalness: 0.35 }));
-    dockedShip.position.set(68, 12, 19);
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 16), steel);
-    bridge.position.set(74, 24, 20);
+    const dockedShip = new THREE.Mesh(new THREE.BoxGeometry(108, 14, 24), hull);
+    dockedShip.position.set(62, 10, 18);
+    const bow = new THREE.Mesh(new THREE.ConeGeometry(8, 16, 6), hull);
+    bow.rotation.z = Math.PI / 2;
+    bow.scale.set(1, 0.88, 1.5);
+    bow.position.set(116, 10, 18);
+    const sternDeck = new THREE.Mesh(new THREE.BoxGeometry(20, 7, 22), trim);
+    sternDeck.position.set(14, 17, 18);
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(22, 14, 16), trim);
+    bridge.position.set(28, 24, 18);
 
     const craneBase = new THREE.Mesh(new THREE.BoxGeometry(18, 14, 18), steel);
     craneBase.position.set(-120, 10, 2);
@@ -478,7 +487,49 @@ export class StageManager {
     craneArm.position.set(-90, 30, 2);
     craneArm.rotation.z = -0.28;
 
-    group.add(mainPier, sidePier, dockedShip, bridge, craneBase, craneArm);
+    const craneCabin = new THREE.Mesh(new THREE.BoxGeometry(8, 6, 7), trim);
+    craneCabin.position.set(-110, 24, 1);
+    const craneHookCable = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 20, 8), steel);
+    craneHookCable.position.set(-62, 19, 2);
+    const craneHook = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), trim);
+    craneHook.position.set(-62, 9, 2);
+
+    for (let row = 0; row < 2; row += 1) {
+      for (let col = 0; col < 5; col += 1) {
+        const container = new THREE.Mesh(
+          new THREE.BoxGeometry(16, 6, 6),
+          new THREE.MeshStandardMaterial({
+            color: containerColors[(row * 5 + col) % containerColors.length],
+            roughness: 0.62,
+            metalness: 0.26,
+          }),
+        );
+        container.position.set(-10 + col * 20, 11 + row * 6.2, -12);
+        group.add(container);
+      }
+    }
+
+    const fuelTank = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 14, 18), concrete);
+    fuelTank.rotation.z = Math.PI / 2;
+    fuelTank.position.set(-138, 12, -24);
+    const serviceRoad = new THREE.Mesh(new THREE.BoxGeometry(300, 0.5, 8), new THREE.MeshStandardMaterial({ color: 0x4a5058, roughness: 0.8, metalness: 0.08 }));
+    serviceRoad.position.set(0, 8.4, -25);
+
+    group.add(
+      mainPier,
+      sidePier,
+      dockedShip,
+      bow,
+      sternDeck,
+      bridge,
+      craneBase,
+      craneArm,
+      craneCabin,
+      craneHookCable,
+      craneHook,
+      fuelTank,
+      serviceRoad,
+    );
     return group;
   }
 
@@ -486,27 +537,78 @@ export class StageManager {
     const group = new THREE.Group();
     const tarmac = new THREE.MeshStandardMaterial({ color: 0x3b4047, roughness: 0.82, metalness: 0.1 });
     const paint = new THREE.MeshStandardMaterial({ color: 0xd7d9dc, roughness: 0.36, metalness: 0.18 });
+    const yellowPaint = new THREE.MeshStandardMaterial({ color: 0xe8c85f, roughness: 0.44, metalness: 0.14 });
+    const concrete = new THREE.MeshStandardMaterial({ color: 0x747b84, roughness: 0.7, metalness: 0.16 });
 
-    const runway = new THREE.Mesh(new THREE.BoxGeometry(340, 2.8, 86), tarmac);
+    const runway = new THREE.Mesh(new THREE.BoxGeometry(360, 2.8, 92), tarmac);
     runway.position.y = 1.4;
+    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(372, 1.6, 112), concrete);
+    shoulder.position.y = 0.8;
 
-    for (let i = -3; i <= 3; i++) {
-      const stripe = new THREE.Mesh(new THREE.BoxGeometry(24, 0.3, 3.2), paint);
-      stripe.position.set(i * 44, 2.95, 0);
-      group.add(stripe);
+    for (let i = -8; i <= 8; i += 1) {
+      if (i === 0) continue;
+      const centerlineDash = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 2.2), paint);
+      centerlineDash.position.set(i * 18, 2.95, 0);
+      group.add(centerlineDash);
     }
 
+    for (let i = 0; i < 4; i += 1) {
+      const leftThreshold = new THREE.Mesh(new THREE.BoxGeometry(20, 0.3, 2), paint);
+      leftThreshold.position.set(-157 + i * 5.2, 2.95, -18 + i * 12);
+      const rightThreshold = leftThreshold.clone();
+      rightThreshold.position.x = 157 - i * 5.2;
+      group.add(leftThreshold, rightThreshold);
+    }
+
+    for (let i = -7; i <= 7; i += 1) {
+      if (Math.abs(i) < 2) continue;
+      const edgeLightL = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), new THREE.MeshStandardMaterial({ color: 0x9dd7ff, emissive: 0x2f5f8b, emissiveIntensity: 0.8 }));
+      edgeLightL.position.set(i * 22, 3.3, -43);
+      const edgeLightR = edgeLightL.clone();
+      edgeLightR.position.z = 43;
+      group.add(edgeLightL, edgeLightR);
+    }
+
+    const taxiway = new THREE.Mesh(new THREE.BoxGeometry(130, 1.4, 26), tarmac);
+    taxiway.position.set(-106, 1.1, -57);
+    const taxiLine = new THREE.Mesh(new THREE.BoxGeometry(122, 0.24, 1.4), yellowPaint);
+    taxiLine.position.set(-106, 2.0, -57);
+    const blastPad = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 88), concrete);
+    blastPad.position.set(176, 2.0, 0);
+
     const hangarL = new THREE.Mesh(new THREE.BoxGeometry(58, 18, 30), new THREE.MeshStandardMaterial({ color: 0x6d737c, roughness: 0.66, metalness: 0.2 }));
-    hangarL.position.set(-116, 9, -44);
+    hangarL.position.set(-118, 9, -42);
     const hangarR = hangarL.clone();
     hangarR.position.x = 116;
 
-    const parkedJet = this.makeFighter();
-    parkedJet.scale.setScalar(1.1);
-    parkedJet.rotation.y = Math.PI;
-    parkedJet.position.set(0, 6, 28);
+    const shelterL = new THREE.Mesh(new THREE.BoxGeometry(28, 9, 16), concrete);
+    shelterL.position.set(-156, 4.5, 39);
+    const shelterR = shelterL.clone();
+    shelterR.position.x = 156;
 
-    group.add(runway, hangarL, hangarR, parkedJet);
+    const parkedJet = this.makeFighter();
+    parkedJet.scale.setScalar(1.08);
+    parkedJet.rotation.y = Math.PI;
+    parkedJet.position.set(-88, 5.5, -56);
+
+    const parkedJet2 = this.makeFighter();
+    parkedJet2.scale.setScalar(1.04);
+    parkedJet2.rotation.y = Math.PI * 0.92;
+    parkedJet2.position.set(-128, 5.4, -56);
+
+    group.add(
+      shoulder,
+      runway,
+      taxiway,
+      taxiLine,
+      blastPad,
+      hangarL,
+      hangarR,
+      shelterL,
+      shelterR,
+      parkedJet,
+      parkedJet2,
+    );
     return group;
   }
   makeGroundTurret() {
