@@ -167,6 +167,11 @@ export class StageManager {
     this.scene.add(fortress);
     this.stageObjects.push(fortress);
 
+    const reinforcedWalls = this.makeReinforcedWallRing();
+    reinforcedWalls.position.set(0, 67, -1180 * areaScale);
+    this.scene.add(reinforcedWalls);
+    this.stageObjects.push(reinforcedWalls);
+
     const hq = this.makeHeadquarters();
     hq.position.set(0, 74, -1240 * areaScale);
     hq.scale.setScalar(1.35);
@@ -217,6 +222,12 @@ export class StageManager {
       [230, 64, -1190],
       [-40, 64, -1360],
       [50, 64, -980],
+      [-280, 65, -1240],
+      [-180, 65, -980],
+      [185, 65, -980],
+      [285, 65, -1240],
+      [-20, 65, -1460],
+      [30, 65, -900],
     ].map((point) => this.scalePoint(point, areaScale));
 
     defensePositions.forEach((pos) => {
@@ -234,6 +245,10 @@ export class StageManager {
       [220, 66, -1040],
       [-100, 66, -1360],
       [110, 66, -1360],
+      [-250, 66, -1140],
+      [250, 66, -1140],
+      [-150, 66, -1420],
+      [155, 66, -1420],
     ].map((point) => this.scalePoint(point, areaScale));
 
     samPositions.forEach((pos) => {
@@ -242,6 +257,22 @@ export class StageManager {
       this.scene.add(sam);
       this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: 1 }));
       this.targets.push({ mesh: sam, radius: 11, type: 'building' });
+    });
+
+    const guardTowerPositions = [
+      [-310, 68, -1060],
+      [320, 68, -1060],
+      [-310, 68, -1320],
+      [320, 68, -1320],
+    ].map((point) => this.scalePoint(point, areaScale));
+
+    guardTowerPositions.forEach((pos) => {
+      const tower = this.makeWatchTower();
+      tower.position.set(...pos);
+      tower.scale.setScalar(1.08);
+      this.scene.add(tower);
+      this.enemies.push(new Enemy({ type: 'turret', mesh: tower, health: 3 }));
+      this.targets.push({ mesh: tower, radius: 18, type: 'building' });
     });
 
     const fleetSpecs = this.scaleFleetSpecs([
@@ -487,6 +518,48 @@ export class StageManager {
     center.position.set(0, 15, -70);
 
     group.add(outerWall, innerCut, bunkerL, bunkerR, center);
+    return group;
+  }
+
+  makeReinforcedWallRing() {
+    const group = new THREE.Group();
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x656d76, roughness: 0.74, metalness: 0.2 });
+    const gateMat = new THREE.MeshStandardMaterial({ color: 0x4f5861, roughness: 0.62, metalness: 0.34 });
+
+    const northWall = new THREE.Mesh(new THREE.BoxGeometry(500, 18, 22), wallMat);
+    northWall.position.set(0, 9, -182);
+    const southWall = northWall.clone();
+    southWall.position.z = 182;
+
+    const westWall = new THREE.Mesh(new THREE.BoxGeometry(22, 18, 350), wallMat);
+    westWall.position.set(-260, 9, 0);
+    const eastWall = westWall.clone();
+    eastWall.position.x = 260;
+
+    const northGate = new THREE.Mesh(new THREE.BoxGeometry(100, 16, 18), gateMat);
+    northGate.position.set(0, 8, -182);
+    const southGate = northGate.clone();
+    southGate.position.z = 182;
+
+    const hedgeMounds = [
+      [-165, 6, -138],
+      [165, 6, -138],
+      [-165, 6, 138],
+      [165, 6, 138],
+      [0, 6, -120],
+      [0, 6, 120],
+    ];
+
+    hedgeMounds.forEach(([x, y, z]) => {
+      const mound = new THREE.Mesh(
+        new THREE.CylinderGeometry(20, 25, 12, 10),
+        new THREE.MeshStandardMaterial({ color: 0x4a6542, roughness: 0.9, metalness: 0.04 }),
+      );
+      mound.position.set(x, y, z);
+      group.add(mound);
+    });
+
+    group.add(northWall, southWall, westWall, eastWall, northGate, southGate);
     return group;
   }
 
