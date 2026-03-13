@@ -166,13 +166,21 @@ export class StageManager {
       x: 0,
       z: -1180 * areaScale,
       areaScale,
-      radiusX: 640,
-      radiusZ: 520,
+      radiusX: 420,
+      radiusZ: 320,
       height: 48,
       seed: 17,
       shorelineTilt: 0.28,
     });
     this.stageObjects.push(...islandCore);
+    this.addIslandCollisionTarget({
+      x: 0,
+      z: -1180 * areaScale,
+      areaScale,
+      radiusX: 420,
+      radiusZ: 320,
+      height: 48,
+    });
 
     const fortress = this.makeFortressComplex();
     fortress.position.set(0, 66, -1180 * areaScale);
@@ -387,6 +395,14 @@ export class StageManager {
       shorelineTilt: 0.33,
     });
     this.stageObjects.push(...islandCore);
+    this.addIslandCollisionTarget({
+      x: 0,
+      z: -900 * areaScale,
+      areaScale,
+      radiusX: 430,
+      radiusZ: 320,
+      height: 68,
+    });
     const hq = this.makeHeadquarters();
     hq.position.set(0, 82, -930 * areaScale);
     this.scene.add(hq);
@@ -490,6 +506,22 @@ export class StageManager {
 
     this.addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height, islandAssets, seed });
     return islandAssets;
+  }
+
+  addIslandCollisionTarget({ x, z, areaScale, radiusX, radiusZ, height }) {
+    const collisionAnchor = new THREE.Object3D();
+    collisionAnchor.position.set(x, Math.max(24, height * 0.55), z);
+    this.stageObjects.push(collisionAnchor);
+
+    this.targets.push({
+      mesh: collisionAnchor,
+      type: 'terrain',
+      collisionHalfExtents: {
+        x: radiusX * areaScale * 0.94,
+        y: Math.max(32, height),
+        z: radiusZ * areaScale * 0.94,
+      },
+    });
   }
 
   addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height, islandAssets, seed }) {
