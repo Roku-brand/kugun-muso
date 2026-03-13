@@ -244,6 +244,7 @@ export class GameScene {
   togglePauseMenu() {
     if (this.finished) return;
     this.paused = !this.paused;
+    this.hud.setControlsEnabled(!this.paused);
     if (this.paused) {
       this.showPauseMenu();
     } else {
@@ -264,6 +265,7 @@ export class GameScene {
     `;
     this.overlayRoot.querySelector('#resume').addEventListener('click', () => {
       this.paused = false;
+      this.hud.setControlsEnabled(true);
       this.hideOverlay();
       this.last = performance.now();
     });
@@ -703,6 +705,7 @@ export class GameScene {
   finish(success, title, detailMessage = null) {
     this.finished = true;
     this.paused = false;
+    this.hud.setControlsEnabled(false);
     this.overlayRoot.classList.remove('hidden');
     this.overlayRoot.innerHTML = `
       <div class="result-panel ${success ? 'clear' : 'over'}">
