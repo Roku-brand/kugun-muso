@@ -150,27 +150,32 @@ export class StageManager {
     this.stageObjects.push(sea);
 
     const island = new THREE.Mesh(
-      new THREE.CylinderGeometry(340 * areaScale, 430 * areaScale, 90, 30),
+      new THREE.CylinderGeometry(380 * areaScale, 460 * areaScale, 46, 36),
       new THREE.MeshStandardMaterial({ color: 0x425f3d, roughness: 0.88, metalness: 0.08 }),
     );
-    island.position.set(0, 45, -1180 * areaScale);
+    island.position.set(0, 23, -1180 * areaScale);
     this.scene.add(island);
     this.stageObjects.push(island);
 
+    const harborRing = this.makeHarborRing();
+    harborRing.position.set(0, 24, -1180 * areaScale);
+    this.scene.add(harborRing);
+    this.stageObjects.push(harborRing);
+
     const fortress = this.makeFortressComplex();
-    fortress.position.set(0, 90, -1180 * areaScale);
+    fortress.position.set(0, 66, -1180 * areaScale);
     this.scene.add(fortress);
     this.stageObjects.push(fortress);
 
     const hq = this.makeHeadquarters();
-    hq.position.set(0, 98, -1240 * areaScale);
+    hq.position.set(0, 74, -1240 * areaScale);
     hq.scale.setScalar(1.35);
     this.scene.add(hq);
-    this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: 8 }));
+    this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: 16 }));
     this.targets.push({ mesh: hq, radius: 56, type: 'building', objective: 'hq' });
 
     const port = this.makeMegaPortFacility();
-    port.position.set(-150 * areaScale, 78, -1040 * areaScale);
+    port.position.set(-240 * areaScale, 52, -1090 * areaScale);
     this.scene.add(port);
     this.enemies.push(new Enemy({ type: 'turret', mesh: port, health: 5, canFire: false }));
     this.targets.push({
@@ -182,24 +187,36 @@ export class StageManager {
     });
 
     const runway = this.makeAirfieldRunway();
-    runway.position.set(150 * areaScale, 76, -1110 * areaScale);
+    runway.position.set(132 * areaScale, 49, -1110 * areaScale);
     this.scene.add(runway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: 5, canFire: false }));
     this.targets.push({
       mesh: runway,
+      radius: 210,
+      type: 'building',
+      objective: 'runwaySpawner',
+      collisionHalfExtents: { x: 230, y: 26, z: 70 },
+    });
+
+    const airportSupport = this.makeAirportSupportFacilities();
+    airportSupport.position.set(180 * areaScale, 50, -1210 * areaScale);
+    this.scene.add(airportSupport);
+    this.enemies.push(new Enemy({ type: 'turret', mesh: airportSupport, health: 6, canFire: false }));
+    this.targets.push({
+      mesh: airportSupport,
       radius: 170,
       type: 'building',
       objective: 'runwaySpawner',
-      collisionHalfExtents: { x: 175, y: 24, z: 54 },
+      collisionHalfExtents: { x: 150, y: 34, z: 110 },
     });
 
     const defensePositions = [
-      [-220, 86, -1190],
-      [-130, 86, -1320],
-      [130, 86, -1325],
-      [230, 86, -1190],
-      [-40, 86, -1360],
-      [50, 86, -980],
+      [-220, 64, -1190],
+      [-130, 64, -1320],
+      [130, 64, -1325],
+      [230, 64, -1190],
+      [-40, 64, -1360],
+      [50, 64, -980],
     ].map((point) => this.scalePoint(point, areaScale));
 
     defensePositions.forEach((pos) => {
@@ -211,12 +228,12 @@ export class StageManager {
     });
 
     const samPositions = [
-      [-210, 88, -1040],
-      [-140, 88, -980],
-      [120, 88, -980],
-      [220, 88, -1040],
-      [-100, 88, -1360],
-      [110, 88, -1360],
+      [-210, 66, -1040],
+      [-140, 66, -980],
+      [120, 66, -980],
+      [220, 66, -1040],
+      [-100, 66, -1360],
+      [110, 66, -1360],
     ].map((point) => this.scalePoint(point, areaScale));
 
     samPositions.forEach((pos) => {
@@ -545,6 +562,75 @@ export class StageManager {
       craneHook,
       fuelTank,
       serviceRoad,
+    );
+    return group;
+  }
+
+
+  makeHarborRing() {
+    const group = new THREE.Group();
+    const concrete = new THREE.MeshStandardMaterial({ color: 0x7a838c, roughness: 0.74, metalness: 0.14 });
+    const deck = new THREE.MeshStandardMaterial({ color: 0x8d969f, roughness: 0.62, metalness: 0.2 });
+    const steel = new THREE.MeshStandardMaterial({ color: 0x6c757e, roughness: 0.5, metalness: 0.42 });
+
+    const segments = [
+      { w: 500, d: 34, x: 0, z: -274 },
+      { w: 500, d: 34, x: 0, z: 274 },
+      { w: 34, d: 500, x: -274, z: 0 },
+      { w: 34, d: 500, x: 274, z: 0 },
+    ];
+
+    segments.forEach(({ w, d, x, z }) => {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w, 16, d), concrete);
+      wall.position.set(x, 8, z);
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(w * 0.94, 3, d * 0.94), deck);
+      cap.position.set(x, 16, z);
+      group.add(wall, cap);
+    });
+
+    for (let i = 0; i < 8; i += 1) {
+      const craneBase = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), steel);
+      craneBase.position.set(-210 + i * 60, 21, -276);
+      const craneArm = new THREE.Mesh(new THREE.BoxGeometry(26, 2.5, 3), steel);
+      craneArm.position.set(-200 + i * 60, 27, -276);
+      craneArm.rotation.z = -0.22;
+      group.add(craneBase, craneArm);
+    }
+
+    return group;
+  }
+
+  makeAirportSupportFacilities() {
+    const group = new THREE.Group();
+    const concrete = new THREE.MeshStandardMaterial({ color: 0x7a828c, roughness: 0.72, metalness: 0.18 });
+    const wall = new THREE.MeshStandardMaterial({ color: 0x666f79, roughness: 0.62, metalness: 0.22 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x96b2c9, roughness: 0.18, metalness: 0.3, transparent: true, opacity: 0.75 });
+
+    const warehouseA = new THREE.Mesh(new THREE.BoxGeometry(96, 24, 44), concrete);
+    warehouseA.position.set(-35, 12, 0);
+    const warehouseB = new THREE.Mesh(new THREE.BoxGeometry(84, 22, 38), concrete);
+    warehouseB.position.set(54, 11, -12);
+
+    const controlBase = new THREE.Mesh(new THREE.CylinderGeometry(12, 14, 26, 16), wall);
+    controlBase.position.set(88, 13, 48);
+    const controlCabin = new THREE.Mesh(new THREE.CylinderGeometry(9, 10, 10, 16), wall);
+    controlCabin.position.set(88, 31, 48);
+    const controlGlass = new THREE.Mesh(new THREE.CylinderGeometry(9.4, 9.4, 4.6, 16), glass);
+    controlGlass.position.set(88, 36, 48);
+    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 10, 10), wall);
+    antenna.position.set(88, 43, 48);
+
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(230, 1.5, 120), new THREE.MeshStandardMaterial({ color: 0x4b5057, roughness: 0.84, metalness: 0.08 }));
+    apron.position.set(30, 0.8, 22);
+
+    group.add(
+      apron,
+      warehouseA,
+      warehouseB,
+      controlBase,
+      controlCabin,
+      controlGlass,
+      antenna,
     );
     return group;
   }
