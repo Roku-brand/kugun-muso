@@ -1,6 +1,6 @@
 import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 import { Player } from './Player.js';
-import { StageManager } from './StageManager.js';
+import { ENEMY_DURABILITY, StageManager } from './StageManager.js';
 import { Enemy } from './Enemy.js';
 import { HUD } from '../ui/HUD.js';
 import { AudioManager } from '../audio/AudioManager.js';
@@ -510,7 +510,10 @@ export class GameScene {
     ship.position.set(origin.x + (Math.random() - 0.5) * 120, 6, origin.z + 160 + Math.random() * 120);
     ship.rotation.y = Math.PI + (Math.random() - 0.5) * 0.3;
     this.scene.add(ship);
-    const enemy = new Enemy({ type: 'ship', mesh: ship, health: 2, speed: 10 + Math.random() * 3 });
+    const spawnedShipDurability = Math.random() > 0.5
+      ? ENEMY_DURABILITY.shipByRole.destroyer
+      : ENEMY_DURABILITY.shipByRole.frigate;
+    const enemy = new Enemy({ type: 'ship', mesh: ship, health: spawnedShipDurability, speed: 10 + Math.random() * 3 });
     this.enemies.push(enemy);
     this.stageManager.targets.push({ mesh: ship, radius: 24, type: 'ship' });
   }
@@ -525,7 +528,7 @@ export class GameScene {
     const enemy = new Enemy({
       type: 'fighter',
       mesh: fighter,
-      health: 1,
+      health: ENEMY_DURABILITY.fighter,
       speed: 82 + Math.random() * 16,
       behavior: {
         engageTime: 1.5 + Math.random() * 1.2,
