@@ -116,7 +116,31 @@ export class AudioManager {
     crackle.stop(now + 0.2);
   }
   machineGun() {
-    this.tone({ freq: 760 + Math.random() * 120, type: 'square', duration: 0.045, gain: 0.05 });
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const burst = this.ctx.createGain();
+    burst.gain.setValueAtTime(0.0001, now);
+    burst.gain.exponentialRampToValueAtTime(0.1 * this.settings.seVolume, now + 0.004);
+    burst.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
+    burst.connect(this.master);
+
+    const osc = this.ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(185, now);
+    osc.frequency.linearRampToValueAtTime(130, now + 0.06);
+
+    const toneShape = this.ctx.createGain();
+    toneShape.gain.setValueAtTime(0.0001, now);
+    toneShape.gain.exponentialRampToValueAtTime(0.9, now + 0.003);
+    toneShape.gain.exponentialRampToValueAtTime(0.0001, now + 0.024);
+    toneShape.gain.setValueAtTime(0.0001, now + 0.028);
+    toneShape.gain.exponentialRampToValueAtTime(0.7, now + 0.036);
+    toneShape.gain.exponentialRampToValueAtTime(0.0001, now + 0.056);
+
+    osc.connect(toneShape);
+    toneShape.connect(burst);
+    osc.start(now);
+    osc.stop(now + 0.07);
   }
 
   enemyShot(kind = 'enemyMachineGun') {

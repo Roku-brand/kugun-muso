@@ -2,6 +2,7 @@ import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 
 const SENS_MAP = { low: 0.6, medium: 1, high: 1.5 };
 const MAX_PITCH_ANGLE = 1.05;
+const MAX_ALTITUDE = 1082;
 
 export class Player {
   constructor(camera, settings) {
@@ -55,7 +56,7 @@ export class Player {
     this.position.addScaledVector(this.forward, this.speed * dt);
 
     this.position.x = THREE.MathUtils.clamp(this.position.x, -280, 280);
-    this.position.y = THREE.MathUtils.clamp(this.position.y, 0, 420);
+    this.position.y = THREE.MathUtils.clamp(this.position.y, 0, MAX_ALTITUDE);
 
     this.missileReloadTimer += dt;
     if (this.missiles < this.maxMissiles && this.missileReloadTimer >= 6) {
