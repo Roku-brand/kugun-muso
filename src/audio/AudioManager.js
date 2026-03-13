@@ -145,16 +145,17 @@ export class AudioManager {
 
   enemyShot(kind = 'enemyMachineGun') {
     if (kind === 'enemyMissile') {
-      this.tone({ freq: 220, type: 'sawtooth', duration: 0.2, gain: 0.1 });
+      this.explosion();
       return;
     }
 
     if (kind === 'enemyCannon') {
-      this.tone({ freq: 120, type: 'triangle', duration: 0.24, gain: 0.13 });
+      this.explosion();
       return;
     }
 
-    this.tone({ freq: 300, type: 'square', duration: 0.08, gain: 0.07 });
+    this.tone({ freq: 960, type: 'triangle', duration: 0.045, gain: 0.09 });
+    this.tone({ freq: 680, type: 'square', duration: 0.07, gain: 0.045 });
   }
   explosion() {
     if (!this.ctx) return;
