@@ -12,9 +12,9 @@ export class Player {
     this.worldUp = new THREE.Vector3(0, 1, 0);
     this.yaw = Math.PI;
     this.pitch = 0;
-    this.speed = 180;
-    this.minSpeed = 110;
-    this.maxSpeed = 360;
+    this.speed = 140;
+    this.minSpeed = 85;
+    this.maxSpeed = 280;
     this.throttle = 0.45;
     this.health = 3;
     this.ammo = 20;
@@ -29,8 +29,8 @@ export class Player {
 
   update(dt) {
     const sens = SENS_MAP[this.settings.controlSensitivity] ?? 1;
-    const yawSpeed = 1.6 * sens;
-    const pitchSpeed = 1.2 * sens;
+    const yawSpeed = 1.25 * sens;
+    const pitchSpeed = 0.95 * sens;
 
     this.yaw -= this.input.yaw * yawSpeed * dt;
     this.pitch += this.input.pitch * pitchSpeed * dt;
