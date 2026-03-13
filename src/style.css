@@ -197,6 +197,12 @@ input[type='range'] { width: 100%; }
 }
 .controls-panel { pointer-events: auto; }
 
+.hud-input-disabled .controls-panel,
+.hud-input-disabled .top-right-menu {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
 .stick-zone {
   width: 90px;
   height: 90px;

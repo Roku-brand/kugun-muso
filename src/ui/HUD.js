@@ -4,6 +4,8 @@ export class HUD {
     this.actions = actions;
     this.elements = {};
     this.stick = { active: false, x: 0, y: 0 };
+    this.throttleActive = false;
+    this.controlsEnabled = true;
   }
 
   mount() {
@@ -71,7 +73,10 @@ export class HUD {
     };
 
     this.bindTouchControls();
-    this.elements.fireBtn.addEventListener('click', this.actions.onFire);
+    this.elements.fireBtn.addEventListener('click', () => {
+      if (!this.controlsEnabled) return;
+      this.actions.onFire();
+    });
     this.bindGunButton();
     this.elements.homeBtn.addEventListener('click', this.actions.onMenu);
     this.bindThrottleBar();
@@ -81,6 +86,7 @@ export class HUD {
     const gun = this.elements.gunBtn;
     const stop = () => this.actions.onGunStop();
     gun.addEventListener('pointerdown', (e) => {
+      if (!this.controlsEnabled) return;
       gun.setPointerCapture(e.pointerId);
       this.actions.onGunStart();
     });
@@ -95,11 +101,12 @@ export class HUD {
     const zone = this.elements.stickZone;
     const knob = this.elements.stickKnob;
     zone.addEventListener('pointerdown', (e) => {
+      if (!this.controlsEnabled) return;
       this.stick.active = true;
       zone.setPointerCapture(e.pointerId);
       this.updateStick(e, zone, knob);
     });
-    zone.addEventListener('pointermove', (e) => this.stick.active && this.updateStick(e, zone, knob));
+    zone.addEventListener('pointermove', (e) => this.stick.active && this.controlsEnabled && this.updateStick(e, zone, knob));
     zone.addEventListener('pointerup', () => {
       this.stick.active = false;
       this.actions.onStick(0, 0);
@@ -109,12 +116,20 @@ export class HUD {
 
   bindThrottleBar() {
     const bar = this.elements.throttleBar;
-    const stopThrottle = () => this.actions.onThrottle(0);
+    const stopThrottle = () => {
+      this.throttleActive = false;
+      this.actions.onThrottle(0);
+    };
     bar.addEventListener('pointerdown', (e) => {
+      if (!this.controlsEnabled) return;
+      this.throttleActive = true;
       bar.setPointerCapture(e.pointerId);
       this.updateThrottleInput(e, bar);
     });
-    bar.addEventListener('pointermove', (e) => this.updateThrottleInput(e, bar));
+    bar.addEventListener('pointermove', (e) => {
+      if (!this.controlsEnabled || !this.throttleActive) return;
+      this.updateThrottleInput(e, bar);
+    });
     bar.addEventListener('pointerup', stopThrottle);
     bar.addEventListener('pointercancel', stopThrottle);
     bar.addEventListener('pointerleave', (e) => {
@@ -164,6 +179,19 @@ export class HUD {
     this.drawRadar(state.radar);
     this.updateLockGuide(state.lockGuide);
     this.drawEnemyGauges(state.enemyGauges ?? []);
+  }
+
+  setControlsEnabled(enabled) {
+    this.controlsEnabled = enabled;
+    this.root.classList.toggle('hud-input-disabled', !enabled);
+    if (!enabled) {
+      this.stick.active = false;
+      this.throttleActive = false;
+      this.actions.onGunStop();
+      this.actions.onThrottle(0);
+      this.actions.onStick(0, 0);
+      this.elements.stickKnob.style.transform = 'translate(0px, 0px)';
+    }
   }
 
 
