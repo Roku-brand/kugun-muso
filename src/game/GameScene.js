@@ -96,13 +96,19 @@ export class GameScene {
   fireMissile() {
     if (this.finished || !this.player.consumeAmmo()) return;
     const lockTarget = this.getLockCandidate(this.player.position, this.player.forward);
-    const pos = this.player.position.clone().add(this.player.forward.clone().multiplyScalar(6));
+    const pos = this.player.position
+      .clone()
+      .add(this.player.forward.clone().multiplyScalar(7))
+      .add(this.player.right.clone().multiplyScalar(0.8))
+      .add(this.player.worldUp.clone().multiplyScalar(-1.9));
     const vel = this.player.forward.clone().multiplyScalar(240);
+    const missileMesh = this.makeMissileMesh();
     this.missiles.push({
       pos,
       vel,
       life: 4,
-      mesh: this.makeMissileMesh(),
+      mesh: missileMesh.group,
+      flame: missileMesh.flame,
       homing: Boolean(lockTarget),
       targetId: lockTarget?.id ?? null,
       targetRef: lockTarget ?? null,
@@ -115,22 +121,29 @@ export class GameScene {
     const group = new THREE.Group();
 
     const body = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.24, 0.3, 2.8, 12),
-      new THREE.MeshStandardMaterial({ color: this.settings.missileColor, metalness: 0.75, roughness: 0.35 }),
+      new THREE.CylinderGeometry(0.2, 0.28, 3.3, 16),
+      new THREE.MeshStandardMaterial({ color: this.settings.missileColor, metalness: 0.8, roughness: 0.3 }),
     );
     body.rotation.z = Math.PI / 2;
 
     const nose = new THREE.Mesh(
-      new THREE.ConeGeometry(0.24, 0.7, 12),
+      new THREE.ConeGeometry(0.22, 0.95, 16),
       new THREE.MeshStandardMaterial({ color: 0xdedede, metalness: 0.8, roughness: 0.25 }),
     );
     nose.rotation.z = -Math.PI / 2;
-    nose.position.x = 1.7;
+    nose.position.x = 2.1;
+
+    const stripe = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.205, 0.205, 0.3, 16),
+      new THREE.MeshStandardMaterial({ color: 0xe84a5f, metalness: 0.4, roughness: 0.55 }),
+    );
+    stripe.rotation.z = Math.PI / 2;
+    stripe.position.x = 0.9;
 
     const finMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.65, roughness: 0.5 });
     for (let i = 0; i < 4; i++) {
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.32), finMat);
-      fin.position.x = -1.05;
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.045, 0.32), finMat);
+      fin.position.x = -1.25;
       fin.rotation.x = (Math.PI / 2) * i;
       group.add(fin);
     }
@@ -140,10 +153,17 @@ export class GameScene {
       new THREE.MeshStandardMaterial({ color: 0x232323, metalness: 0.4, roughness: 0.6 }),
     );
     exhaust.rotation.z = Math.PI / 2;
-    exhaust.position.x = -1.5;
+    exhaust.position.x = -1.8;
 
-    group.add(body, nose, exhaust);
-    return group;
+    const flame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.16, 0.9, 12),
+      new THREE.MeshBasicMaterial({ color: 0xff9e2f, transparent: true, opacity: 0.85 }),
+    );
+    flame.rotation.z = Math.PI / 2;
+    flame.position.x = -2.35;
+
+    group.add(body, nose, stripe, exhaust, flame);
+    return { group, flame };
   }
 
   loop = () => {
@@ -178,6 +198,11 @@ export class GameScene {
       m.life -= dt;
       m.mesh.position.copy(m.pos);
       m.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), m.vel.clone().normalize());
+      if (m.flame) {
+        const flicker = 0.65 + Math.random() * 0.5;
+        m.flame.scale.set(flicker, flicker, flicker);
+        m.flame.material.opacity = 0.6 + Math.random() * 0.35;
+      }
     });
 
     this.enemyBullets.forEach((b) => {
