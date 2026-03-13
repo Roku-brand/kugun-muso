@@ -1,4 +1,3 @@
-import './style.css';
 import { GameScene } from './game/GameScene.js';
 import { SETTINGS_DEFAULTS, loadSettings, resetSettings, saveSettings } from './ui/settingsStore.js';
 
