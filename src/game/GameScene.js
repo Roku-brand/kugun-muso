@@ -153,7 +153,7 @@ export class GameScene {
     const bullet = {
       pos,
       vel,
-      life: 1.5,
+      life: 1.8,
       damage: 10,
       mesh: this.makePlayerMachineGunMesh(),
     };
