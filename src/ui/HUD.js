@@ -13,6 +13,12 @@ export class HUD {
         <div>速度: <span id="speed">0</span> km/h</div>
         <div>高度: <span id="altitude">0</span> m</div>
       </div>
+      <div class="aim-reticle" id="aimReticle">
+        <div class="reticle-ring"></div>
+        <div class="reticle-h"></div>
+        <div class="reticle-v"></div>
+      </div>
+      <div class="lock-guide hidden" id="lockGuide"></div>
       <div class="hud right-mid">
         <div>残弾: <span id="ammo">20</span></div>
         <div>体力: <span id="hp">❤❤❤</span></div>
@@ -47,6 +53,8 @@ export class HUD {
       decelBtn: this.root.querySelector('#decelBtn'),
       stickZone: this.root.querySelector('#stick-zone'),
       stickKnob: this.root.querySelector('#stick-knob'),
+      aimReticle: this.root.querySelector('#aimReticle'),
+      lockGuide: this.root.querySelector('#lockGuide'),
     };
 
     this.bindTouchControls();
@@ -95,6 +103,18 @@ export class HUD {
     this.elements.hp.textContent = '❤'.repeat(state.health) + '・'.repeat(3 - state.health);
     this.elements.throttle.textContent = Math.round(state.throttle * 100);
     this.drawRadar(state.radar);
+    this.updateLockGuide(state.lockGuide);
+  }
+
+
+  updateLockGuide(lockGuide) {
+    if (!lockGuide) {
+      this.elements.lockGuide.classList.add('hidden');
+      return;
+    }
+    this.elements.lockGuide.classList.remove('hidden');
+    this.elements.lockGuide.style.left = `${lockGuide.x}px`;
+    this.elements.lockGuide.style.top = `${lockGuide.y}px`;
   }
 
   drawRadar(radarState) {

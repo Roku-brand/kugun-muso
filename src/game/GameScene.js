@@ -38,6 +38,7 @@ export class GameScene {
     this.touchThrottle = 0;
     this.touchStick = { x: 0, y: 0 };
     this.missiles = [];
+    this.missileLockDistance = 180;
     this.enemyBullets = [];
     this.effects = [];
     this.lockOnTimer = 0;
@@ -94,9 +95,18 @@ export class GameScene {
 
   fireMissile() {
     if (this.finished || !this.player.consumeAmmo()) return;
+    const lockTarget = this.getLockCandidate(this.player.position, this.player.forward);
     const pos = this.player.position.clone().add(this.player.forward.clone().multiplyScalar(6));
     const vel = this.player.forward.clone().multiplyScalar(240);
-    this.missiles.push({ pos, vel, life: 4, mesh: this.makeMissileMesh() });
+    this.missiles.push({
+      pos,
+      vel,
+      life: 4,
+      mesh: this.makeMissileMesh(),
+      homing: Boolean(lockTarget),
+      targetId: lockTarget?.id ?? null,
+      targetRef: lockTarget ?? null,
+    });
     this.scene.add(this.missiles.at(-1).mesh);
     this.audio.missile();
   }
@@ -157,15 +167,17 @@ export class GameScene {
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, () => this.makeEnemyBulletMesh(enemy.type)));
 
     this.missiles.forEach((m) => {
-      const target = this.getClosestLivingEnemy(m.pos);
-      if (target) {
-        const desired = target.mesh.position.clone().sub(m.pos).normalize().multiplyScalar(240);
-        m.vel.lerp(desired, 0.035);
+      if (m.homing) {
+        const target = this.resolveMissileTarget(m);
+        if (target) {
+          const desired = target.mesh.position.clone().sub(m.pos).normalize().multiplyScalar(240);
+          m.vel.lerp(desired, 0.04);
+        }
       }
       m.pos.addScaledVector(m.vel, dt);
       m.life -= dt;
       m.mesh.position.copy(m.pos);
-      m.mesh.lookAt(m.pos.clone().add(m.vel));
+      m.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), m.vel.clone().normalize());
     });
 
     this.enemyBullets.forEach((b) => {
@@ -301,6 +313,7 @@ export class GameScene {
       radarObjects.push({ x: THREE.MathUtils.clamp(rightDot * scale, -72, 72), y: THREE.MathUtils.clamp(-forwardDot * scale, -72, 72), kind: 'enemy' });
     });
 
+    const lockCandidate = this.getLockCandidate(this.player.position, this.player.forward);
     this.hud.update({
       speed: this.player.speed,
       altitude: this.player.position.y,
@@ -308,6 +321,7 @@ export class GameScene {
       health: this.player.health,
       throttle: this.player.throttle,
       radar: radarObjects,
+      lockGuide: lockCandidate ? this.toScreenPoint(lockCandidate.mesh.position) : null,
     });
   }
 
@@ -328,6 +342,44 @@ export class GameScene {
   nearestEnemyDistance() {
     const e = this.getClosestLivingEnemy(this.player.position);
     return e ? e.mesh.position.distanceTo(this.player.position) : Infinity;
+  }
+
+
+  getLockCandidate(origin, forward) {
+    let best = null;
+    let bestScore = -Infinity;
+    this.enemies.forEach((enemy) => {
+      if (!enemy.alive) return;
+      const toEnemy = enemy.mesh.position.clone().sub(origin);
+      const dist = toEnemy.length();
+      if (dist > this.missileLockDistance) return;
+      const dir = toEnemy.normalize();
+      const alignment = dir.dot(forward);
+      if (alignment < 0.78) return;
+      const score = alignment - dist / this.missileLockDistance;
+      if (score > bestScore) {
+        bestScore = score;
+        best = enemy;
+      }
+    });
+    return best;
+  }
+
+  resolveMissileTarget(missile) {
+    if (missile.targetRef?.alive) return missile.targetRef;
+    if (!missile.targetId) return null;
+    const found = this.enemies.find((e) => e.id === missile.targetId && e.alive);
+    missile.targetRef = found ?? null;
+    return missile.targetRef;
+  }
+
+  toScreenPoint(worldPos) {
+    const p = worldPos.clone().project(this.camera);
+    if (p.z < -1 || p.z > 1) return null;
+    return {
+      x: (p.x * 0.5 + 0.5) * window.innerWidth,
+      y: (-p.y * 0.5 + 0.5) * window.innerHeight,
+    };
   }
 
   dispose() {
