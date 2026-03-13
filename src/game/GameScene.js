@@ -6,6 +6,7 @@ import { HUD } from '../ui/HUD.js';
 import { AudioManager } from '../audio/AudioManager.js';
 
 const COMBAT_SPEED_SCALE = 0.6;
+const DIFFICULTY_ALLY_COUNT = { easy: 3, normal: 1, hard: 0 };
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit }) {
@@ -45,6 +46,7 @@ export class GameScene {
     this.touchStick = { x: 0, y: 0 };
     this.missiles = [];
     this.playerBullets = [];
+    this.allyBullets = [];
     this.missileLockDistance = 360;
     this.enemyBullets = [];
     this.effects = [];
@@ -56,6 +58,7 @@ export class GameScene {
     this.machineGunCooldown = 0;
     this.spawnerTimers = { port: 0, runway: 0 };
     this.last = performance.now();
+    this.initAllies();
     this.bindEvents();
   }
 
@@ -260,6 +263,45 @@ export class GameScene {
     this.overlayRoot.innerHTML = '';
   }
 
+  initAllies() {
+    const allyCount = DIFFICULTY_ALLY_COUNT[this.settings.difficulty] ?? DIFFICULTY_ALLY_COUNT.normal;
+    this.allies = Array.from({ length: allyCount }, (_, index) => ({
+      index,
+      cooldown: 0.5 + index * 0.2,
+      offset: new THREE.Vector3(20 + index * 6, 6 + (index % 2) * 3, index % 2 === 0 ? -16 : 16),
+    }));
+  }
+
+  updateAllies(dt) {
+    if (!this.allies.length) return;
+    const target = this.getClosestLivingEnemy(this.player.position);
+    if (!target) return;
+
+    this.allies.forEach((ally, idx) => {
+      ally.cooldown -= dt;
+      if (ally.cooldown > 0) return;
+      ally.cooldown = 0.24 + idx * 0.02;
+
+      const side = idx % 2 === 0 ? -1 : 1;
+      const shootPos = this.player.position
+        .clone()
+        .add(this.player.right.clone().multiplyScalar(ally.offset.x * side))
+        .add(this.player.worldUp.clone().multiplyScalar(ally.offset.y))
+        .add(this.player.forward.clone().multiplyScalar(ally.offset.z));
+
+      const aim = target.mesh.position.clone().sub(shootPos).normalize();
+      const bullet = {
+        pos: shootPos,
+        vel: aim.multiplyScalar(340),
+        life: 1.8,
+        damage: 8,
+        mesh: this.makeAllyMachineGunMesh(),
+      };
+      this.allyBullets.push(bullet);
+      bullet.mesh.position.copy(bullet.pos);
+    });
+  }
+
   updateWorld(dt) {
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
     this.updateTotalWarSpawners(dt);
@@ -288,7 +330,17 @@ export class GameScene {
       if (b.mesh) b.mesh.position.copy(b.pos);
     });
 
+    this.updateAllies(dt);
+
     this.playerBullets.forEach((b) => {
+      b.pos.addScaledVector(b.vel, dt);
+      b.life -= dt;
+      if (b.mesh) {
+        b.mesh.position.copy(b.pos);
+        b.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), b.vel.clone().normalize());
+      }
+    });
+    this.allyBullets.forEach((b) => {
       b.pos.addScaledVector(b.vel, dt);
       b.life -= dt;
       if (b.mesh) {
@@ -314,6 +366,12 @@ export class GameScene {
     });
 
     this.playerBullets = this.playerBullets.filter((b) => {
+      const keep = b.life > 0;
+      if (!keep && b.mesh) this.scene.remove(b.mesh);
+      return keep;
+    });
+
+    this.allyBullets = this.allyBullets.filter((b) => {
       const keep = b.life > 0;
       if (!keep && b.mesh) this.scene.remove(b.mesh);
       return keep;
@@ -409,6 +467,16 @@ export class GameScene {
     return tracer;
   }
 
+  makeAllyMachineGunMesh() {
+    const tracer = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.07, 0.09, 1.6, 8),
+      new THREE.MeshBasicMaterial({ color: 0x7fffd4 }),
+    );
+    tracer.rotation.z = Math.PI / 2;
+    this.scene.add(tracer);
+    return tracer;
+  }
+
   updateEffects(dt) {
     this.effects.forEach((e) => {
       e.life -= dt;
@@ -458,6 +526,8 @@ export class GameScene {
       }
     });
 
+    this.updateAllies(dt);
+
     this.playerBullets.forEach((b) => {
       this.enemies.forEach((enemy) => {
         if (!enemy.alive) return;
@@ -467,6 +537,21 @@ export class GameScene {
           if (!enemy.alive) {
             this.audio.explosion();
             this.spawnExplosion(enemy.mesh.position, 0xffb777);
+            this.scene.remove(enemy.mesh);
+          }
+        }
+      });
+    });
+
+    this.allyBullets.forEach((b) => {
+      this.enemies.forEach((enemy) => {
+        if (!enemy.alive) return;
+        if (b.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 7 : 13)) {
+          enemy.applyDamage(b.damage);
+          b.life = 0;
+          if (!enemy.alive) {
+            this.audio.explosion();
+            this.spawnExplosion(enemy.mesh.position, 0x8fffd4);
             this.scene.remove(enemy.mesh);
           }
         }
@@ -640,6 +725,7 @@ export class GameScene {
     this.stageManager.cleanup();
     this.missiles.forEach((m) => this.scene.remove(m.mesh));
     this.playerBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
+    this.allyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.audio.dispose();
     this.renderer.dispose();

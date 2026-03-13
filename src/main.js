@@ -140,6 +140,13 @@ function renderSettingPanel() {
             .join('')}
         </select>
       </label>
+      <label>難易度
+        <select id="difficulty">
+          ${['easy', 'normal', 'hard']
+            .map((v) => `<option value="${v}" ${settings.difficulty === v ? 'selected' : ''}>${labelDifficulty(v)}</option>`)
+            .join('')}
+        </select>
+      </label>
       <button class="reset-btn" id="resetSetting">設定を初期化</button>
     </div>
   `;
@@ -165,6 +172,7 @@ function bindSettingInputs(root) {
         seVolume: Number(document.getElementById('seVolume')?.value ?? settings.seVolume),
         masterVolume: Number(document.getElementById('masterVolume')?.value ?? settings.masterVolume),
         quality: document.getElementById('quality')?.value ?? settings.quality,
+        difficulty: document.getElementById('difficulty')?.value ?? settings.difficulty,
       };
       saveSettings(settings);
     });
@@ -203,6 +211,10 @@ function labelSensitivity(v) {
 
 function labelQuality(v) {
   return { low: '低', medium: '中', high: '高' }[v];
+}
+
+function labelDifficulty(v) {
+  return { easy: '簡単', normal: 'ふつう', hard: '難しい' }[v];
 }
 
 window.addEventListener('beforeunload', () => {
