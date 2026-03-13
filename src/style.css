@@ -63,6 +63,7 @@ html, body {
 .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
 .stage-card { border: 1px solid #4d728d; padding: 10px; border-radius: 10px; cursor: pointer; background: #102030; min-height: 94px; }
 .stage-card h3 { margin: 0 0 6px; font-size: clamp(0.88rem, 1.9vw, 1rem); }
+.stage-card h3 span { font-size: 0.85em; color: #8ec6df; font-weight: 500; }
 .stage-card p { margin: 0; font-size: clamp(0.74rem, 1.6vw, 0.9rem); }
 .stage-card.selected { outline: 2px solid #65ddff; background: #123049; }
 .sortie-btn, .reset-btn { margin-top: 10px; background: linear-gradient(135deg, #1a5e8e, #27c0d8); border: none; color: white; padding: 9px 14px; border-radius: 10px; font-size: clamp(0.8rem, 1.8vw, 1rem); cursor: pointer; }

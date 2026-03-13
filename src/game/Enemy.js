@@ -9,7 +9,7 @@ const FLIGHT_BOUNDS = {
 };
 
 export class Enemy {
-  constructor({ type, mesh, health = 1, speed = 0, behavior = {} }) {
+  constructor({ type, mesh, health = 1, speed = 0, behavior = {}, canFire = true }) {
     this.id = ENEMY_SERIAL++;
     this.type = type;
     this.mesh = mesh;
@@ -27,6 +27,7 @@ export class Enemy {
       preferredRange: behavior.preferredRange ?? 260,
       rangeTolerance: behavior.rangeTolerance ?? 70,
     };
+    this.canFire = canFire;
     this.elapsed = 0;
 
     if (this.type === 'fighter') {
@@ -158,6 +159,8 @@ export class Enemy {
       this.mesh.position.x += Math.sin(this.phase) * dt * 2;
       this.phase += dt * 0.3;
     }
+
+    if (!this.canFire) return;
 
     this.cooldown -= dt;
     const shotDistance = playerPos.distanceTo(this.mesh.position);
