@@ -1,7 +1,10 @@
 import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 
+let ENEMY_SERIAL = 1;
+
 export class Enemy {
   constructor({ type, mesh, health = 1, speed = 0 }) {
+    this.id = ENEMY_SERIAL++;
     this.type = type;
     this.mesh = mesh;
     this.health = health;
@@ -9,6 +12,11 @@ export class Enemy {
     this.cooldown = Math.random() * 2;
     this.alive = true;
     this.phase = Math.random() * Math.PI * 2;
+    this.weaveAmp = 0.35 + Math.random() * 0.7;
+    this.weaveSpeed = 0.75 + Math.random() * 0.9;
+    this.verticalAmp = 1.8 + Math.random() * 2.6;
+    this.verticalSpeed = 1.3 + Math.random() * 1.6;
+    this.bankBias = (Math.random() - 0.5) * 0.9;
   }
 
   update(dt, playerPos, bullets) {
@@ -16,13 +24,17 @@ export class Enemy {
 
     if (this.type === 'fighter') {
       const toPlayer = playerPos.clone().sub(this.mesh.position).normalize();
-      const swirl = new THREE.Vector3(Math.sin(this.phase), Math.sin(this.phase * 1.8) * 0.4, Math.cos(this.phase)).multiplyScalar(0.28);
+      const swirl = new THREE.Vector3(
+        Math.sin(this.phase * this.weaveSpeed),
+        Math.sin(this.phase * this.verticalSpeed) * 0.35,
+        Math.cos(this.phase * (this.weaveSpeed * 0.9) + this.bankBias),
+      ).multiplyScalar(this.weaveAmp);
       const dir = toPlayer.add(swirl).normalize();
       this.mesh.position.addScaledVector(dir, this.speed * dt);
-      this.mesh.position.y += Math.sin(this.phase * 2.1) * dt * 3.4;
+      this.mesh.position.y += Math.sin(this.phase * this.verticalSpeed + this.bankBias) * dt * this.verticalAmp;
       this.mesh.lookAt(this.mesh.position.clone().add(dir));
-      this.mesh.rotateZ(Math.sin(this.phase * 2.4) * dt * 0.45);
-      this.phase += dt * 1.05;
+      this.mesh.rotateZ((Math.sin(this.phase * 2.4) * 0.3 + this.bankBias) * dt);
+      this.phase += dt * (0.8 + this.weaveSpeed * 0.45);
     }
 
     if (this.type === 'ship') {
