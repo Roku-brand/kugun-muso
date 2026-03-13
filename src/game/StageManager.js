@@ -172,6 +172,23 @@ export class StageManager {
     this.scene.add(reinforcedWalls);
     this.stageObjects.push(reinforcedWalls);
 
+    const fortressVanguard = this.makeFortressVanguardHarbor();
+    fortressVanguard.position.set(0, 54, -1060 * areaScale);
+    this.scene.add(fortressVanguard);
+    this.stageObjects.push(fortressVanguard);
+
+    const rearRunway = this.makeRearWingRunwayComplex();
+    rearRunway.position.set(0, 56, -1310 * areaScale);
+    this.scene.add(rearRunway);
+    this.enemies.push(new Enemy({ type: 'turret', mesh: rearRunway, health: 7, canFire: false }));
+    this.targets.push({
+      mesh: rearRunway,
+      radius: 265,
+      type: 'building',
+      objective: 'runwaySpawner',
+      collisionHalfExtents: { x: 300, y: 30, z: 95 },
+    });
+
     const hq = this.makeHeadquarters();
     hq.position.set(0, 74, -1240 * areaScale);
     hq.scale.setScalar(1.35);
@@ -784,6 +801,67 @@ export class StageManager {
       parkedJet,
       parkedJet2,
     );
+    return group;
+  }
+
+  makeFortressVanguardHarbor() {
+    const group = new THREE.Group();
+    const concrete = new THREE.MeshStandardMaterial({ color: 0x7f8790, roughness: 0.72, metalness: 0.14 });
+    const dockTop = new THREE.MeshStandardMaterial({ color: 0x9aa2ab, roughness: 0.62, metalness: 0.2 });
+    const steel = new THREE.MeshStandardMaterial({ color: 0x666f78, roughness: 0.48, metalness: 0.4 });
+
+    const basin = new THREE.Mesh(new THREE.BoxGeometry(480, 14, 160), concrete);
+    basin.position.set(0, 0, 0);
+    const quay = new THREE.Mesh(new THREE.BoxGeometry(450, 3.2, 128), dockTop);
+    quay.position.set(0, 8.6, 0);
+
+    const leftBreakwater = new THREE.Mesh(new THREE.BoxGeometry(38, 18, 210), concrete);
+    leftBreakwater.position.set(-210, 3, 0);
+    const rightBreakwater = leftBreakwater.clone();
+    rightBreakwater.position.x = 210;
+
+    const centerBunker = new THREE.Mesh(new THREE.BoxGeometry(124, 16, 34), concrete);
+    centerBunker.position.set(0, 11, 38);
+
+    for (let i = -4; i <= 4; i += 1) {
+      const bollard = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 5, 10), steel);
+      bollard.position.set(i * 48, 11.5, -55);
+      group.add(bollard);
+    }
+
+    group.add(basin, quay, leftBreakwater, rightBreakwater, centerBunker);
+    return group;
+  }
+
+  makeRearWingRunwayComplex() {
+    const group = new THREE.Group();
+    const asphalt = new THREE.MeshStandardMaterial({ color: 0x3b4047, roughness: 0.82, metalness: 0.1 });
+    const concrete = new THREE.MeshStandardMaterial({ color: 0x747b84, roughness: 0.7, metalness: 0.16 });
+    const marking = new THREE.MeshStandardMaterial({ color: 0xe3e6e9, roughness: 0.38, metalness: 0.18 });
+
+    const runwayBase = new THREE.Mesh(new THREE.BoxGeometry(620, 3.2, 96), asphalt);
+    runwayBase.position.y = 1.6;
+    const runwayShoulder = new THREE.Mesh(new THREE.BoxGeometry(650, 1.6, 128), concrete);
+    runwayShoulder.position.y = 0.8;
+
+    for (let i = -13; i <= 13; i += 1) {
+      if (i === 0) continue;
+      const dash = new THREE.Mesh(new THREE.BoxGeometry(10, 0.3, 2.1), marking);
+      dash.position.set(i * 22, 3.35, 0);
+      group.add(dash);
+    }
+
+    const wingPadLeft = new THREE.Mesh(new THREE.BoxGeometry(188, 1.2, 66), concrete);
+    wingPadLeft.position.set(-210, 1.1, -86);
+    const wingPadRight = wingPadLeft.clone();
+    wingPadRight.position.x = 210;
+
+    const rearHangarL = new THREE.Mesh(new THREE.BoxGeometry(70, 18, 28), concrete);
+    rearHangarL.position.set(-250, 10, 86);
+    const rearHangarR = rearHangarL.clone();
+    rearHangarR.position.x = 250;
+
+    group.add(runwayShoulder, runwayBase, wingPadLeft, wingPadRight, rearHangarL, rearHangarR);
     return group;
   }
   makeGroundTurret() {
