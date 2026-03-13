@@ -6,6 +6,7 @@ export const SETTINGS_DEFAULTS = {
   seVolume: 0.7,
   masterVolume: 0.8,
   quality: 'high',
+  difficulty: 'normal',
 };
 
 const KEY = 'kugun_settings';
