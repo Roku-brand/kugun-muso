@@ -29,7 +29,13 @@ export class Player {
     this.missileReloadTimer = 0;
     this.machineGunReloadTimer = 0;
     this.input = { yaw: 0, pitch: 0, throttle: 0 };
+    this.mesh = null;
     this.syncCamera();
+  }
+
+  setVisual(mesh) {
+    this.mesh = mesh;
+    this.syncVisual();
   }
 
   setInput(nextInput) {
@@ -81,10 +87,18 @@ export class Player {
   }
 
   syncCamera() {
-    this.camera.position.copy(this.position);
-    const lookAt = this.position.clone().add(this.forward.clone().multiplyScalar(40));
+    const chaseOffset = this.forward.clone().multiplyScalar(-18).add(this.worldUp.clone().multiplyScalar(6.5));
+    this.camera.position.copy(this.position.clone().add(chaseOffset));
+    const lookAt = this.position.clone().add(this.forward.clone().multiplyScalar(70)).add(this.worldUp.clone().multiplyScalar(1.8));
     this.camera.up.set(0, 1, 0);
     this.camera.lookAt(lookAt);
+    this.syncVisual();
+  }
+
+  syncVisual() {
+    if (!this.mesh) return;
+    this.mesh.position.copy(this.position).add(this.worldUp.clone().multiplyScalar(-1.1));
+    this.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), this.forward.clone().normalize());
   }
 
   canFireMissile() {
