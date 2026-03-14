@@ -50,6 +50,9 @@ export class GameScene {
 
     this.stageManager = new StageManager(this.scene);
     this.enemies = this.stageManager.createStage(stage);
+    this.playerMesh = this.createPlayerVisual();
+    this.player.setVisual(this.playerMesh);
+    this.scene.add(this.playerMesh);
 
     this.audio = new AudioManager(settings);
     this.hud = new HUD(
@@ -579,6 +582,19 @@ export class GameScene {
     return tracer;
   }
 
+  createPlayerVisual() {
+    const fighter = this.stageManager.makeFighter();
+    fighter.scale.setScalar(0.7);
+    fighter.traverse((part) => {
+      if (!part.isMesh || !part.material) return;
+      part.material = part.material.clone();
+      if (part.material.color) {
+        part.material.color.offsetHSL(0.02, 0.22, 0.2);
+      }
+    });
+    return fighter;
+  }
+
   updateEffects(dt) {
     this.effects.forEach((e) => {
       e.life -= dt;
@@ -922,6 +938,7 @@ export class GameScene {
     this.allyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.allies.forEach((ally) => ally.mesh && this.scene.remove(ally.mesh));
     this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
+    if (this.playerMesh) this.scene.remove(this.playerMesh);
     this.audio.dispose();
     this.renderer.dispose();
   }
