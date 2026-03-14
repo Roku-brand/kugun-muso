@@ -50,14 +50,18 @@ export class GameScene {
     this.enemies = this.stageManager.createStage(stage);
 
     this.audio = new AudioManager(settings);
-    this.hud = new HUD(hudRoot, {
-      onFire: () => this.fireMissile(),
-      onGunStart: () => (this.touchGunHeld = true),
-      onGunStop: () => (this.touchGunHeld = false),
-      onThrottle: (v) => (this.touchThrottle = v),
-      onStick: (x, y) => (this.touchStick = { x, y }),
-      onMenu: () => this.togglePauseMenu(),
-    });
+    this.hud = new HUD(
+      hudRoot,
+      {
+        onFire: () => this.fireMissile(),
+        onGunStart: () => (this.touchGunHeld = true),
+        onGunStop: () => (this.touchGunHeld = false),
+        onThrottle: (v) => (this.touchThrottle = v),
+        onStick: (x, y) => (this.touchStick = { x, y }),
+        onMenu: () => this.togglePauseMenu(),
+      },
+      settings,
+    );
 
     this.keys = {};
     this.touchThrottle = 0;

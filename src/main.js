@@ -172,6 +172,26 @@ function renderSettingPanel() {
             .join('')}
         </select>
       </label>
+      <fieldset class="ui-offset-group">
+        <legend>操縦UI位置（左下）</legend>
+        <label>Xオフセット
+          <input type="range" id="pilotUiOffsetX" min="-120" max="120" step="1" value="${settings.pilotUiOffsetX}" />
+        </label>
+        <label>Yオフセット
+          <input type="range" id="pilotUiOffsetY" min="-120" max="120" step="1" value="${settings.pilotUiOffsetY}" />
+        </label>
+        <div class="offset-preview"><span id="pilotUiOffsetValue">X:${settings.pilotUiOffsetX} / Y:${settings.pilotUiOffsetY}</span></div>
+      </fieldset>
+      <fieldset class="ui-offset-group">
+        <legend>武装UI位置（右下）</legend>
+        <label>Xオフセット
+          <input type="range" id="weaponUiOffsetX" min="-120" max="120" step="1" value="${settings.weaponUiOffsetX}" />
+        </label>
+        <label>Yオフセット
+          <input type="range" id="weaponUiOffsetY" min="-120" max="120" step="1" value="${settings.weaponUiOffsetY}" />
+        </label>
+        <div class="offset-preview"><span id="weaponUiOffsetValue">X:${settings.weaponUiOffsetX} / Y:${settings.weaponUiOffsetY}</span></div>
+      </fieldset>
       <button class="reset-btn" id="resetSetting">設定を初期化</button>
     </div>
   `;
@@ -198,7 +218,19 @@ function bindSettingInputs(root) {
         masterVolume: Number(document.getElementById('masterVolume')?.value ?? settings.masterVolume),
         quality: document.getElementById('quality')?.value ?? settings.quality,
         difficulty: document.getElementById('difficulty')?.value ?? settings.difficulty,
+        pilotUiOffsetX: Number(document.getElementById('pilotUiOffsetX')?.value ?? settings.pilotUiOffsetX),
+        pilotUiOffsetY: Number(document.getElementById('pilotUiOffsetY')?.value ?? settings.pilotUiOffsetY),
+        weaponUiOffsetX: Number(document.getElementById('weaponUiOffsetX')?.value ?? settings.weaponUiOffsetX),
+        weaponUiOffsetY: Number(document.getElementById('weaponUiOffsetY')?.value ?? settings.weaponUiOffsetY),
       };
+      const pilotOffsetValue = document.getElementById('pilotUiOffsetValue');
+      const weaponOffsetValue = document.getElementById('weaponUiOffsetValue');
+      if (pilotOffsetValue) {
+        pilotOffsetValue.textContent = `X:${settings.pilotUiOffsetX} / Y:${settings.pilotUiOffsetY}`;
+      }
+      if (weaponOffsetValue) {
+        weaponOffsetValue.textContent = `X:${settings.weaponUiOffsetX} / Y:${settings.weaponUiOffsetY}`;
+      }
       saveSettings(settings);
     });
   });
