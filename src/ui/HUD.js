@@ -1,14 +1,21 @@
 export class HUD {
-  constructor(root, actions) {
+  constructor(root, actions, settings = {}) {
     this.root = root;
     this.actions = actions;
     this.elements = {};
     this.stick = { active: false, x: 0, y: 0 };
     this.throttleActive = false;
     this.controlsEnabled = true;
+    this.settings = settings;
   }
 
   mount() {
+
+    this.root.style.setProperty('--pilot-ui-offset-x', `${this.settings.pilotUiOffsetX ?? 0}px`);
+    this.root.style.setProperty('--pilot-ui-offset-y', `${this.settings.pilotUiOffsetY ?? 0}px`);
+    this.root.style.setProperty('--weapon-ui-offset-x', `${this.settings.weaponUiOffsetX ?? 0}px`);
+    this.root.style.setProperty('--weapon-ui-offset-y', `${this.settings.weaponUiOffsetY ?? 0}px`);
+
     this.root.innerHTML = `
       <div class="hud top-right-menu">
         <button id="homeBtn" class="menu-btn" aria-label="一時停止メニューを開く">ホーム</button>

@@ -7,6 +7,10 @@ export const SETTINGS_DEFAULTS = {
   masterVolume: 0.8,
   quality: 'high',
   difficulty: 'normal',
+  pilotUiOffsetX: 0,
+  pilotUiOffsetY: 0,
+  weaponUiOffsetX: 0,
+  weaponUiOffsetY: 0,
 };
 
 const KEY = 'kugun_settings';
