@@ -8,9 +8,30 @@ const STAGES = [
   { id: 'totalWar', name: '総力戦', desc: '要塞島の港と滑走路を破壊し、軍事本部を撃破せよ。' },
 ];
 
+const HOME_TABS = [
+  { id: 'customize', label: '1. カスタマイズ' },
+  { id: 'practice', label: '2. 練習' },
+  { id: 'combat', label: '3. 実戦' },
+  { id: 'records', label: '4. 記録' },
+];
+
+const RECORDS_KEY = 'kugun_records';
+const EMPTY_RECORDS = {
+  sorties: 0,
+  clears: 0,
+  failures: 0,
+  enemyKills: {
+    fighter: 0,
+    ship: 0,
+    turret: 0,
+  },
+};
+
 const app = document.getElementById('app');
 let selectedStage = STAGES[0].id;
 let settings = loadSettings();
+let activeTab = 'practice';
+let records = loadRecords();
 let gameScene = null;
 
 window.addEventListener('gesturestart', (event) => {
@@ -44,29 +65,11 @@ function renderTop() {
       </header>
 
       <main class="home-main">
-        <section class="hero-panel home-panel" id="panel-model"></section>
-        <section class="custom-panel home-panel" id="panel-custom"></section>
-      </main>
-
-      <section class="bottom-dock">
-        <section class="news-panel home-panel">
-          <h2>NEWS</h2>
-          <ul>
-            <li>2024/04/24</li>
-            <li>新イベント開催！</li>
-            <li>新鋭機F-35実装！</li>
-          </ul>
+        <section class="dashboard-shell">
+          <nav class="quadrant-tabs" id="quadrant-tabs" aria-label="トップタブ"></nav>
+          <section class="dashboard-panel home-panel" id="dashboard-content"></section>
         </section>
-        <section class="sortie-panel home-panel" id="panel-stage"></section>
-      </section>
-
-      <nav class="home-nav" aria-label="トップメニュー">
-        <button>格納庫</button>
-        <button>編成</button>
-        <button>任務</button>
-        <button class="active">ショップ</button>
-        <button>記録</button>
-      </nav>
+      </main>
 
       <section class="setting-drawer hidden" id="panel-setting">
         <div class="setting-drawer-head">
@@ -79,10 +82,44 @@ function renderTop() {
   `;
 
   bindSettingDrawer();
-  renderStagePanel();
-  renderModelPanel();
-  renderCustomPanel();
+  renderTabs();
+  renderActiveTab();
   renderSettingPanel();
+}
+
+function renderTabs() {
+  const nav = document.getElementById('quadrant-tabs');
+  nav.innerHTML = HOME_TABS.map((tab) => `
+    <button class="quadrant-tab ${activeTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">${tab.label}</button>
+  `).join('');
+
+  nav.querySelectorAll('.quadrant-tab').forEach((button) => {
+    button.addEventListener('click', () => {
+      activeTab = button.dataset.tab;
+      renderTabs();
+      renderActiveTab();
+    });
+  });
+}
+
+function renderActiveTab() {
+  const content = document.getElementById('dashboard-content');
+  if (activeTab === 'customize') {
+    renderCustomPanel(content);
+    return;
+  }
+
+  if (activeTab === 'practice') {
+    renderPracticePanel(content);
+    return;
+  }
+
+  if (activeTab === 'combat') {
+    renderCombatPanel(content);
+    return;
+  }
+
+  renderRecordsPanel(content);
 }
 
 function bindSettingDrawer() {
@@ -95,11 +132,10 @@ function bindSettingDrawer() {
   });
 }
 
-function renderStagePanel() {
-  const panel = document.getElementById('panel-stage');
+function renderPracticePanel(panel) {
   panel.innerHTML = `
-    <div class="sortie-title-row">
-      <h2>出撃チーム</h2>
+    <div class="panel-title-row">
+      <h2>練習ステージ</h2>
       <p>選択中: ${STAGES.find((stage) => stage.id === selectedStage)?.name}</p>
     </div>
     <div class="stage-button-list">
@@ -109,49 +145,35 @@ function renderStagePanel() {
             <span class="stage-order">STAGE ${index + 1}</span>
             <strong>${s.name}</strong>
             <small>${s.desc}</small>
-            <em>開始</em>
+            <em>プレイ</em>
           </button>
         `,
       ).join('')}
     </div>
-    <button class="sortie-btn" id="start-btn">作戦開始</button>
   `;
 
   panel.querySelectorAll('.stage-card').forEach((card) => {
     card.addEventListener('click', () => {
       selectedStage = card.dataset.stage;
-      renderStagePanel();
-      renderModelPanel();
+      renderPracticePanel(panel);
+      startBattle();
     });
   });
-
-  document.getElementById('start-btn').addEventListener('click', startBattle);
 }
 
-function renderModelPanel() {
-  const selected = STAGES.find((stage) => stage.id === selectedStage);
-  const panel = document.getElementById('panel-model');
+function renderCombatPanel(panel) {
   panel.innerHTML = `
-    <div class="model-heading">
-      <p class="hero-overline">航空母艦打撃群 / 出撃待機</p>
-      <h2>自機戦闘機モデル</h2>
-      <p class="hero-stage">${selected?.name ?? ''}</p>
+    <div class="panel-title-row">
+      <h2>実戦コース</h2>
     </div>
-    <div class="jet-model-view" aria-label="自機戦闘機モデル表示">
-      <div class="jet-cloud cloud-a"></div>
-      <div class="jet-cloud cloud-b"></div>
-      <div class="jet-cloud cloud-c"></div>
-      <div class="jet-wing"></div>
-      <div class="jet-body"></div>
-      <div class="jet-tail"></div>
-      <div class="jet-cockpit"></div>
+    <div class="placeholder-panel">
+      <p>近日公開（デモ）</p>
+      <small>将来的に長編ミッション・本格コースを実装予定です。</small>
     </div>
-    <p class="stage-desc">${selected?.desc ?? ''}</p>
   `;
 }
 
-function renderCustomPanel() {
-  const panel = document.getElementById('panel-custom');
+function renderCustomPanel(panel) {
   panel.innerHTML = `
     <h2>機体カスタマイズ</h2>
     <div class="setting-grid compact">
@@ -177,6 +199,25 @@ function renderCustomPanel() {
     </div>
   `;
   bindSettingInputs(panel);
+}
+
+function renderRecordsPanel(panel) {
+  panel.innerHTML = `
+    <div class="panel-title-row">
+      <h2>戦闘記録</h2>
+    </div>
+    <div class="records-grid">
+      <div class="record-pill"><span>出撃回数</span><strong>${records.sorties}</strong></div>
+      <div class="record-pill"><span>クリア回数</span><strong>${records.clears}</strong></div>
+      <div class="record-pill"><span>失敗回数</span><strong>${records.failures}</strong></div>
+    </div>
+    <h3 class="record-subtitle">敵種別撃墜数</h3>
+    <div class="records-grid">
+      <div class="record-pill"><span>敵戦闘機</span><strong>${records.enemyKills.fighter}</strong></div>
+      <div class="record-pill"><span>敵艦艇</span><strong>${records.enemyKills.ship}</strong></div>
+      <div class="record-pill"><span>対空砲台</span><strong>${records.enemyKills.turret}</strong></div>
+    </div>
+  `;
 }
 
 function renderSettingPanel() {
@@ -288,9 +329,20 @@ async function startBattle() {
     overlayRoot: document.getElementById('overlay'),
     stage: selectedStage,
     settings,
+    onEnemyDestroyed: (enemyType) => {
+      records.enemyKills[enemyType] = (records.enemyKills[enemyType] ?? 0) + 1;
+      saveRecords(records);
+    },
+    onBattleFinished: (success) => {
+      records.sorties += 1;
+      if (success) records.clears += 1;
+      else records.failures += 1;
+      saveRecords(records);
+    },
     onExit: () => {
       gameScene?.dispose();
       gameScene = null;
+      records = loadRecords();
       renderTop();
     },
   });
@@ -307,6 +359,29 @@ function labelQuality(v) {
 
 function labelDifficulty(v) {
   return { easy: '簡単', normal: 'ふつう', hard: '難しい' }[v];
+}
+
+function loadRecords() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECORDS_KEY));
+    if (!parsed) return structuredClone(EMPTY_RECORDS);
+    return {
+      sorties: Number(parsed.sorties) || 0,
+      clears: Number(parsed.clears) || 0,
+      failures: Number(parsed.failures) || 0,
+      enemyKills: {
+        fighter: Number(parsed.enemyKills?.fighter) || 0,
+        ship: Number(parsed.enemyKills?.ship) || 0,
+        turret: Number(parsed.enemyKills?.turret) || 0,
+      },
+    };
+  } catch {
+    return structuredClone(EMPTY_RECORDS);
+  }
+}
+
+function saveRecords(nextRecords) {
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(nextRecords));
 }
 
 window.addEventListener('beforeunload', () => {

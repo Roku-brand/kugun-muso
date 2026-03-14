@@ -26,13 +26,15 @@ const PLAYER_HORIZONTAL_BOUNDS = {
 };
 
 export class GameScene {
-  constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit }) {
+  constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
     this.canvas = canvas;
     this.hudRoot = hudRoot;
     this.overlayRoot = overlayRoot;
     this.stage = stage;
     this.settings = settings;
     this.onExit = onExit;
+    this.onEnemyDestroyed = onEnemyDestroyed;
+    this.onBattleFinished = onBattleFinished;
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: settings.quality !== 'low' });
     this.renderer.setPixelRatio(settings.quality === 'high' ? window.devicePixelRatio : 1);
@@ -611,7 +613,10 @@ export class GameScene {
           m.life = 0;
           this.spawnExplosion(enemy.mesh.position);
           this.audio.explosion();
-          if (!enemy.alive) this.scene.remove(enemy.mesh);
+          if (!enemy.alive) {
+            this.scene.remove(enemy.mesh);
+            this.onEnemyDestroyed?.(enemy.type);
+          }
         }
       });
     });
@@ -639,6 +644,7 @@ export class GameScene {
             this.audio.explosion();
             this.spawnExplosion(enemy.mesh.position, 0xffb777);
             this.scene.remove(enemy.mesh);
+            this.onEnemyDestroyed?.(enemy.type);
           }
         }
       });
@@ -654,6 +660,7 @@ export class GameScene {
             this.audio.explosion();
             this.spawnExplosion(enemy.mesh.position, 0x8fffd4);
             this.scene.remove(enemy.mesh);
+            this.onEnemyDestroyed?.(enemy.type);
           }
         }
       });
@@ -732,6 +739,7 @@ export class GameScene {
 
   finish(success, title, detailMessage = null) {
     this.finished = true;
+    this.onBattleFinished?.(success);
     this.paused = false;
     this.hud.setControlsEnabled(false);
     this.overlayRoot.classList.remove('hidden');
