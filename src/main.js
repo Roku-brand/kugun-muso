@@ -31,69 +31,94 @@ renderTop();
 
 function renderTop() {
   app.innerHTML = `
-    <div class="top-shell">
-      <header class="title-panel">
+    <div class="top-shell home-shell">
+      <header class="home-header">
         <h1>空軍無双</h1>
-        <p>近代空戦シミュレーション・プロトタイプ</p>
+        <button class="icon-setting" id="setting-toggle" aria-label="設定">⚙️</button>
       </header>
-      <div class="tabs">
-        <button class="tab active" data-tab="stage">ステージ選択</button>
-        <button class="tab" data-tab="custom">カスタマイズ</button>
-        <button class="tab" data-tab="setting">設定</button>
-      </div>
-      <section class="tab-panel" id="panel-stage"></section>
-      <section class="tab-panel hidden" id="panel-custom"></section>
-      <section class="tab-panel hidden" id="panel-setting"></section>
+      <main class="home-layout">
+        <section class="home-panel sortie-panel" id="panel-stage"></section>
+        <section class="home-panel model-panel" id="panel-model"></section>
+        <section class="home-panel custom-panel" id="panel-custom"></section>
+      </main>
+      <section class="setting-drawer hidden" id="panel-setting">
+        <div class="setting-drawer-head">
+          <h2>設定</h2>
+          <button class="setting-close" id="setting-close" aria-label="設定を閉じる">×</button>
+        </div>
+        <div id="setting-content"></div>
+      </section>
     </div>
   `;
 
-  bindTabs();
+  bindSettingDrawer();
   renderStagePanel();
+  renderModelPanel();
   renderCustomPanel();
   renderSettingPanel();
 }
 
-function bindTabs() {
-  const tabs = [...document.querySelectorAll('.tab')];
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      tabs.forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.add('hidden'));
-      document.getElementById(`panel-${tab.dataset.tab}`).classList.remove('hidden');
-    });
+function bindSettingDrawer() {
+  const drawer = document.getElementById('panel-setting');
+  document.getElementById('setting-toggle').addEventListener('click', () => {
+    drawer.classList.toggle('hidden');
+  });
+  document.getElementById('setting-close').addEventListener('click', () => {
+    drawer.classList.add('hidden');
   });
 }
 
 function renderStagePanel() {
   const panel = document.getElementById('panel-stage');
   panel.innerHTML = `
-    <div class="card-grid">
+    <h2>出撃</h2>
+    <div class="stage-button-list">
       ${STAGES.map(
         (s, index) => `
-          <article class="stage-card ${selectedStage === s.id ? 'selected' : ''}" data-stage="${s.id}">
-            <h3>${s.name} <span>（第${index + 1}ステージ）</span></h3>
-            <p>${s.desc}</p>
-          </article>
+          <button class="stage-card ${selectedStage === s.id ? 'selected' : ''}" data-stage="${s.id}">
+            <strong>${s.name}</strong>
+            <span>第${index + 1}ステージ</span>
+          </button>
         `,
       ).join('')}
     </div>
-    <button class="sortie-btn" id="start-btn">出撃</button>
+    <button class="sortie-btn" id="start-btn">出撃開始</button>
   `;
 
   panel.querySelectorAll('.stage-card').forEach((card) => {
     card.addEventListener('click', () => {
       selectedStage = card.dataset.stage;
       renderStagePanel();
+      renderModelPanel();
     });
   });
 
   document.getElementById('start-btn').addEventListener('click', startBattle);
 }
 
+function renderModelPanel() {
+  const selected = STAGES.find((stage) => stage.id === selectedStage);
+  const panel = document.getElementById('panel-model');
+  panel.innerHTML = `
+    <div class="model-heading">
+      <h2>自機戦闘機モデル</h2>
+      <p>${selected?.name ?? ''}</p>
+    </div>
+    <div class="jet-model-view" aria-label="自機戦闘機モデル表示">
+      <div class="jet-cloud cloud-a"></div>
+      <div class="jet-cloud cloud-b"></div>
+      <div class="jet-wing"></div>
+      <div class="jet-body"></div>
+      <div class="jet-tail"></div>
+    </div>
+    <p class="stage-desc">${selected?.desc ?? ''}</p>
+  `;
+}
+
 function renderCustomPanel() {
   const panel = document.getElementById('panel-custom');
   panel.innerHTML = `
+    <h2>カスタマイズ</h2>
     <div class="setting-grid">
       <label>機体カラー
         <input type="color" id="aircraftColor" value="${settings.aircraftColor}" />
@@ -120,7 +145,7 @@ function renderCustomPanel() {
 }
 
 function renderSettingPanel() {
-  const panel = document.getElementById('panel-setting');
+  const panel = document.getElementById('setting-content');
   panel.innerHTML = `
     <div class="setting-grid">
       <label>全体音量
