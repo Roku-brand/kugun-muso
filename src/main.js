@@ -13,7 +13,6 @@ let selectedStage = STAGES[0].id;
 let settings = loadSettings();
 let gameScene = null;
 
-
 window.addEventListener('gesturestart', (event) => {
   event.preventDefault();
 });
@@ -26,21 +25,49 @@ window.addEventListener(
   { passive: false },
 );
 
-
 renderTop();
 
 function renderTop() {
   app.innerHTML = `
     <div class="top-shell home-shell">
       <header class="home-header">
+        <div class="resource-strip" aria-label="リソース">
+          <div class="resource-pill"><span class="resource-dot gold"></span>520,000</div>
+          <div class="resource-pill"><span class="resource-dot blue"></span>1,900</div>
+          <div class="resource-pill"><span class="resource-dot silver"></span>380</div>
+        </div>
         <h1>空軍無双</h1>
-        <button class="icon-setting" id="setting-toggle" aria-label="設定">⚙️</button>
+        <div class="header-actions">
+          <button class="icon-mail" aria-label="お知らせ">✉️</button>
+          <button class="icon-setting" id="setting-toggle" aria-label="設定">⚙️</button>
+        </div>
       </header>
-      <main class="home-layout">
-        <section class="home-panel sortie-panel" id="panel-stage"></section>
-        <section class="home-panel model-panel" id="panel-model"></section>
-        <section class="home-panel custom-panel" id="panel-custom"></section>
+
+      <main class="home-main">
+        <section class="hero-panel home-panel" id="panel-model"></section>
+        <section class="custom-panel home-panel" id="panel-custom"></section>
       </main>
+
+      <section class="bottom-dock">
+        <section class="news-panel home-panel">
+          <h2>NEWS</h2>
+          <ul>
+            <li>2024/04/24</li>
+            <li>新イベント開催！</li>
+            <li>新鋭機F-35実装！</li>
+          </ul>
+        </section>
+        <section class="sortie-panel home-panel" id="panel-stage"></section>
+      </section>
+
+      <nav class="home-nav" aria-label="トップメニュー">
+        <button>格納庫</button>
+        <button>編成</button>
+        <button>任務</button>
+        <button class="active">ショップ</button>
+        <button>記録</button>
+      </nav>
+
       <section class="setting-drawer hidden" id="panel-setting">
         <div class="setting-drawer-head">
           <h2>設定</h2>
@@ -71,18 +98,23 @@ function bindSettingDrawer() {
 function renderStagePanel() {
   const panel = document.getElementById('panel-stage');
   panel.innerHTML = `
-    <h2>出撃</h2>
+    <div class="sortie-title-row">
+      <h2>出撃チーム</h2>
+      <p>選択中: ${STAGES.find((stage) => stage.id === selectedStage)?.name}</p>
+    </div>
     <div class="stage-button-list">
       ${STAGES.map(
         (s, index) => `
           <button class="stage-card ${selectedStage === s.id ? 'selected' : ''}" data-stage="${s.id}">
+            <span class="stage-order">STAGE ${index + 1}</span>
             <strong>${s.name}</strong>
-            <span>第${index + 1}ステージ</span>
+            <small>${s.desc}</small>
+            <em>開始</em>
           </button>
         `,
       ).join('')}
     </div>
-    <button class="sortie-btn" id="start-btn">出撃開始</button>
+    <button class="sortie-btn" id="start-btn">作戦開始</button>
   `;
 
   panel.querySelectorAll('.stage-card').forEach((card) => {
@@ -101,15 +133,18 @@ function renderModelPanel() {
   const panel = document.getElementById('panel-model');
   panel.innerHTML = `
     <div class="model-heading">
+      <p class="hero-overline">航空母艦打撃群 / 出撃待機</p>
       <h2>自機戦闘機モデル</h2>
-      <p>${selected?.name ?? ''}</p>
+      <p class="hero-stage">${selected?.name ?? ''}</p>
     </div>
     <div class="jet-model-view" aria-label="自機戦闘機モデル表示">
       <div class="jet-cloud cloud-a"></div>
       <div class="jet-cloud cloud-b"></div>
+      <div class="jet-cloud cloud-c"></div>
       <div class="jet-wing"></div>
       <div class="jet-body"></div>
       <div class="jet-tail"></div>
+      <div class="jet-cockpit"></div>
     </div>
     <p class="stage-desc">${selected?.desc ?? ''}</p>
   `;
@@ -118,12 +153,12 @@ function renderModelPanel() {
 function renderCustomPanel() {
   const panel = document.getElementById('panel-custom');
   panel.innerHTML = `
-    <h2>カスタマイズ</h2>
-    <div class="setting-grid">
+    <h2>機体カスタマイズ</h2>
+    <div class="setting-grid compact">
       <label>機体カラー
         <input type="color" id="aircraftColor" value="${settings.aircraftColor}" />
       </label>
-      <label>ミサイルエフェクト色
+      <label>ミサイル色
         <input type="color" id="missileColor" value="${settings.missileColor}" />
       </label>
       <label>操縦感度
@@ -133,10 +168,10 @@ function renderCustomPanel() {
             .join('')}
         </select>
       </label>
-      <label>BGM音量
+      <label>BGM
         <input type="range" id="bgmVolume" min="0" max="1" step="0.01" value="${settings.bgmVolume}" />
       </label>
-      <label>SE音量
+      <label>SE
         <input type="range" id="seVolume" min="0" max="1" step="0.01" value="${settings.seVolume}" />
       </label>
     </div>
@@ -281,7 +316,6 @@ window.addEventListener('beforeunload', () => {
 if (!localStorage.getItem('kugun_settings')) {
   saveSettings(SETTINGS_DEFAULTS);
 }
-
 
 async function enforceLandscapeMode() {
   if (!screen.orientation?.lock) return;
