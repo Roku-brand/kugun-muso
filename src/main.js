@@ -32,15 +32,31 @@ renderTop();
 function renderTop() {
   app.innerHTML = `
     <div class="top-shell home-shell">
-      <header class="home-header">
-        <h1>空軍無双</h1>
-        <button class="icon-setting" id="setting-toggle" aria-label="設定">⚙️</button>
+      <header class="resource-bar">
+        <div class="resource-group">
+          <span>💎 520,000</span>
+          <span>📦 1,900</span>
+          <span>🛞 380</span>
+        </div>
+        <div class="resource-actions">
+          <button class="icon-setting" id="setting-toggle" aria-label="設定">⚙</button>
+        </div>
       </header>
       <main class="home-layout">
-        <section class="home-panel sortie-panel" id="panel-stage"></section>
         <section class="home-panel model-panel" id="panel-model"></section>
         <section class="home-panel custom-panel" id="panel-custom"></section>
       </main>
+      <section class="home-bottom">
+        <section class="home-panel news-panel">
+          <h2>NEWS</h2>
+          <ul>
+            <li>2024/04/24 新イベント開始</li>
+            <li>新機体 F-35A 実装</li>
+            <li>期間限定チャレンジ開催中</li>
+          </ul>
+        </section>
+        <section class="home-panel sortie-panel" id="panel-stage"></section>
+      </section>
       <section class="setting-drawer hidden" id="panel-setting">
         <div class="setting-drawer-head">
           <h2>設定</h2>
@@ -71,18 +87,19 @@ function bindSettingDrawer() {
 function renderStagePanel() {
   const panel = document.getElementById('panel-stage');
   panel.innerHTML = `
-    <h2>出撃</h2>
+    <h2>出撃チアー</h2>
     <div class="stage-button-list">
       ${STAGES.map(
         (s, index) => `
           <button class="stage-card ${selectedStage === s.id ? 'selected' : ''}" data-stage="${s.id}">
             <strong>${s.name}</strong>
-            <span>第${index + 1}ステージ</span>
+            <span>${s.desc}</span>
+            <em>第${index + 1}作戦</em>
           </button>
         `,
       ).join('')}
     </div>
-    <button class="sortie-btn" id="start-btn">出撃開始</button>
+    <button class="sortie-btn" id="start-btn">任務開始</button>
   `;
 
   panel.querySelectorAll('.stage-card').forEach((card) => {
@@ -100,25 +117,28 @@ function renderModelPanel() {
   const selected = STAGES.find((stage) => stage.id === selectedStage);
   const panel = document.getElementById('panel-model');
   panel.innerHTML = `
-    <div class="model-heading">
-      <h2>自機戦闘機モデル</h2>
-      <p>${selected?.name ?? ''}</p>
+    <div class="hero-title-wrap">
+      <h1>空軍無双</h1>
+      <p>航空母艦甲板で最新鋭戦闘機を発進させろ</p>
     </div>
     <div class="jet-model-view" aria-label="自機戦闘機モデル表示">
+      <div class="sky-glow"></div>
+      <div class="carrier"></div>
       <div class="jet-cloud cloud-a"></div>
       <div class="jet-cloud cloud-b"></div>
+      <div class="jet-cloud cloud-c"></div>
       <div class="jet-wing"></div>
       <div class="jet-body"></div>
       <div class="jet-tail"></div>
     </div>
-    <p class="stage-desc">${selected?.desc ?? ''}</p>
+    <p class="stage-desc"><strong>${selected?.name ?? ''}</strong> - ${selected?.desc ?? ''}</p>
   `;
 }
 
 function renderCustomPanel() {
   const panel = document.getElementById('panel-custom');
   panel.innerHTML = `
-    <h2>カスタマイズ</h2>
+    <h2>迷彩カスタマイズ</h2>
     <div class="setting-grid">
       <label>機体カラー
         <input type="color" id="aircraftColor" value="${settings.aircraftColor}" />
