@@ -125,8 +125,12 @@ html, body {
 .dashboard-shell {
   height: 100%;
   display: grid;
-  grid-template-rows: minmax(170px, 34%) minmax(0, 1fr);
+  grid-template-rows: 1fr;
   gap: 10px;
+}
+
+.dashboard-shell.is-detail-page {
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .quadrant-tabs {
@@ -144,6 +148,29 @@ html, body {
   font-weight: 800;
   letter-spacing: 0.02em;
   padding: 12px;
+  cursor: pointer;
+}
+
+.page-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.page-head-row h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #e7f1ff;
+}
+
+.back-btn {
+  border: 1px solid rgba(132, 168, 205, 0.62);
+  border-radius: 9px;
+  background: linear-gradient(150deg, rgba(56, 90, 126, 0.82), rgba(14, 33, 52, 0.9));
+  color: #d6e6f7;
+  font-weight: 700;
+  padding: 7px 11px;
   cursor: pointer;
 }
 
@@ -281,7 +308,7 @@ input[type='range'] { width: 100%; }
 }
 
 @media (max-width: 1100px) {
-  .dashboard-shell { grid-template-rows: minmax(160px, 38%) minmax(0, 1fr); }
+  .dashboard-shell { grid-template-rows: 1fr; }
 }
 
 @media (max-width: 760px) {

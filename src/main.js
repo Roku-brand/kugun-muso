@@ -30,7 +30,7 @@ const EMPTY_RECORDS = {
 const app = document.getElementById('app');
 let selectedStage = STAGES[0].id;
 let settings = loadSettings();
-let activeTab = 'practice';
+let currentPage = null;
 let records = loadRecords();
 let gameScene = null;
 
@@ -65,10 +65,7 @@ function renderTop() {
       </header>
 
       <main class="home-main">
-        <section class="dashboard-shell">
-          <nav class="quadrant-tabs" id="quadrant-tabs" aria-label="トップタブ"></nav>
-          <section class="dashboard-panel home-panel" id="dashboard-content"></section>
-        </section>
+        <section class="dashboard-shell" id="dashboard-shell"></section>
       </main>
 
       <section class="setting-drawer hidden" id="panel-setting">
@@ -82,39 +79,61 @@ function renderTop() {
   `;
 
   bindSettingDrawer();
-  renderTabs();
-  renderActiveTab();
+  renderDashboard();
   renderSettingPanel();
 }
 
-function renderTabs() {
-  const nav = document.getElementById('quadrant-tabs');
-  nav.innerHTML = HOME_TABS.map((tab) => `
-    <button class="quadrant-tab ${activeTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">${tab.label}</button>
-  `).join('');
+function renderDashboard() {
+  const shell = document.getElementById('dashboard-shell');
 
-  nav.querySelectorAll('.quadrant-tab').forEach((button) => {
-    button.addEventListener('click', () => {
-      activeTab = button.dataset.tab;
-      renderTabs();
-      renderActiveTab();
+  if (!currentPage) {
+    shell.classList.remove('is-detail-page');
+    shell.innerHTML = `
+      <nav class="quadrant-tabs" id="quadrant-tabs" aria-label="トップタブ"></nav>
+    `;
+
+    const nav = document.getElementById('quadrant-tabs');
+    nav.innerHTML = HOME_TABS.map((tab) => `
+      <button class="quadrant-tab" data-tab="${tab.id}">${tab.label}</button>
+    `).join('');
+
+    nav.querySelectorAll('.quadrant-tab').forEach((button) => {
+      button.addEventListener('click', () => {
+        currentPage = button.dataset.tab;
+        renderDashboard();
+      });
     });
-  });
-}
 
-function renderActiveTab() {
+    return;
+  }
+
+  const pageLabel = HOME_TABS.find((tab) => tab.id === currentPage)?.label ?? '';
+  shell.classList.add('is-detail-page');
+  shell.innerHTML = `
+    <div class="page-head-row">
+      <button class="back-btn" id="back-to-home" aria-label="トップに戻る">← トップへ戻る</button>
+      <h2>${pageLabel}</h2>
+    </div>
+    <section class="dashboard-panel home-panel" id="dashboard-content"></section>
+  `;
+
+  document.getElementById('back-to-home').addEventListener('click', () => {
+    currentPage = null;
+    renderDashboard();
+  });
+
   const content = document.getElementById('dashboard-content');
-  if (activeTab === 'customize') {
+  if (currentPage === 'customize') {
     renderCustomPanel(content);
     return;
   }
 
-  if (activeTab === 'practice') {
+  if (currentPage === 'practice') {
     renderPracticePanel(content);
     return;
   }
 
-  if (activeTab === 'combat') {
+  if (currentPage === 'combat') {
     renderCombatPanel(content);
     return;
   }
