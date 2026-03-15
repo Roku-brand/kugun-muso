@@ -26,6 +26,9 @@ export class HUD {
         <div>機関銃: <span id="mgAmmo">100</span>/100</div>
         <div>速度: <span id="speed">0</span> km/h</div>
         <div>高度: <span id="altitude">0</span> m</div>
+        <div>燃料: <span id="fuel">100</span>%</div>
+        <div>G: <span id="gforce">1.0</span></div>
+        <div>昇降率: <span id="verticalSpeed">0</span> m/s</div>
       </div>
       <div class="hud armor-gauge"><div id="armorGaugeFill" class="armor-gauge-fill"></div></div>
       <div class="hud left-top radar-wrap"><canvas id="radar" width="96" height="96"></canvas></div>
@@ -61,6 +64,9 @@ export class HUD {
     this.elements = {
       speed: this.root.querySelector('#speed'),
       altitude: this.root.querySelector('#altitude'),
+      fuel: this.root.querySelector('#fuel'),
+      gforce: this.root.querySelector('#gforce'),
+      verticalSpeed: this.root.querySelector('#verticalSpeed'),
       missiles: this.root.querySelector('#missiles'),
       mgAmmo: this.root.querySelector('#mgAmmo'),
       armorText: this.root.querySelector('#armorText'),
@@ -175,6 +181,9 @@ export class HUD {
   update(state) {
     this.elements.speed.textContent = Math.round(state.speed);
     this.elements.altitude.textContent = Math.round(state.altitude);
+    this.elements.fuel.textContent = `${Math.round(state.fuelRatio * 100)}`;
+    this.elements.gforce.textContent = state.gForce.toFixed(1);
+    this.elements.verticalSpeed.textContent = Math.round(state.verticalSpeed);
     this.elements.missiles.textContent = state.missiles;
     this.elements.mgAmmo.textContent = state.machineGunAmmo;
     const armorRatio = state.armor / Math.max(1, state.armorMax);
