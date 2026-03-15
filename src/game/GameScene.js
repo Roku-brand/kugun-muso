@@ -25,12 +25,6 @@ const PLAYER_HORIZONTAL_BOUNDS = {
   totalWar: 1650,
 };
 
-const WEATHER_PRESETS = [
-  { name: '晴天', windBase: 2.5, turbulence: 1.8, visibility: 1 },
-  { name: '強風', windBase: 7.2, turbulence: 3.6, visibility: 0.9 },
-  { name: '乱気流', windBase: 5.3, turbulence: 7.2, visibility: 0.82 },
-];
-
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
     this.canvas = canvas;
@@ -94,9 +88,6 @@ export class GameScene {
     this.lastCollisionCause = null;
     this.lowAltitudeThreshold = 10;
     this.lowAltitudeWarningCooldown = 0;
-    this.weather = WEATHER_PRESETS[Math.floor(Math.random() * WEATHER_PRESETS.length)];
-    this.weatherTime = 0;
-    this.windVector = new THREE.Vector3();
     this.last = performance.now();
     this.initAllies();
     this.bindEvents();
@@ -255,7 +246,6 @@ export class GameScene {
     if (!this.finished && !this.paused) {
       const combatDt = dt * COMBAT_SPEED_SCALE;
       this.readInput(combatDt);
-      this.updateWeather(combatDt);
       this.player.update(combatDt);
       this.fireMachineGun(combatDt);
       this.updateWorld(combatDt);
@@ -266,16 +256,6 @@ export class GameScene {
     this.renderer.render(this.scene, this.camera);
     this.raf = requestAnimationFrame(this.loop);
   };
-
-
-  updateWeather(dt) {
-    this.weatherTime += dt;
-    const gustX = Math.sin(this.weatherTime * 0.55) * this.weather.windBase;
-    const gustZ = Math.cos(this.weatherTime * 0.32 + 0.7) * this.weather.windBase * 0.65;
-    const turbulenceY = Math.sin(this.weatherTime * 2.6) * this.weather.turbulence;
-    this.windVector.set(gustX, turbulenceY, gustZ).multiplyScalar(0.32);
-    this.player.setWindVector(this.windVector);
-  }
 
   togglePauseMenu() {
     if (this.finished) return;
@@ -754,11 +734,6 @@ export class GameScene {
       return;
     }
 
-    if (this.player.fuel <= 0 && this.player.position.y < 40) {
-      this.finish(false, 'ゲームオーバー', '燃料切れ：推力を失い、海面近くで制御不能になりました。');
-      return;
-    }
-
     if (this.player.armor <= 0) {
       this.finish(false, 'ゲームオーバー', this.getGameOverReason('armorBreak'));
       return;
@@ -886,9 +861,6 @@ export class GameScene {
       altitude: this.player.position.y,
       missiles: this.player.missiles,
       machineGunAmmo: this.player.machineGunAmmo,
-      fuelRatio: this.player.fuel / Math.max(1, this.player.maxFuel),
-      gForce: this.player.gForce,
-      verticalSpeed: this.player.verticalSpeed,
       armor: this.player.armor,
       armorMax: this.player.maxArmor,
       throttle: this.player.throttle,

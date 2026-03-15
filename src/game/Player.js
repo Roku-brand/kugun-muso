@@ -4,20 +4,6 @@ const SENS_MAP = { low: 0.6, medium: 1, high: 1.5 };
 const MAX_PITCH_ANGLE = 1.05;
 const MAX_ALTITUDE = 1082;
 const DEFAULT_HORIZONTAL_BOUND = 280;
-const FLIGHT_MODEL_BY_LANGUAGE = {
-  csharp: {
-    drag: 0.13,
-    engineResponse: 0.95,
-    lift: 0.62,
-    fuelEfficiency: 1.08,
-  },
-  cpp: {
-    drag: 0.11,
-    engineResponse: 1.12,
-    lift: 0.57,
-    fuelEfficiency: 0.98,
-  },
-};
 
 export class Player {
   constructor(camera, settings) {
@@ -32,7 +18,6 @@ export class Player {
     this.speed = 74;
     this.minSpeed = 42;
     this.maxSpeed = 165;
-    this.stallSpeed = 58;
     this.throttle = 0.45;
     this.horizontalBound = DEFAULT_HORIZONTAL_BOUND;
     this.maxArmor = 100;
@@ -41,11 +26,6 @@ export class Player {
     this.missiles = this.maxMissiles;
     this.maxMachineGunAmmo = 100;
     this.machineGunAmmo = this.maxMachineGunAmmo;
-    this.maxFuel = 2200;
-    this.fuel = this.maxFuel;
-    this.gForce = 1;
-    this.windDrift = new THREE.Vector3();
-    this.verticalSpeed = 0;
     this.missileReloadTimer = 0;
     this.machineGunReloadTimer = 0;
     this.input = { yaw: 0, pitch: 0, throttle: 0 };
@@ -63,7 +43,6 @@ export class Player {
   }
 
   update(dt) {
-    const flightModel = FLIGHT_MODEL_BY_LANGUAGE[this.settings.flightModelLanguage] ?? FLIGHT_MODEL_BY_LANGUAGE.csharp;
     const sens = SENS_MAP[this.settings.controlSensitivity] ?? 1;
     const yawSpeed = 1.25 * sens;
     const pitchSpeed = 0.95 * sens;
@@ -80,35 +59,9 @@ export class Player {
     ).normalize();
     this.right.crossVectors(this.forward, this.worldUp).normalize();
 
-    this.throttle = THREE.MathUtils.clamp(this.throttle + this.input.throttle * dt * 0.5 * flightModel.engineResponse, 0, 1);
-    const targetSpeed = THREE.MathUtils.lerp(this.minSpeed, this.maxSpeed, this.throttle);
-    const speedChange = (targetSpeed - this.speed) * Math.min(1, dt * (2.5 - flightModel.drag));
-    this.speed += speedChange;
-
-    const turnInput = Math.hypot(this.input.yaw + this.input.pitch * 0.5, this.input.pitch + this.input.yaw * 0.4);
-    this.gForce = 1 + turnInput * (this.speed / this.maxSpeed) * 5.8;
-
-    const fuelDrainRate = (0.9 + this.throttle * 1.5 + Math.max(0, this.gForce - 1) * 0.42) / flightModel.fuelEfficiency;
-    this.fuel = Math.max(0, this.fuel - fuelDrainRate * dt);
-
-    if (this.fuel <= 0) {
-      this.throttle = Math.min(this.throttle, 0.22);
-      this.speed = Math.max(this.speed - dt * 22, this.minSpeed * 0.65);
-    }
-
-    const lift = this.speed * this.speed * 0.00095 * flightModel.lift;
-    const gravity = 9.81;
-    this.verticalSpeed += (lift * Math.sin(this.pitch + 0.3) - gravity) * dt;
-
-    const isStalling = this.speed < this.stallSpeed && this.pitch > 0.35;
-    if (isStalling) {
-      this.verticalSpeed -= (this.stallSpeed - this.speed) * dt * 0.35;
-    }
-
-    this.verticalSpeed = THREE.MathUtils.clamp(this.verticalSpeed, -42, 35);
+    this.throttle = THREE.MathUtils.clamp(this.throttle + this.input.throttle * dt * 0.5, 0, 1);
+    this.speed = THREE.MathUtils.lerp(this.minSpeed, this.maxSpeed, this.throttle);
     this.position.addScaledVector(this.forward, this.speed * dt);
-    this.position.y += this.verticalSpeed * dt;
-    this.position.addScaledVector(this.windDrift, dt);
 
     this.position.x = THREE.MathUtils.clamp(this.position.x, -this.horizontalBound, this.horizontalBound);
     this.position.y = THREE.MathUtils.clamp(this.position.y, 0, MAX_ALTITUDE);
@@ -126,10 +79,6 @@ export class Player {
     }
 
     this.syncCamera();
-  }
-
-  setWindVector(wind) {
-    this.windDrift.copy(wind);
   }
 
   setHorizontalBound(bound) {

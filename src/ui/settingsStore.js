@@ -7,7 +7,6 @@ export const SETTINGS_DEFAULTS = {
   masterVolume: 0.8,
   quality: 'high',
   difficulty: 'normal',
-  flightModelLanguage: 'csharp',
   pilotUiOffsetX: 0,
   pilotUiOffsetY: 0,
   weaponUiOffsetX: 0,

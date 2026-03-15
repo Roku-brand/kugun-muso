@@ -209,13 +209,6 @@ function renderCustomPanel(panel) {
             .join('')}
         </select>
       </label>
-      <label>フライトモデル言語
-        <select id="flightModelLanguageCustom">
-          ${['csharp', 'cpp']
-            .map((v) => `<option value="${v}" ${settings.flightModelLanguage === v ? 'selected' : ''}>${labelFlightLanguage(v)}</option>`)
-            .join('')}
-        </select>
-      </label>
       <label>BGM
         <input type="range" id="bgmVolume" min="0" max="1" step="0.01" value="${settings.bgmVolume}" />
       </label>
@@ -274,13 +267,6 @@ function renderSettingPanel() {
             .join('')}
         </select>
       </label>
-      <label>フライトモデル言語
-        <select id="flightModelLanguage">
-          ${['csharp', 'cpp']
-            .map((v) => `<option value="${v}" ${settings.flightModelLanguage === v ? 'selected' : ''}>${labelFlightLanguage(v)}</option>`)
-            .join('')}
-        </select>
-      </label>
       <fieldset class="ui-offset-group">
         <legend>操縦UI位置（左下）</legend>
         <label>Xオフセット
@@ -317,8 +303,6 @@ function bindSettingInputs(root) {
     el.addEventListener('input', () => {
       const customSensitivity = document.getElementById('controlSensitivity');
       const settingSensitivity = document.getElementById('sensitivitySetting');
-      const customFlightLanguage = document.getElementById('flightModelLanguageCustom');
-      const settingFlightLanguage = document.getElementById('flightModelLanguage');
       settings = {
         ...settings,
         aircraftColor: document.getElementById('aircraftColor')?.value ?? settings.aircraftColor,
@@ -329,7 +313,6 @@ function bindSettingInputs(root) {
         masterVolume: Number(document.getElementById('masterVolume')?.value ?? settings.masterVolume),
         quality: document.getElementById('quality')?.value ?? settings.quality,
         difficulty: document.getElementById('difficulty')?.value ?? settings.difficulty,
-        flightModelLanguage: customFlightLanguage?.value ?? settingFlightLanguage?.value ?? settings.flightModelLanguage,
         pilotUiOffsetX: Number(document.getElementById('pilotUiOffsetX')?.value ?? settings.pilotUiOffsetX),
         pilotUiOffsetY: Number(document.getElementById('pilotUiOffsetY')?.value ?? settings.pilotUiOffsetY),
         weaponUiOffsetX: Number(document.getElementById('weaponUiOffsetX')?.value ?? settings.weaponUiOffsetX),
@@ -395,10 +378,6 @@ function labelQuality(v) {
 
 function labelDifficulty(v) {
   return { easy: '簡単', normal: 'ふつう', hard: '難しい' }[v];
-}
-
-function labelFlightLanguage(v) {
-  return { csharp: 'C#（安定型）', cpp: 'C++（高出力型）' }[v] ?? v;
 }
 
 function loadRecords() {
