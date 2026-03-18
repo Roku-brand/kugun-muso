@@ -31,6 +31,7 @@ export class StageManager {
     if (stage === 'totalWar') this.createTotalWarBattle();
     if (stage === 'ayanishiRecapture') this.createAyanishiRecaptureBattle();
     if (stage === 'hokkaiNavalBattle') this.createHokkaiNavalBattle();
+    if (stage === 'easternFront') this.createEasternFrontBattle();
     return this.enemies;
   }
 
@@ -487,6 +488,151 @@ export class StageManager {
           spreadWeight: 0.7 + (index % 3) * 0.06,
           spreadPoint,
           preferredRange: 265 + (index % 4) * 20,
+          rangeTolerance: 90,
+        },
+      }));
+    });
+  }
+
+  createEasternFrontBattle() {
+    const areaScale = 1.45;
+    this.createSkyCommon();
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(9600 * areaScale, 9600 * areaScale, 96, 96),
+      new THREE.MeshStandardMaterial({ color: 0x596944, roughness: 0.92, metalness: 0.05 }),
+    );
+    ground.rotation.x = -Math.PI / 2;
+    this.scene.add(ground);
+    this.stageObjects.push(ground);
+
+    const frontlineRoad = new THREE.Mesh(
+      new THREE.PlaneGeometry(780 * areaScale, 3600 * areaScale),
+      new THREE.MeshStandardMaterial({ color: 0x505357, roughness: 0.88, metalness: 0.1 }),
+    );
+    frontlineRoad.rotation.x = -Math.PI / 2;
+    frontlineRoad.position.set(0, 0.38, -380 * areaScale);
+    this.scene.add(frontlineRoad);
+    this.stageObjects.push(frontlineRoad);
+
+    const allyFortress = this.makeFortressComplex();
+    allyFortress.position.set(0, 64, 260);
+    allyFortress.rotation.y = Math.PI;
+    this.scene.add(allyFortress);
+    this.stageObjects.push(allyFortress);
+    this.targets.push({
+      mesh: allyFortress,
+      radius: 96,
+      collisionVerticalRadius: 52,
+      type: 'building',
+      objective: 'allyFortress',
+    });
+
+    const allyRampart = this.makeReinforcedWallRing();
+    allyRampart.position.set(0, 65, 260);
+    allyRampart.rotation.y = Math.PI;
+    this.scene.add(allyRampart);
+    this.stageObjects.push(allyRampart);
+    this.targets.push({
+      mesh: allyRampart,
+      radius: 160,
+      collisionVerticalRadius: 40,
+      type: 'building',
+      objective: 'allyFortressPerimeter',
+    });
+
+    const enemyFortress = this.makeFortressComplex();
+    enemyFortress.position.set(0, 68, -1380);
+    this.scene.add(enemyFortress);
+    this.enemies.push(new Enemy({ type: 'turret', mesh: enemyFortress, health: ENEMY_DURABILITY.headquarters + 24 }));
+    this.targets.push({
+      mesh: enemyFortress,
+      radius: 98,
+      collisionVerticalRadius: 55,
+      type: 'building',
+      objective: 'enemyFortress',
+    });
+
+    const enemyRampart = this.makeReinforcedWallRing();
+    enemyRampart.position.set(0, 69, -1380);
+    this.scene.add(enemyRampart);
+    this.enemies.push(new Enemy({ type: 'turret', mesh: enemyRampart, health: ENEMY_DURABILITY.fortress + 24, canFire: false }));
+    this.targets.push({
+      mesh: enemyRampart,
+      radius: 166,
+      collisionVerticalRadius: 44,
+      type: 'building',
+      objective: 'enemyFortress',
+    });
+
+    const defensePositions = [
+      [-260, 68, -1260],
+      [260, 68, -1260],
+      [-320, 68, -1440],
+      [320, 68, -1440],
+      [-120, 68, -1510],
+      [120, 68, -1510],
+    ];
+
+    defensePositions.forEach((pos) => {
+      const turret = this.makeGroundTurret();
+      turret.position.set(...pos);
+      this.scene.add(turret);
+      this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: ENEMY_DURABILITY.turret }));
+      this.targets.push({ mesh: turret, radius: 14, collisionVerticalRadius: 10, type: 'building' });
+    });
+
+    const enemyGroundColumns = [
+      { x: -240, z: -980, speed: 16.8, health: 52, factory: () => this.makeTankUnit(), radius: 18, type: 'tank' },
+      { x: -80, z: -1040, speed: 16.1, health: 48, factory: () => this.makeTankUnit(), radius: 18, type: 'tank' },
+      { x: 110, z: -1000, speed: 17.2, health: 48, factory: () => this.makeTankUnit(), radius: 18, type: 'tank' },
+      { x: 280, z: -1080, speed: 16.7, health: 52, factory: () => this.makeTankUnit(), radius: 18, type: 'tank' },
+      { x: -170, z: -850, speed: 13.4, health: 36, factory: () => this.makeInfantryBattalion(), radius: 15, type: 'infantry' },
+      { x: 170, z: -860, speed: 13.1, health: 36, factory: () => this.makeInfantryBattalion(), radius: 15, type: 'infantry' },
+    ].map((spec) => ({ ...spec, x: spec.x * areaScale, z: spec.z * areaScale }));
+
+    enemyGroundColumns.forEach((spec, index) => {
+      const unit = spec.factory();
+      unit.position.set(spec.x, 6, spec.z);
+      unit.rotation.y = Math.PI + (index - 2.5) * 0.06;
+      this.scene.add(unit);
+      this.enemies.push(new Enemy({ type: 'ship', mesh: unit, health: spec.health, speed: spec.speed }));
+      this.targets.push({ mesh: unit, radius: spec.radius, collisionVerticalRadius: 10, type: spec.type });
+    });
+
+    const enemyAirSpecs = [
+      { x: -460, y: 280, z: -1340, speed: 86 },
+      { x: -320, y: 330, z: -1520, speed: 90 },
+      { x: -120, y: 300, z: -1410, speed: 88 },
+      { x: 80, y: 360, z: -1500, speed: 92 },
+      { x: 250, y: 320, z: -1430, speed: 90 },
+      { x: 420, y: 290, z: -1360, speed: 87 },
+      { x: -260, y: 390, z: -1650, speed: 93 },
+      { x: 260, y: 400, z: -1680, speed: 94 },
+    ];
+    const playerStart = new THREE.Vector3(0, 170, 150);
+
+    enemyAirSpecs.forEach((spec, index) => {
+      const fighter = this.makeFighter();
+      const [x, y, z] = this.scalePoint([spec.x, spec.y, spec.z], areaScale, 1.04);
+      fighter.position.set(x, y, z);
+      fighter.lookAt(playerStart);
+      this.scene.add(fighter);
+
+      const spreadPoint = new THREE.Vector3(
+        x + (index % 2 === 0 ? -80 : 85),
+        y + 26 + (index % 3) * 16,
+        z + 210 + (index % 4) * 34,
+      );
+      this.enemies.push(new Enemy({
+        type: 'fighter',
+        mesh: fighter,
+        health: ENEMY_DURABILITY.fighter,
+        speed: spec.speed,
+        behavior: {
+          engageTime: 2.4 + index * 0.24,
+          spreadWeight: 0.68 + (index % 3) * 0.08,
+          spreadPoint,
+          preferredRange: 270 + (index % 4) * 22,
           rangeTolerance: 90,
         },
       }));

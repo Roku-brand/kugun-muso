@@ -40,10 +40,13 @@ const PLAYER_HORIZONTAL_BOUNDS = {
   totalWar: 1650,
   ayanishiRecapture: 1650,
   hokkaiNavalBattle: 1750,
+  easternFront: 1750,
 };
 const PLAYER_COLLISION_RADIUS = 2.6;
-const ALLIED_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture', 'hokkaiNavalBattle']);
+const ALLIED_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture', 'hokkaiNavalBattle', 'easternFront']);
 const HQ_OBJECTIVE_STAGES = new Set(['totalWar', 'ayanishiRecapture']);
+const EASTERN_FRONT_STAGE = 'easternFront';
+const EASTERN_FRONT_FORTRESS_FALL_Z = 220;
 const LAND_DEFENSE_STAGE = 'land';
 const LAND_DEFENSE_FRONTLINE_Z = 230;
 
@@ -1213,6 +1216,22 @@ export class GameScene {
       }
     }
 
+    if (this.isEasternFrontStage()) {
+      const alliedFortressBreached = this.enemies.some((enemy) => enemy.alive && enemy.type !== 'fighter'
+        && enemy.mesh.position.z >= EASTERN_FRONT_FORTRESS_FALL_Z);
+      if (alliedFortressBreached) {
+        this.finish(false, 'ミッション失敗', '味方要塞が陥落しました。敵地上軍の進撃を止めてください。');
+        return;
+      }
+
+      const enemyFortressAlive = this.enemies.some((enemy) => enemy.alive
+        && this.stageManager.targets.some((target) => target.objective === 'enemyFortress' && target.mesh === enemy.mesh));
+      if (!enemyFortressAlive) {
+        this.finish(true, 'ミッションクリア');
+      }
+      return;
+    }
+
     if (this.isHqObjectiveStage()) {
       const hqAlive = this.enemies.some((enemy) => enemy.alive
         && this.stageManager.targets.some((target) => target.objective === 'hq' && target.mesh === enemy.mesh));
@@ -1236,7 +1255,11 @@ export class GameScene {
     this.overlayRoot.innerHTML = `
       <div class="result-panel ${success ? 'clear' : 'over'}">
         <h2>${title}</h2>
-        <p>${success ? (this.isHqObjectiveStage() ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : (detailMessage ?? '任務失敗。機体を喪失しました。')}</p>
+        <p>${success
+    ? (this.isHqObjectiveStage()
+      ? '軍事本部を破壊し、作戦目標を達成しました。'
+      : (this.isEasternFrontStage() ? '敵要塞を撃破し、東部戦線を制圧しました。' : '敵戦力を殲滅しました。'))
+    : (detailMessage ?? '任務失敗。機体を喪失しました。')}</p>
         <button id="retry">リトライ</button>
         <button id="back">トップへ戻る</button>
       </div>
@@ -1254,6 +1277,10 @@ export class GameScene {
 
   isHqObjectiveStage() {
     return HQ_OBJECTIVE_STAGES.has(this.stage);
+  }
+
+  isEasternFrontStage() {
+    return this.stage === EASTERN_FRONT_STAGE;
   }
 
 
@@ -1288,6 +1315,9 @@ export class GameScene {
   objectiveLabel(objective) {
     const labels = {
       hq: '軍事本部施設',
+      enemyFortress: '敵要塞',
+      allyFortress: '味方要塞',
+      allyFortressPerimeter: '味方要塞防衛線',
       portSpawner: '港湾施設',
       runwaySpawner: '滑走路施設',
       tank: '敵戦車部隊',
