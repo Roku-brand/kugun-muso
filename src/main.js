@@ -109,7 +109,7 @@ function renderDashboard() {
       <div class="home-top-layout">
         <nav class="quadrant-tabs" id="quadrant-tabs" aria-label="トップタブ"></nav>
         <aside class="home-hero" aria-label="戦闘機イメージ">
-          <img src="./src/assets/top-fighter-demo.svg" alt="戦闘機のデモ画像。あとで差し替え可能" />
+          <img src="./src/top-fighter-demo.svg" alt="戦闘機のデモ画像。あとで差し替え可能" />
         </aside>
       </div>
     `;
