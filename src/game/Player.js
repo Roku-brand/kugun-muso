@@ -74,7 +74,7 @@ export class Player {
     this.position.x = THREE.MathUtils.clamp(this.position.x, -this.horizontalBound, this.horizontalBound);
     this.position.y = THREE.MathUtils.clamp(this.position.y, 0, MAX_ALTITUDE);
 
-    const targetBank = -this.input.yaw * MAX_VISUAL_BANK_ANGLE;
+    const targetBank = this.input.yaw * MAX_VISUAL_BANK_ANGLE;
     const targetNosePitch = this.input.pitch * MAX_VISUAL_NOSE_ANGLE;
     const visualBlend = 1 - Math.exp(-VISUAL_ATTITUDE_RESPONSE * dt);
     this.visualBank = THREE.MathUtils.lerp(this.visualBank, targetBank, visualBlend);
