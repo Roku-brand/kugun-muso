@@ -294,6 +294,52 @@ input[type='range'] { width: 100%; }
   color: #111827;
 }
 
+.combat-course-card {
+  border: 1px solid rgba(156, 166, 178, 0.75);
+  border-radius: 12px;
+  padding: 12px;
+  background: linear-gradient(160deg, rgba(238, 244, 250, 0.85), rgba(160, 170, 183, 0.92));
+  color: #111827;
+  display: grid;
+  gap: 10px;
+}
+.combat-course-label {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(17, 24, 39, 0.7);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.combat-course-card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.combat-story {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.combat-fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.combat-fleet-grid h4 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+}
+.combat-fleet-grid ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 0.76rem;
+}
+.combat-objective {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
 .records-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
