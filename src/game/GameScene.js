@@ -1008,6 +1008,18 @@ export class GameScene {
     this.onEnemyDestroyed?.(enemy.type);
   }
 
+  applyEnemyDamage(enemy, damage, { requiresPlayerFinisher = false } = {}) {
+    if (!enemy.alive) return false;
+
+    if (requiresPlayerFinisher && damage >= enemy.health) {
+      enemy.health = Math.max(1, enemy.health);
+      return false;
+    }
+
+    enemy.applyDamage(damage);
+    return !enemy.alive;
+  }
+
   isTargetActive(target) {
     if (target.type === 'terrain') return true;
     const linkedEnemy = this.enemies.find((enemy) => enemy.mesh === target.mesh);
@@ -1056,7 +1068,7 @@ export class GameScene {
       this.enemies.forEach((enemy) => {
         if (!enemy.alive) return;
         if (b.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 8 : 14)) {
-          enemy.applyDamage(b.damage);
+          this.applyEnemyDamage(enemy, b.damage);
           b.life = 0;
           if (!enemy.alive) {
             this.destroyEnemy(enemy, 0xffb777);
@@ -1069,7 +1081,7 @@ export class GameScene {
       this.enemies.forEach((enemy) => {
         if (!enemy.alive) return;
         if (b.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 7 : 13)) {
-          enemy.applyDamage(b.damage);
+          this.applyEnemyDamage(enemy, b.damage, { requiresPlayerFinisher: true });
           b.life = 0;
           if (!enemy.alive) {
             this.destroyEnemy(enemy, 0x8fffd4);
@@ -1082,7 +1094,7 @@ export class GameScene {
       this.enemies.forEach((enemy) => {
         if (!enemy.alive) return;
         if (b.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 6 : 15)) {
-          enemy.applyDamage(b.damage);
+          this.applyEnemyDamage(enemy, b.damage, { requiresPlayerFinisher: true });
           b.life = 0;
           if (!enemy.alive) {
             this.destroyEnemy(enemy, 0x9be9ff);
