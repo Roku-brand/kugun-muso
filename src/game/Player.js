@@ -4,6 +4,12 @@ const SENS_MAP = { low: 0.6, medium: 1, high: 1.5 };
 const MAX_PITCH_ANGLE = 1.05;
 const MAX_ALTITUDE = 1082;
 const DEFAULT_HORIZONTAL_BOUND = 280;
+const MAX_VISUAL_BANK_ANGLE = 0.42;
+const MAX_VISUAL_NOSE_ANGLE = 0.26;
+const VISUAL_ATTITUDE_RESPONSE = 7.5;
+const BASE_FORWARD = new THREE.Vector3(1, 0, 0);
+const LOCAL_FORWARD_AXIS = new THREE.Vector3(1, 0, 0);
+const LOCAL_RIGHT_AXIS = new THREE.Vector3(0, 0, 1);
 
 export class Player {
   constructor(camera, settings) {
@@ -29,6 +35,8 @@ export class Player {
     this.missileReloadTimer = 0;
     this.machineGunReloadTimer = 0;
     this.input = { yaw: 0, pitch: 0, throttle: 0 };
+    this.visualBank = 0;
+    this.visualNosePitch = 0;
     this.mesh = null;
     this.syncCamera();
   }
@@ -66,6 +74,12 @@ export class Player {
     this.position.x = THREE.MathUtils.clamp(this.position.x, -this.horizontalBound, this.horizontalBound);
     this.position.y = THREE.MathUtils.clamp(this.position.y, 0, MAX_ALTITUDE);
 
+    const targetBank = -this.input.yaw * MAX_VISUAL_BANK_ANGLE;
+    const targetNosePitch = this.input.pitch * MAX_VISUAL_NOSE_ANGLE;
+    const visualBlend = 1 - Math.exp(-VISUAL_ATTITUDE_RESPONSE * dt);
+    this.visualBank = THREE.MathUtils.lerp(this.visualBank, targetBank, visualBlend);
+    this.visualNosePitch = THREE.MathUtils.lerp(this.visualNosePitch, targetNosePitch, visualBlend);
+
     this.missileReloadTimer += dt;
     if (this.missiles < this.maxMissiles && this.missileReloadTimer >= 6) {
       this.missiles += 1;
@@ -98,7 +112,20 @@ export class Player {
   syncVisual() {
     if (!this.mesh) return;
     this.mesh.position.copy(this.position).add(this.worldUp.clone().multiplyScalar(-1.1));
-    this.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), this.forward.clone().normalize());
+
+    const forwardAxis = this.forward.clone().normalize();
+    const rightAxis = this.right.clone().normalize();
+    const upAxis = rightAxis.clone().cross(forwardAxis).normalize();
+    const baseRotation = new THREE.Matrix4().makeBasis(forwardAxis, upAxis, rightAxis);
+    this.mesh.quaternion.setFromRotationMatrix(baseRotation);
+
+    const bankQuat = new THREE.Quaternion().setFromAxisAngle(LOCAL_FORWARD_AXIS, this.visualBank);
+    const noseQuat = new THREE.Quaternion().setFromAxisAngle(LOCAL_RIGHT_AXIS, this.visualNosePitch);
+    this.mesh.quaternion.multiply(bankQuat).multiply(noseQuat);
+
+    if (!Number.isFinite(this.mesh.quaternion.x)) {
+      this.mesh.quaternion.setFromUnitVectors(BASE_FORWARD, forwardAxis);
+    }
   }
 
   canFireMissile() {
