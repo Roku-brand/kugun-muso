@@ -35,6 +35,13 @@ export class Enemy {
         .applyQuaternion(this.mesh.quaternion)
         .normalize()
         .multiplyScalar(this.speed);
+      this.attackPattern = {
+        lateralOffset: (Math.random() - 0.5) * 140,
+        verticalOffset: (Math.random() - 0.5) * 55,
+        orbitPhase: Math.random() * Math.PI * 2,
+        orbitRate: 0.35 + Math.random() * 0.45,
+        orbitRadius: 50 + Math.random() * 58,
+      };
       this.flightProfile = {
         minSpeed: Math.max(52, this.speed * 0.9),
         maxSpeed: this.speed * 1.45,
@@ -86,7 +93,7 @@ export class Enemy {
     return { key: 'enemyMachineGun', speed: 90, damage: 8, radius: 1.4, cooldown: 0.35 };
   }
 
-  update(dt, playerPos, bullets, createBulletMesh) {
+  update(dt, playerPos, bullets, createBulletMesh, allEnemies = null) {
     if (!this.alive) return;
     this.elapsed += dt;
 
@@ -110,13 +117,34 @@ export class Enemy {
       const spacingDir = standoffDir.clone().lerp(toPlayer.clone().normalize(), rangeBlend).normalize();
 
       const leadTarget = playerPos.clone().add(new THREE.Vector3(this.passOffset * 70, 0, 0));
+      const orbitTheta = this.attackPattern.orbitPhase + (this.elapsed * this.attackPattern.orbitRate);
+      const orbitOffset = new THREE.Vector3(
+        this.attackPattern.lateralOffset + Math.sin(orbitTheta) * this.attackPattern.orbitRadius,
+        this.attackPattern.verticalOffset + Math.sin(orbitTheta * 0.7 + this.passOffset) * this.attackPattern.orbitRadius * 0.22,
+        Math.cos(orbitTheta) * this.attackPattern.orbitRadius * 0.35,
+      );
+      leadTarget.add(orbitOffset);
       const pursuitDir = leadTarget
         .sub(this.mesh.position.clone().add(forward.clone().multiplyScalar(profile.passDistance * 0.35)))
         .normalize();
 
+      let separationDir = new THREE.Vector3();
+      if (allEnemies) {
+        for (const neighbor of allEnemies) {
+          if (!neighbor?.alive || neighbor === this || neighbor.type !== 'fighter') continue;
+          const fromNeighbor = this.mesh.position.clone().sub(neighbor.mesh.position);
+          const distance = fromNeighbor.length();
+          if (distance <= 1e-3 || distance > 120) continue;
+          const weight = 1 - (distance / 120);
+          separationDir.add(fromNeighbor.normalize().multiplyScalar(weight * weight));
+        }
+      }
+      if (separationDir.lengthSq() > 1e-4) separationDir.normalize();
+
       const desiredDir = approachDir
         .lerp(spacingDir, 0.72)
         .lerp(pursuitDir, THREE.MathUtils.clamp(distanceToPlayer / 420, 0.08, 0.45))
+        .lerp(separationDir, separationDir.lengthSq() > 0 ? 0.38 : 0)
         .normalize();
 
       const turnAxis = new THREE.Vector3().crossVectors(forward, desiredDir);
