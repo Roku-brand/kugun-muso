@@ -4,7 +4,7 @@ export class HUD {
     this.actions = actions;
     this.elements = {};
     this.stick = { active: false, x: 0, y: 0 };
-    this.throttleActive = false;
+    this.speedBoostActive = false;
     this.controlsEnabled = true;
     this.settings = settings;
   }
@@ -49,12 +49,12 @@ export class HUD {
           <button id="gunBtn" class="gun-fire-btn" aria-label="機関銃連射">
             <span class="gun-icon" aria-hidden="true"></span>
           </button>
-          <div id="throttleBar" class="throttle-bar" aria-label="速度バー">
-            <div class="throttle-bar-center"></div>
-            <div id="throttleFill" class="throttle-fill"></div>
-          </div>
+          <button id="speedUpBtn" class="speed-up-btn" aria-label="長押しで加速">加速</button>
         </div>
         <div class="throttle-label">スロットル: <span id="throttle">45</span>%</div>
+        <div class="throttle-meter" aria-hidden="true">
+          <div id="throttleFill" class="throttle-fill"></div>
+        </div>
       </div>
     `;
 
@@ -66,7 +66,7 @@ export class HUD {
       armorText: this.root.querySelector('#armorText'),
       armorGaugeFill: this.root.querySelector('#armorGaugeFill'),
       throttle: this.root.querySelector('#throttle'),
-      throttleBar: this.root.querySelector('#throttleBar'),
+      speedUpBtn: this.root.querySelector('#speedUpBtn'),
       throttleFill: this.root.querySelector('#throttleFill'),
       radar: this.root.querySelector('#radar'),
       fireBtn: this.root.querySelector('#fireBtn'),
@@ -86,7 +86,7 @@ export class HUD {
     });
     this.bindGunButton();
     this.elements.homeBtn.addEventListener('click', this.actions.onMenu);
-    this.bindThrottleBar();
+    this.bindSpeedUpButton();
   }
 
   bindGunButton() {
@@ -121,40 +121,25 @@ export class HUD {
     });
   }
 
-  bindThrottleBar() {
-    const bar = this.elements.throttleBar;
-    const stopThrottle = () => {
-      this.throttleActive = false;
+  bindSpeedUpButton() {
+    const button = this.elements.speedUpBtn;
+    const stopBoost = () => {
+      this.speedBoostActive = false;
       this.actions.onThrottle(0);
+      button.classList.remove('is-pressing');
     };
-    bar.addEventListener('pointerdown', (e) => {
+    button.addEventListener('pointerdown', (e) => {
       if (!this.controlsEnabled) return;
-      this.throttleActive = true;
-      bar.setPointerCapture(e.pointerId);
-      this.updateThrottleInput(e, bar);
-    });
-    bar.addEventListener('pointermove', (e) => {
-      if (!this.controlsEnabled || !this.throttleActive) return;
-      this.updateThrottleInput(e, bar);
-    });
-    bar.addEventListener('pointerup', stopThrottle);
-    bar.addEventListener('pointercancel', stopThrottle);
-    bar.addEventListener('pointerleave', (e) => {
-      if (e.buttons === 0) stopThrottle();
-    });
-  }
-
-  updateThrottleInput(event, bar) {
-    const rect = bar.getBoundingClientRect();
-    const ratio = (event.clientY - rect.top) / rect.height;
-    const deadZone = 0.1;
-    if (ratio < 0.5 - deadZone) {
+      this.speedBoostActive = true;
+      button.setPointerCapture(e.pointerId);
       this.actions.onThrottle(1);
-    } else if (ratio > 0.5 + deadZone) {
-      this.actions.onThrottle(-1);
-    } else {
-      this.actions.onThrottle(0);
-    }
+      button.classList.add('is-pressing');
+    });
+    button.addEventListener('pointerup', stopBoost);
+    button.addEventListener('pointercancel', stopBoost);
+    button.addEventListener('pointerleave', (e) => {
+      if (e.buttons === 0) stopBoost();
+    });
   }
 
   updateStick(e, zone, knob) {
@@ -182,7 +167,7 @@ export class HUD {
     this.elements.armorGaugeFill.style.width = `${Math.round(armorRatio * 100)}%`;
     const throttlePercent = Math.round(state.throttle * 100);
     this.elements.throttle.textContent = throttlePercent;
-    this.elements.throttleFill.style.height = `${throttlePercent}%`;
+    this.elements.throttleFill.style.width = `${throttlePercent}%`;
     this.drawRadar(state.radar);
     this.updateLockGuide(state.lockGuide);
     this.drawEnemyGauges(state.enemyGauges ?? []);
@@ -193,11 +178,12 @@ export class HUD {
     this.root.classList.toggle('hud-input-disabled', !enabled);
     if (!enabled) {
       this.stick.active = false;
-      this.throttleActive = false;
+      this.speedBoostActive = false;
       this.actions.onGunStop();
       this.actions.onThrottle(0);
       this.actions.onStick(0, 0);
       this.elements.stickKnob.style.transform = 'translate(0px, 0px)';
+      this.elements.speedUpBtn?.classList.remove('is-pressing');
     }
   }
 
