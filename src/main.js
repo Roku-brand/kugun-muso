@@ -15,16 +15,30 @@ const HOME_TABS = [
   { id: 'records', label: '4. 記録' },
 ];
 
-const COMBAT_COURSE = {
-  id: 'ayanishi-recapture',
-  title: '綾西島奪還作戦',
-  stage: 'ayanishiRecapture',
-  story:
-    '西国により我が国の領土・綾西島が占領された。西軍は第3管区艦隊と飛行隊を展開し、島には西国陸戦隊が武装展開している。我が国は西部方面隊の第5艦隊と西部航空隊5機を出撃。自機はその1機として参戦し、敵軍掃討をもって作戦完遂とする。',
-  enemy: ['西軍 第3管区艦隊', '西軍 飛行隊', '綾西島駐留 西国陸戦隊'],
-  ally: ['我が国 西部方面隊 第5艦隊', '我が国 西部航空隊 5機（自機含む）'],
-  objective: '敵軍を掃討し、綾西島を奪還せよ。',
-};
+const COMBAT_COURSES = [
+  {
+    id: 'ayanishi-recapture',
+    label: '本格コース 1',
+    title: '綾西島奪還作戦',
+    stage: 'ayanishiRecapture',
+    story:
+      '西国により我が国の領土・綾西島が占領された。西軍は第3管区艦隊と飛行隊を展開し、島には西国陸戦隊が武装展開している。我が国は西部方面隊の第5艦隊と西部航空隊5機を出撃。自機はその1機として参戦し、敵軍掃討をもって作戦完遂とする。',
+    enemy: ['西軍 第3管区艦隊', '西軍 飛行隊', '綾西島駐留 西国陸戦隊'],
+    ally: ['我が国 西部方面隊 第5艦隊', '我が国 西部航空隊 5機（自機含む）'],
+    objective: '敵軍を掃討し、綾西島を奪還せよ。',
+  },
+  {
+    id: 'hokkai-naval-battle',
+    label: '本格コース 2',
+    title: '北海海戦',
+    stage: 'hokkaiNavalBattle',
+    story:
+      '北国の増援軍が北海航路を南下中。これを阻止するため、我が国北方艦隊と航空隊が洋上迎撃を実施する。敵も海空混成で突入し、制海権・制空権を同時に争う決戦となる。',
+    enemy: ['北国 増援艦隊（空母1・巡洋艦2・駆逐艦3・フリゲート2）', '北国 増援飛行隊 10機'],
+    ally: ['我が国 北方機動艦隊（空母打撃群）', '我が国 北方航空隊 5機（自機含む）'],
+    objective: '増援軍主力を北海上で撃滅し、南下を阻止せよ。',
+  },
+];
 
 const RECORDS_KEY = 'kugun_records';
 const EMPTY_RECORDS = {
@@ -218,36 +232,42 @@ function renderCombatPanel(panel) {
     <div class="panel-title-row">
       <h2>実戦コース</h2>
     </div>
-    <article class="combat-course-card">
-      <p class="combat-course-label">本格コース</p>
-      <h3>${COMBAT_COURSE.title}</h3>
-      <p class="combat-story">${COMBAT_COURSE.story}</p>
-      <figure class="combat-ally-visual">
-        <img src="./src/ayanishi-allied-force.svg" alt="綾西島奪還作戦に参加する味方の第5艦隊と西部航空隊5機の作戦図" />
-        <figcaption>味方の艦隊と戦闘機の展開イメージ</figcaption>
-      </figure>
-      <div class="combat-fleet-grid">
-        <section>
-          <h4>敵戦力</h4>
-          <ul>
-            ${COMBAT_COURSE.enemy.map((unit) => `<li>${unit}</li>`).join('')}
-          </ul>
-        </section>
-        <section>
-          <h4>味方戦力</h4>
-          <ul>
-            ${COMBAT_COURSE.ally.map((unit) => `<li>${unit}</li>`).join('')}
-          </ul>
-        </section>
-      </div>
-      <p class="combat-objective"><strong>作戦目標：</strong>${COMBAT_COURSE.objective}</p>
-      <button class="sortie-btn" id="start-combat-course">作戦開始</button>
-    </article>
+    <div class="combat-course-list">
+      ${COMBAT_COURSES.map((course) => `
+        <article class="combat-course-card">
+          <p class="combat-course-label">${course.label}</p>
+          <h3>${course.title}</h3>
+          <p class="combat-story">${course.story}</p>
+          <figure class="combat-ally-visual">
+            <img src="./src/ayanishi-allied-force.svg" alt="${course.title}に参加する味方艦隊と航空隊の作戦図" />
+            <figcaption>味方の艦隊と戦闘機の展開イメージ</figcaption>
+          </figure>
+          <div class="combat-fleet-grid">
+            <section>
+              <h4>敵戦力</h4>
+              <ul>
+                ${course.enemy.map((unit) => `<li>${unit}</li>`).join('')}
+              </ul>
+            </section>
+            <section>
+              <h4>味方戦力</h4>
+              <ul>
+                ${course.ally.map((unit) => `<li>${unit}</li>`).join('')}
+              </ul>
+            </section>
+          </div>
+          <p class="combat-objective"><strong>作戦目標：</strong>${course.objective}</p>
+          <button class="sortie-btn start-combat-course" data-stage="${course.stage}">作戦開始</button>
+        </article>
+      `).join('')}
+    </div>
   `;
 
-  panel.querySelector('#start-combat-course').addEventListener('click', () => {
-    selectedStage = COMBAT_COURSE.stage;
-    startBattle();
+  panel.querySelectorAll('.start-combat-course').forEach((button) => {
+    button.addEventListener('click', () => {
+      selectedStage = button.dataset.stage;
+      startBattle();
+    });
   });
 }
 
