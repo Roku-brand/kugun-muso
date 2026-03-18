@@ -7,6 +7,8 @@ const DEFAULT_HORIZONTAL_BOUND = 280;
 const MAX_VISUAL_BANK_ANGLE = 0.42;
 const MAX_VISUAL_NOSE_ANGLE = 0.26;
 const VISUAL_ATTITUDE_RESPONSE = 7.5;
+const THROTTLE_ACCEL_RATE = 0.5;
+const THROTTLE_PASSIVE_DECEL_RATE = 0.18;
 const BASE_FORWARD = new THREE.Vector3(1, 0, 0);
 const LOCAL_FORWARD_AXIS = new THREE.Vector3(1, 0, 0);
 const LOCAL_RIGHT_AXIS = new THREE.Vector3(0, 0, 1);
@@ -67,7 +69,11 @@ export class Player {
     ).normalize();
     this.right.crossVectors(this.forward, this.worldUp).normalize();
 
-    this.throttle = THREE.MathUtils.clamp(this.throttle + this.input.throttle * dt * 0.5, 0, 1);
+    const throttleInput = this.input.throttle;
+    this.throttle = THREE.MathUtils.clamp(this.throttle + throttleInput * dt * THROTTLE_ACCEL_RATE, 0, 1);
+    if (throttleInput <= 0) {
+      this.throttle = Math.max(0, this.throttle - THROTTLE_PASSIVE_DECEL_RATE * dt);
+    }
     this.speed = THREE.MathUtils.lerp(this.minSpeed, this.maxSpeed, this.throttle);
     this.position.addScaledVector(this.forward, this.speed * dt);
 
