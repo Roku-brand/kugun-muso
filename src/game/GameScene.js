@@ -54,6 +54,8 @@ export class GameScene {
     this.playerMesh = this.createPlayerVisual();
     this.player.setVisual(this.playerMesh);
     this.scene.add(this.playerMesh);
+    this.playerShadow = this.createAltitudeShadow();
+    this.scene.add(this.playerShadow);
 
     this.audio = new AudioManager(settings);
     this.hud = new HUD(
@@ -401,6 +403,7 @@ export class GameScene {
   }
 
   updateWorld(dt) {
+    this.updateAltitudeShadow();
     this.lowAltitudeWarningCooldown = Math.max(0, this.lowAltitudeWarningCooldown - dt);
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
     this.updateTotalWarSpawners(dt);
@@ -594,6 +597,49 @@ export class GameScene {
       }
     });
     return fighter;
+  }
+
+  createAltitudeShadow() {
+    const shadowCanvas = document.createElement('canvas');
+    shadowCanvas.width = 256;
+    shadowCanvas.height = 256;
+    const ctx = shadowCanvas.getContext('2d');
+    if (ctx) {
+      const gradient = ctx.createRadialGradient(128, 128, 24, 128, 128, 116);
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0.6)');
+      gradient.addColorStop(0.55, 'rgba(0, 0, 0, 0.3)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 256, 256);
+    }
+
+    const texture = new THREE.CanvasTexture(shadowCanvas);
+    texture.needsUpdate = true;
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 32),
+      new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        opacity: 0.5,
+        color: 0x000000,
+      }),
+    );
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.renderOrder = 1;
+    return shadow;
+  }
+
+  updateAltitudeShadow() {
+    if (!this.playerShadow) return;
+
+    const altitude = Math.max(0, this.player.position.y);
+    const altitudeRatio = THREE.MathUtils.clamp(altitude / 280, 0, 1);
+    const shadowScale = 10 + altitude * 0.16;
+    this.playerShadow.position.set(this.player.position.x, 0.2, this.player.position.z);
+    this.playerShadow.scale.set(shadowScale, shadowScale * (0.75 + altitudeRatio * 0.3), shadowScale);
+    this.playerShadow.material.opacity = THREE.MathUtils.lerp(0.52, 0.06, altitudeRatio);
+    this.playerShadow.visible = altitude < 900;
   }
 
   updateEffects(dt) {
@@ -963,6 +1009,12 @@ export class GameScene {
     this.allies.forEach((ally) => ally.mesh && this.scene.remove(ally.mesh));
     this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     if (this.playerMesh) this.scene.remove(this.playerMesh);
+    if (this.playerShadow) {
+      this.scene.remove(this.playerShadow);
+      this.playerShadow.geometry?.dispose?.();
+      if (this.playerShadow.material?.map) this.playerShadow.material.map.dispose();
+      this.playerShadow.material?.dispose?.();
+    }
     this.audio.dispose();
     this.renderer.dispose();
   }
