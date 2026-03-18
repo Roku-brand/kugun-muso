@@ -468,9 +468,7 @@ export class GameScene {
 
     this.allyFleet.forEach((ship) => {
       const target = this.getClosestLivingEnemy(ship.mesh.position, (enemy) => enemy.type !== 'fighter');
-      const desiredPoint = target?.mesh?.position
-        ? target.mesh.position.clone()
-        : this.player.position.clone().add(new THREE.Vector3(0, 0, -520));
+      const desiredPoint = this.getAllyFleetDesiredPoint(ship, target);
       desiredPoint.y = ship.mesh.position.y;
       const toObjective = desiredPoint.sub(ship.mesh.position);
       const desiredHeading = toObjective.lengthSq() > 1
@@ -479,7 +477,8 @@ export class GameScene {
       const angleDelta = Math.atan2(Math.sin(desiredHeading - ship.heading), Math.cos(desiredHeading - ship.heading));
       ship.heading += angleDelta * Math.min(1, ship.turnRate * dt);
 
-      const advance = ship.speed * dt * (0.86 + 0.14 * Math.sin(ship.phase * 0.6));
+      const pursuitBoost = target ? this.getAllyFleetPursuitBoost(ship, target) : 0;
+      const advance = ship.speed * (1 + pursuitBoost) * dt * (0.86 + 0.14 * Math.sin(ship.phase * 0.6));
       ship.mesh.position.x += Math.sin(ship.heading) * advance;
       ship.mesh.position.z += Math.cos(ship.heading) * advance;
       ship.mesh.position.y = ship.baseY + Math.sin(ship.phase * ship.bobFrequency) * ship.bobAmplitude;
@@ -516,6 +515,40 @@ export class GameScene {
         ship.heading = Math.PI;
       }
     });
+  }
+
+  getEnemyThreatRange(enemy) {
+    if (!enemy) return 0;
+    if (enemy.type === 'turret') return 320;
+    if (enemy.type === 'ship') return 380;
+    return 260;
+  }
+
+  getAllyFleetEngagementDistance(ship, target) {
+    const enemyThreatRange = this.getEnemyThreatRange(target);
+    return Math.min(ship.fireRange * 0.84, enemyThreatRange * 0.92);
+  }
+
+  getAllyFleetDesiredPoint(ship, target) {
+    if (!target?.mesh?.position) {
+      return this.player.position.clone().add(new THREE.Vector3(0, 0, -520));
+    }
+
+    const toShip = ship.mesh.position.clone().sub(target.mesh.position);
+    toShip.y = 0;
+    if (toShip.lengthSq() < 1e-4) {
+      toShip.set(Math.sin(ship.heading), 0, Math.cos(ship.heading));
+    }
+    toShip.normalize();
+
+    const engagementDistance = this.getAllyFleetEngagementDistance(ship, target);
+    return target.mesh.position.clone().addScaledVector(toShip, engagementDistance);
+  }
+
+  getAllyFleetPursuitBoost(ship, target) {
+    const engagementDistance = this.getAllyFleetEngagementDistance(ship, target);
+    const gap = Math.max(0, ship.mesh.position.distanceTo(target.mesh.position) - engagementDistance);
+    return THREE.MathUtils.clamp(gap / 620, 0, 0.32);
   }
 
   updateWorld(dt) {
