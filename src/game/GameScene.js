@@ -636,6 +636,14 @@ export class GameScene {
     return linkedEnemy.alive;
   }
 
+  triggerPlayerCollision(cause, explosionColor = 0xff8f4d) {
+    if (this.player.armor <= 0) return;
+    this.lastCollisionCause = cause;
+    this.player.armor = 0;
+    this.spawnExplosion(this.player.position, explosionColor);
+    this.audio.explosion();
+  }
+
   handleCollisions(dt) {
     this.missiles.forEach((m) => {
       this.enemies.forEach((enemy) => {
@@ -694,8 +702,7 @@ export class GameScene {
     for (const enemy of this.enemies) {
       const enemyCollisionRadius = enemy.type === 'fighter' ? 6.8 : 8.2;
       if (enemy.alive && enemy.mesh.position.distanceTo(this.player.position) < (enemyCollisionRadius + PLAYER_COLLISION_RADIUS)) {
-        this.lastCollisionCause = { type: 'enemy', enemyType: enemy.type };
-        this.player.armor = 0;
+        this.triggerPlayerCollision({ type: 'enemy', enemyType: enemy.type }, 0xff7676);
       }
     }
 
@@ -715,8 +722,8 @@ export class GameScene {
           && dy < Math.max(0.1, box.y - PLAYER_COLLISION_RADIUS)
           && dz < Math.max(0.1, box.z - PLAYER_COLLISION_RADIUS)
         ) {
-          this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
-          this.player.armor = 0;
+          this.triggerPlayerCollision({ type: 'object', objective: target.objective ?? target.type ?? 'terrain' });
+          break;
         }
         continue;
       }
@@ -734,8 +741,8 @@ export class GameScene {
       const ny = (this.player.position.y - cy) / effectiveVerticalRadius;
       const nz = (this.player.position.z - cz) / effectiveRadius;
       if ((nx * nx) + (ny * ny) + (nz * nz) < 1) {
-        this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
-        this.player.armor = 0;
+        this.triggerPlayerCollision({ type: 'object', objective: target.objective ?? target.type ?? 'terrain' });
+        break;
       }
     }
   }
