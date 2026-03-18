@@ -31,9 +31,10 @@ const PLAYER_HORIZONTAL_BOUNDS = {
   base: 1100,
   totalWar: 1650,
   ayanishiRecapture: 1650,
+  hokkaiNavalBattle: 1750,
 };
 const PLAYER_COLLISION_RADIUS = 2.6;
-const STRATEGIC_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture']);
+const STRATEGIC_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture', 'hokkaiNavalBattle']);
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
@@ -86,6 +87,7 @@ export class GameScene {
     this.missiles = [];
     this.playerBullets = [];
     this.allyBullets = [];
+    this.allyFleetBullets = [];
     this.allyFleet = [];
     this.missileLockDistance = 360;
     this.enemyBullets = [];
@@ -380,6 +382,8 @@ export class GameScene {
       return {
         mesh: ship,
         speed: spec.speed,
+        cooldown: 0.6 + index * 0.35,
+        fireRange: 460 + index * 45,
       };
     });
   }
@@ -446,6 +450,23 @@ export class GameScene {
       ship.mesh.position.z -= ship.speed * dt;
       ship.mesh.position.x += Math.sin((this.last * 0.00045) + ship.mesh.position.z * 0.0008) * dt * 0.9;
 
+      const target = this.getClosestLivingEnemy(ship.mesh.position, (enemy) => enemy.type !== 'fighter');
+      ship.cooldown -= dt;
+      if (target && ship.cooldown <= 0 && ship.mesh.position.distanceTo(target.mesh.position) < ship.fireRange) {
+        ship.cooldown = 1.3;
+        const shootPos = ship.mesh.position.clone().add(new THREE.Vector3(0, 5.8, -6.5));
+        const aim = target.mesh.position.clone().sub(shootPos).normalize();
+        const navalShot = {
+          pos: shootPos,
+          vel: aim.multiplyScalar(270),
+          life: 3.2,
+          damage: 20,
+          mesh: this.makeAllyNavalShellMesh(),
+        };
+        this.allyFleetBullets.push(navalShot);
+        navalShot.mesh.position.copy(navalShot.pos);
+      }
+
       if (ship.mesh.position.z < -2200) {
         ship.mesh.position.z = 240;
       }
@@ -499,6 +520,14 @@ export class GameScene {
         b.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), b.vel.clone().normalize());
       }
     });
+    this.allyFleetBullets.forEach((b) => {
+      b.pos.addScaledVector(b.vel, dt);
+      b.life -= dt;
+      if (b.mesh) {
+        b.mesh.position.copy(b.pos);
+        b.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), b.vel.clone().normalize());
+      }
+    });
     this.updateEffects(dt);
     this.handleCollisions(dt);
 
@@ -523,6 +552,11 @@ export class GameScene {
     });
 
     this.allyBullets = this.allyBullets.filter((b) => {
+      const keep = b.life > 0;
+      if (!keep && b.mesh) this.scene.remove(b.mesh);
+      return keep;
+    });
+    this.allyFleetBullets = this.allyFleetBullets.filter((b) => {
       const keep = b.life > 0;
       if (!keep && b.mesh) this.scene.remove(b.mesh);
       return keep;
@@ -635,6 +669,15 @@ export class GameScene {
     tracer.rotation.z = Math.PI / 2;
     this.scene.add(tracer);
     return tracer;
+  }
+
+  makeAllyNavalShellMesh() {
+    const shell = new THREE.Mesh(
+      new THREE.SphereGeometry(1.1, 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0x8be4ff }),
+    );
+    this.scene.add(shell);
+    return shell;
   }
 
   createPlayerVisual() {
@@ -879,6 +922,19 @@ export class GameScene {
       });
     });
 
+    this.allyFleetBullets.forEach((b) => {
+      this.enemies.forEach((enemy) => {
+        if (!enemy.alive) return;
+        if (b.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 6 : 15)) {
+          enemy.applyDamage(b.damage);
+          b.life = 0;
+          if (!enemy.alive) {
+            this.destroyEnemy(enemy, 0x9be9ff);
+          }
+        }
+      });
+    });
+
     for (const enemy of this.enemies) {
       const enemyCollisionRadius = enemy.type === 'fighter' ? 6.8 : 8.2;
       if (enemy.alive && enemy.mesh.position.distanceTo(this.player.position) < (enemyCollisionRadius + PLAYER_COLLISION_RADIUS)) {
@@ -1086,11 +1142,12 @@ export class GameScene {
     });
   }
 
-  getClosestLivingEnemy(pos) {
+  getClosestLivingEnemy(pos, predicate = null) {
     let best = null;
     let bestDist = Infinity;
     this.enemies.forEach((enemy) => {
       if (!enemy.alive) return;
+      if (predicate && !predicate(enemy)) return;
       const d = enemy.mesh.position.distanceTo(pos);
       if (d < bestDist) {
         bestDist = d;
@@ -1152,6 +1209,7 @@ export class GameScene {
     this.missiles.forEach((m) => this.scene.remove(m.mesh));
     this.playerBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.allyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
+    this.allyFleetBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.allies.forEach((ally) => ally.mesh && this.scene.remove(ally.mesh));
     this.allyFleet?.forEach((allyShip) => allyShip.mesh && this.scene.remove(allyShip.mesh));
     this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
