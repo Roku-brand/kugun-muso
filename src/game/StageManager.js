@@ -1297,6 +1297,10 @@ export class StageManager {
       flightDeck.position.y = 8;
       const runwayStripe = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, 112), new THREE.MeshStandardMaterial({ color: 0xe7e9eb }));
       runwayStripe.position.set(0, 9.4, -2);
+      const deckGuide = new THREE.Mesh(new THREE.BoxGeometry(18, 0.25, 6), new THREE.MeshStandardMaterial({ color: 0xf3f5f7 }));
+      deckGuide.position.set(0, 9.42, 42);
+      const arrestingZone = new THREE.Mesh(new THREE.BoxGeometry(22, 0.28, 2.2), new THREE.MeshStandardMaterial({ color: 0x31363d }));
+      arrestingZone.position.set(0, 9.41, 26);
 
       const island = new THREE.Mesh(new THREE.BoxGeometry(11, 17, 20), superMat);
       island.position.set(12, 17, 16);
@@ -1312,8 +1316,13 @@ export class StageManager {
         ciws.position.set((i - 1) * 13, 9.8, 50 - i * 38);
         group.add(ciws);
       }
+      for (let i = 0; i < 4; i++) {
+        const cable = new THREE.Mesh(new THREE.BoxGeometry(22, 0.1, 0.7), darkMat);
+        cable.position.set(0, 9.48, 30 - i * 9);
+        group.add(cable);
+      }
 
-      group.add(hull, bow, flightDeck, runwayStripe, island, bridge, windows, mast);
+      group.add(hull, bow, flightDeck, runwayStripe, deckGuide, arrestingZone, island, bridge, windows, mast);
       return group;
     }
 
