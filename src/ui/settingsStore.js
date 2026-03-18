@@ -1,4 +1,5 @@
 export const SETTINGS_DEFAULTS = {
+  aircraftModel: 'f35',
   aircraftColor: '#6cf4ff',
   missileColor: '#ffae42',
   controlSensitivity: 'medium',
