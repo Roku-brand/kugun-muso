@@ -367,6 +367,10 @@ input[type='range'] { width: 100%; }
   display: grid;
   gap: 10px;
 }
+.combat-course-list {
+  display: grid;
+  gap: 12px;
+}
 .combat-course-label {
   margin: 0;
   font-size: 0.72rem;

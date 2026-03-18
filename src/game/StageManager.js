@@ -29,6 +29,7 @@ export class StageManager {
     if (stage === 'base') this.createBaseBattle();
     if (stage === 'totalWar') this.createTotalWarBattle();
     if (stage === 'ayanishiRecapture') this.createAyanishiRecaptureBattle();
+    if (stage === 'hokkaiNavalBattle') this.createHokkaiNavalBattle();
     return this.enemies;
   }
 
@@ -417,6 +418,80 @@ export class StageManager {
       this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
     });
   }
+
+  createHokkaiNavalBattle() {
+    const areaScale = 1.6;
+    this.createSkyCommon();
+    const sea = new THREE.Mesh(
+      new THREE.PlaneGeometry(9800 * areaScale, 9800 * areaScale, 64, 64),
+      new THREE.MeshStandardMaterial({ color: 0x0a3553, metalness: 0.35, roughness: 0.58 }),
+    );
+    sea.rotation.x = -Math.PI / 2;
+    this.scene.add(sea);
+    this.stageObjects.push(sea);
+
+    const enemyFleetSpecs = this.scaleFleetSpecs([
+      { role: 'carrier', x: -120, z: -760, health: ENEMY_DURABILITY.shipByRole.carrier, speed: 8.2, radius: 42 },
+      { role: 'cruiser', x: -360, z: -840, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10.6, radius: 32 },
+      { role: 'cruiser', x: 130, z: -900, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 10.2, radius: 32 },
+      { role: 'destroyer', x: 380, z: -980, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13.8, radius: 26 },
+      { role: 'destroyer', x: -440, z: -1030, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13.2, radius: 26 },
+      { role: 'frigate', x: -40, z: -1120, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 12.8, radius: 24 },
+      { role: 'frigate', x: 280, z: -1200, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 12.4, radius: 24 },
+      { role: 'destroyer', x: -250, z: -1290, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 13.5, radius: 26 },
+    ], areaScale);
+
+    enemyFleetSpecs.forEach((spec, index) => {
+      const ship = this.makeShip(spec.role);
+      ship.position.set(spec.x, 6, spec.z);
+      ship.rotation.y = (Math.PI * 0.92) + (index - 3.5) * 0.06;
+      this.scene.add(ship);
+      this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: spec.health, speed: spec.speed }));
+      this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
+    });
+
+    const playerStart = new THREE.Vector3(0, 180, 120);
+    const enemyAirSpecs = [
+      { x: -460, y: 260, z: -1220, speed: 80 },
+      { x: -260, y: 310, z: -1160, speed: 86 },
+      { x: -80, y: 280, z: -1100, speed: 82 },
+      { x: 90, y: 330, z: -1240, speed: 88 },
+      { x: 280, y: 290, z: -1180, speed: 84 },
+      { x: 440, y: 350, z: -1260, speed: 90 },
+      { x: -320, y: 370, z: -1380, speed: 92 },
+      { x: 340, y: 390, z: -1420, speed: 94 },
+      { x: -160, y: 340, z: -1500, speed: 90 },
+      { x: 180, y: 300, z: -1540, speed: 87 },
+    ];
+
+    enemyAirSpecs.forEach((spec, index) => {
+      const fighter = this.makeFighter();
+      const [x, y, z] = this.scalePoint([spec.x, spec.y, spec.z], areaScale, 1.05);
+      fighter.position.set(x, y, z);
+      fighter.lookAt(playerStart);
+      this.scene.add(fighter);
+
+      const spreadPoint = new THREE.Vector3(
+        x + (index % 2 === 0 ? -90 : 90),
+        y + 30 + (index % 3) * 16,
+        z + 190 + (index % 4) * 38,
+      );
+      this.enemies.push(new Enemy({
+        type: 'fighter',
+        mesh: fighter,
+        health: ENEMY_DURABILITY.fighter,
+        speed: spec.speed,
+        behavior: {
+          engageTime: 2.6 + index * 0.24,
+          spreadWeight: 0.7 + (index % 3) * 0.06,
+          spreadPoint,
+          preferredRange: 265 + (index % 4) * 20,
+          rangeTolerance: 90,
+        },
+      }));
+    });
+  }
+
   createBaseBattle() {
     const areaScale = 1.35;
     this.createSkyCommon();
