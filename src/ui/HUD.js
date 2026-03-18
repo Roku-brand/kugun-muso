@@ -43,13 +43,15 @@ export class HUD {
       </div>
       <div class="hud-corner hud-corner-right controls-panel">
         <div class="control-row">
-          <button id="fireBtn" class="missile-fire-btn" aria-label="ミサイル発射">
-            <span class="missile-icon" aria-hidden="true"></span>
-          </button>
+          <div class="flight-action-stack">
+            <button id="speedUpBtn" class="speed-up-btn" aria-label="長押しで加速">加速</button>
+            <button id="fireBtn" class="missile-fire-btn" aria-label="ミサイル発射">
+              <span class="missile-icon" aria-hidden="true"></span>
+            </button>
+          </div>
           <button id="gunBtn" class="gun-fire-btn" aria-label="機関銃連射">
             <span class="gun-icon" aria-hidden="true"></span>
           </button>
-          <button id="speedUpBtn" class="speed-up-btn" aria-label="長押しで加速">加速</button>
         </div>
         <div class="throttle-label">スロットル: <span id="throttle">45</span>%</div>
         <div class="throttle-meter" aria-hidden="true">
@@ -153,7 +155,8 @@ export class HUD {
       x /= len;
       y /= len;
     }
-    knob.style.transform = `translate(${x * 30}px, ${y * 30}px)`;
+    const knobTravel = Math.max(20, rect.width * 0.33);
+    knob.style.transform = `translate(${x * knobTravel}px, ${y * knobTravel}px)`;
     this.actions.onStick(x, y);
   }
 

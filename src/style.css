@@ -645,6 +645,11 @@ input[type='range'] { width: 100%; }
   align-items: flex-end;
   gap: 10px;
 }
+.flight-action-stack {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
 .missile-fire-btn {
   width: 74px;
   height: 74px;
@@ -807,15 +812,80 @@ input[type='range'] { width: 100%; }
   .hud-corner-right {
     right: calc(8px + env(safe-area-inset-right) - var(--weapon-ui-offset-x, 0px));
     bottom: calc(8px + env(safe-area-inset-bottom) + var(--weapon-ui-offset-y, 0px));
-    width: 118px;
+    width: 132px;
   }
-  .speed-up-btn { width: 58px; height: 58px; }
+  .flight-action-stack {
+    gap: 6px;
+  }
+  .speed-up-btn { width: 54px; height: 54px; font-size: 0.78rem; }
   .throttle-meter { width: 114px; }
   .missile-fire-btn { width: 64px; height: 64px; }
   .gun-fire-btn { width: 56px; height: 56px; }
   .missile-icon { transform: rotate(35deg) scale(0.92); }
 }
 
+
+
+@media (max-width: 860px) and (max-height: 540px) {
+  .top-status {
+    min-width: min(97vw, 580px);
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: clamp(0.62rem, 1.8vw, 0.76rem);
+  }
+  .armor-gauge {
+    top: calc(46px + env(safe-area-inset-top));
+    width: min(58vw, 250px);
+    height: 10px;
+  }
+  .left-top {
+    top: calc(6px + env(safe-area-inset-top));
+  }
+  .radar-wrap canvas {
+    width: 78px;
+    height: 78px;
+  }
+  .hud-corner-left {
+    width: 150px;
+  }
+  .stick-zone {
+    width: 74px;
+    height: 74px;
+  }
+  .stick-knob {
+    width: 24px;
+    height: 24px;
+    top: 25px;
+    left: 25px;
+  }
+  .hud-corner-right {
+    width: 122px;
+    gap: 6px;
+  }
+  .control-row {
+    gap: 8px;
+  }
+  .speed-up-btn,
+  .missile-fire-btn {
+    width: 50px;
+    height: 50px;
+  }
+  .gun-fire-btn {
+    width: 48px;
+    height: 48px;
+  }
+  .throttle-meter {
+    width: 100px;
+    height: 10px;
+  }
+  .throttle-label {
+    font-size: 0.64rem;
+    padding: 2px 5px;
+  }
+  .missile-icon {
+    transform: rotate(35deg) scale(0.72);
+  }
+}
 @media (max-height: 440px) {
   .top-shell { padding: calc(8px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left)); gap: 8px; }
   .title-panel { padding: 8px 10px; }
