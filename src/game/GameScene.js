@@ -24,6 +24,7 @@ const PLAYER_HORIZONTAL_BOUNDS = {
   base: 1100,
   totalWar: 1650,
 };
+const PLAYER_COLLISION_RADIUS = 2.6;
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
@@ -620,6 +621,21 @@ export class GameScene {
     this.effects.push({ mesh, life: 0.6, maxLife: 0.6 });
   }
 
+  destroyEnemy(enemy, explosionColor = 0xff9b5f) {
+    this.audio.explosion();
+    this.spawnExplosion(enemy.mesh.position, explosionColor);
+    this.scene.remove(enemy.mesh);
+    this.stageManager.targets = this.stageManager.targets.filter((target) => target.mesh !== enemy.mesh);
+    this.onEnemyDestroyed?.(enemy.type);
+  }
+
+  isTargetActive(target) {
+    if (target.type === 'terrain') return true;
+    const linkedEnemy = this.enemies.find((enemy) => enemy.mesh === target.mesh);
+    if (!linkedEnemy) return true;
+    return linkedEnemy.alive;
+  }
+
   handleCollisions(dt) {
     this.missiles.forEach((m) => {
       this.enemies.forEach((enemy) => {
@@ -630,15 +646,14 @@ export class GameScene {
           this.spawnExplosion(enemy.mesh.position);
           this.audio.explosion();
           if (!enemy.alive) {
-            this.scene.remove(enemy.mesh);
-            this.onEnemyDestroyed?.(enemy.type);
+            this.destroyEnemy(enemy);
           }
         }
       });
     });
 
     this.enemyBullets.forEach((b) => {
-      if (b.pos.distanceTo(this.player.position) < 8) {
+      if (b.pos.distanceTo(this.player.position) < ((b.radius ?? 3.2) + PLAYER_COLLISION_RADIUS)) {
         b.pos.set(99999, 99999, 99999);
         if (b.mesh) this.scene.remove(b.mesh);
         this.lastDamageCause = { type: 'shot', weapon: b.kind };
@@ -657,10 +672,7 @@ export class GameScene {
           enemy.applyDamage(b.damage);
           b.life = 0;
           if (!enemy.alive) {
-            this.audio.explosion();
-            this.spawnExplosion(enemy.mesh.position, 0xffb777);
-            this.scene.remove(enemy.mesh);
-            this.onEnemyDestroyed?.(enemy.type);
+            this.destroyEnemy(enemy, 0xffb777);
           }
         }
       });
@@ -673,23 +685,22 @@ export class GameScene {
           enemy.applyDamage(b.damage);
           b.life = 0;
           if (!enemy.alive) {
-            this.audio.explosion();
-            this.spawnExplosion(enemy.mesh.position, 0x8fffd4);
-            this.scene.remove(enemy.mesh);
-            this.onEnemyDestroyed?.(enemy.type);
+            this.destroyEnemy(enemy, 0x8fffd4);
           }
         }
       });
     });
 
     for (const enemy of this.enemies) {
-      if (enemy.alive && enemy.mesh.position.distanceTo(this.player.position) < 9) {
+      const enemyCollisionRadius = enemy.type === 'fighter' ? 6.8 : 8.2;
+      if (enemy.alive && enemy.mesh.position.distanceTo(this.player.position) < (enemyCollisionRadius + PLAYER_COLLISION_RADIUS)) {
         this.lastCollisionCause = { type: 'enemy', enemyType: enemy.type };
         this.player.armor = 0;
       }
     }
 
     for (const target of this.stageManager.targets) {
+      if (!this.isTargetActive(target)) continue;
       const box = target.collisionHalfExtents;
       if (box) {
         const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
@@ -699,7 +710,11 @@ export class GameScene {
         const dx = Math.abs(this.player.position.x - centerX);
         const dy = Math.abs(this.player.position.y - centerY);
         const dz = Math.abs(this.player.position.z - centerZ);
-        if (dx < box.x && dy < box.y && dz < box.z) {
+        if (
+          dx < Math.max(0.1, box.x - PLAYER_COLLISION_RADIUS)
+          && dy < Math.max(0.1, box.y - PLAYER_COLLISION_RADIUS)
+          && dz < Math.max(0.1, box.z - PLAYER_COLLISION_RADIUS)
+        ) {
           this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
           this.player.armor = 0;
         }
@@ -709,13 +724,15 @@ export class GameScene {
       const radius = target.radius ?? 0;
       const verticalRadius = target.collisionVerticalRadius ?? radius;
       if (radius <= 0 || verticalRadius <= 0) continue;
+      const effectiveRadius = Math.max(0.1, radius - PLAYER_COLLISION_RADIUS);
+      const effectiveVerticalRadius = Math.max(0.1, verticalRadius - PLAYER_COLLISION_RADIUS);
       const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
       const cx = target.mesh.position.x + offset.x;
       const cy = target.mesh.position.y + offset.y;
       const cz = target.mesh.position.z + offset.z;
-      const nx = (this.player.position.x - cx) / radius;
-      const ny = (this.player.position.y - cy) / verticalRadius;
-      const nz = (this.player.position.z - cz) / radius;
+      const nx = (this.player.position.x - cx) / effectiveRadius;
+      const ny = (this.player.position.y - cy) / effectiveVerticalRadius;
+      const nz = (this.player.position.z - cz) / effectiveRadius;
       if ((nx * nx) + (ny * ny) + (nz * nz) < 1) {
         this.lastCollisionCause = { type: 'object', objective: target.objective ?? target.type ?? 'terrain' };
         this.player.armor = 0;
