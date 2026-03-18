@@ -30,8 +30,10 @@ const PLAYER_HORIZONTAL_BOUNDS = {
   sea: 1200,
   base: 1100,
   totalWar: 1650,
+  ayanishiRecapture: 1650,
 };
 const PLAYER_COLLISION_RADIUS = 2.6;
+const STRATEGIC_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture']);
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
@@ -309,7 +311,7 @@ export class GameScene {
 
   initAllies() {
     const difficultyAllyCount = DIFFICULTY_ALLY_COUNT[this.settings.difficulty] ?? DIFFICULTY_ALLY_COUNT.normal;
-    const defaultMissionAllies = this.stage === 'totalWar' ? TOTAL_WAR_DEFAULT_ALLY_FIGHTERS : 0;
+    const defaultMissionAllies = this.isStrategicOperationStage() ? TOTAL_WAR_DEFAULT_ALLY_FIGHTERS : 0;
     const allyCount = defaultMissionAllies + difficultyAllyCount;
     this.allies = Array.from({ length: allyCount }, (_, index) => ({
       index,
@@ -360,7 +362,7 @@ export class GameScene {
   }
 
   initAllyFleet() {
-    if (this.stage !== 'totalWar') {
+    if (!this.isStrategicOperationStage()) {
       this.allyFleet = [];
       return;
     }
@@ -530,7 +532,7 @@ export class GameScene {
 
 
   updateTotalWarSpawners(dt) {
-    if (this.stage !== 'totalWar') return;
+    if (!this.isStrategicOperationStage()) return;
 
     const port = this.findObjectiveTarget('portSpawner');
     const runway = this.findObjectiveTarget('runwaySpawner');
@@ -941,7 +943,7 @@ export class GameScene {
       return;
     }
 
-    if (this.stage === 'totalWar') {
+    if (this.isStrategicOperationStage()) {
       const hqAlive = this.enemies.some((enemy) => enemy.alive
         && this.stageManager.targets.some((target) => target.objective === 'hq' && target.mesh === enemy.mesh));
       if (!hqAlive) {
@@ -964,7 +966,7 @@ export class GameScene {
     this.overlayRoot.innerHTML = `
       <div class="result-panel ${success ? 'clear' : 'over'}">
         <h2>${title}</h2>
-        <p>${success ? (this.stage === 'totalWar' ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : (detailMessage ?? '任務失敗。機体を喪失しました。')}</p>
+        <p>${success ? (this.isStrategicOperationStage() ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : (detailMessage ?? '任務失敗。機体を喪失しました。')}</p>
         <button id="retry">リトライ</button>
         <button id="back">トップへ戻る</button>
       </div>
@@ -974,6 +976,10 @@ export class GameScene {
       location.reload();
     });
     this.overlayRoot.querySelector('#back').addEventListener('click', this.onExit);
+  }
+
+  isStrategicOperationStage() {
+    return STRATEGIC_OPERATION_STAGES.has(this.stage);
   }
 
 

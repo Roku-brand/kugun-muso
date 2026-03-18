@@ -18,7 +18,7 @@ const HOME_TABS = [
 const COMBAT_COURSE = {
   id: 'ayanishi-recapture',
   title: '綾西島奪還作戦',
-  stage: 'totalWar',
+  stage: 'ayanishiRecapture',
   story:
     '西国により我が国の領土・綾西島が占領された。西軍は第3管区艦隊と飛行隊を展開し、島には西国陸戦隊が武装展開している。我が国は西部方面隊の第5艦隊と西部航空隊5機を出撃。自機はその1機として参戦し、敵軍掃討をもって作戦完遂とする。',
   enemy: ['西軍 第3管区艦隊', '西軍 飛行隊', '綾西島駐留 西国陸戦隊'],

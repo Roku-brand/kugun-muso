@@ -28,6 +28,7 @@ export class StageManager {
     if (stage === 'sea') this.createSeaBattle();
     if (stage === 'base') this.createBaseBattle();
     if (stage === 'totalWar') this.createTotalWarBattle();
+    if (stage === 'ayanishiRecapture') this.createAyanishiRecaptureBattle();
     return this.enemies;
   }
 
@@ -371,6 +372,49 @@ export class StageManager {
           rangeTolerance: 90,
         },
       }));
+    });
+  }
+
+  createAyanishiRecaptureBattle() {
+    this.createTotalWarBattle();
+
+    const hqTarget = this.targets.find((target) => target.objective === 'hq');
+    if (hqTarget?.mesh) {
+      hqTarget.mesh.position.x = 230;
+      hqTarget.mesh.position.z -= 120;
+    }
+
+    const additionalDefensePositions = [
+      [-360, 66, -1040],
+      [-320, 66, -1180],
+      [320, 66, -1180],
+      [360, 66, -1040],
+      [-240, 66, -900],
+      [240, 66, -900],
+    ];
+
+    additionalDefensePositions.forEach((pos) => {
+      const turret = this.makeGroundTurret();
+      turret.position.set(...pos);
+      this.scene.add(turret);
+      this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: ENEMY_DURABILITY.turret }));
+      this.targets.push({ mesh: turret, radius: 14, collisionVerticalRadius: 10, type: 'building' });
+    });
+
+    const rapidFleetSpecs = [
+      { role: 'destroyer', x: -380, z: -780, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 14, radius: 26 },
+      { role: 'frigate', x: 360, z: -760, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 13, radius: 24 },
+      { role: 'cruiser', x: -120, z: -690, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 11, radius: 32 },
+      { role: 'destroyer', x: 140, z: -670, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 14, radius: 26 },
+    ];
+
+    rapidFleetSpecs.forEach((spec, index) => {
+      const ship = this.makeShip(spec.role);
+      ship.position.set(spec.x, 6, spec.z);
+      ship.rotation.y = Math.PI * 0.9 + (index - 1.5) * 0.07;
+      this.scene.add(ship);
+      this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: spec.health, speed: spec.speed }));
+      this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
     });
   }
   createBaseBattle() {
