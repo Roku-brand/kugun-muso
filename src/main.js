@@ -15,6 +15,17 @@ const HOME_TABS = [
   { id: 'records', label: '4. 記録' },
 ];
 
+const COMBAT_COURSE = {
+  id: 'ayanishi-recapture',
+  title: '綾西島奪還作戦',
+  stage: 'totalWar',
+  story:
+    '西国により我が国の領土・綾西島が占領された。西軍は第3管区艦隊と飛行隊を展開し、島には西国陸戦隊が武装展開している。我が国は西部方面隊の第5艦隊と西部航空隊5機を出撃。自機はその1機として参戦し、敵軍掃討をもって作戦完遂とする。',
+  enemy: ['西軍 第3管区艦隊', '西軍 飛行隊', '綾西島駐留 西国陸戦隊'],
+  ally: ['我が国 西部方面隊 第5艦隊', '我が国 西部航空隊 5機（自機含む）'],
+  objective: '敵軍を掃討し、綾西島を奪還せよ。',
+};
+
 const RECORDS_KEY = 'kugun_records';
 const EMPTY_RECORDS = {
   sorties: 0,
@@ -207,11 +218,33 @@ function renderCombatPanel(panel) {
     <div class="panel-title-row">
       <h2>実戦コース</h2>
     </div>
-    <div class="placeholder-panel">
-      <p>近日公開（デモ）</p>
-      <small>将来的に長編ミッション・本格コースを実装予定です。</small>
-    </div>
+    <article class="combat-course-card">
+      <p class="combat-course-label">本格コース</p>
+      <h3>${COMBAT_COURSE.title}</h3>
+      <p class="combat-story">${COMBAT_COURSE.story}</p>
+      <div class="combat-fleet-grid">
+        <section>
+          <h4>敵戦力</h4>
+          <ul>
+            ${COMBAT_COURSE.enemy.map((unit) => `<li>${unit}</li>`).join('')}
+          </ul>
+        </section>
+        <section>
+          <h4>味方戦力</h4>
+          <ul>
+            ${COMBAT_COURSE.ally.map((unit) => `<li>${unit}</li>`).join('')}
+          </ul>
+        </section>
+      </div>
+      <p class="combat-objective"><strong>作戦目標：</strong>${COMBAT_COURSE.objective}</p>
+      <button class="sortie-btn" id="start-combat-course">作戦開始</button>
+    </article>
   `;
+
+  panel.querySelector('#start-combat-course').addEventListener('click', () => {
+    selectedStage = COMBAT_COURSE.stage;
+    startBattle();
+  });
 }
 
 function renderCustomPanel(panel) {
