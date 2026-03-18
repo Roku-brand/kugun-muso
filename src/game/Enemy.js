@@ -47,6 +47,21 @@ export class Enemy {
       };
       this.passOffset = (Math.random() - 0.5) * 0.7;
     }
+
+    if (this.type === 'ship') {
+      const initialHeading = this.mesh.rotation.y + Math.PI;
+      this.shipProfile = {
+        heading: initialHeading,
+        baseY: this.mesh.position.y,
+        bobAmplitude: 0.9 + Math.random() * 0.7,
+        bobFrequency: 0.9 + Math.random() * 0.45,
+        rollAmplitude: 0.09 + Math.random() * 0.05,
+        pitchAmplitude: 0.045 + Math.random() * 0.03,
+        turnRate: 0.26 + Math.random() * 0.14,
+        driftAmplitude: 4 + Math.random() * 3,
+      };
+      this.wavePhase = Math.random() * Math.PI * 2;
+    }
   }
 
   getWeaponProfile(distanceToPlayer) {
@@ -156,8 +171,29 @@ export class Enemy {
     }
 
     if (this.type === 'ship') {
-      this.mesh.position.x += Math.sin(this.phase) * dt * 2;
-      this.phase += dt * 0.3;
+      const ship = this.shipProfile;
+      const toPlayer = playerPos.clone().sub(this.mesh.position);
+      toPlayer.y = 0;
+      const desiredHeading = toPlayer.lengthSq() > 1
+        ? Math.atan2(toPlayer.x, toPlayer.z)
+        : ship.heading;
+      const angleDelta = Math.atan2(
+        Math.sin(desiredHeading - ship.heading),
+        Math.cos(desiredHeading - ship.heading),
+      );
+      ship.heading += angleDelta * Math.min(1, ship.turnRate * dt);
+
+      const speedScale = 0.85 + 0.15 * Math.sin(this.phase * 0.55 + this.wavePhase);
+      const forward = new THREE.Vector3(Math.sin(ship.heading), 0, Math.cos(ship.heading));
+      this.mesh.position.addScaledVector(forward, this.speed * dt * speedScale);
+      this.mesh.position.x += Math.sin(this.phase * 0.75 + this.wavePhase) * ship.driftAmplitude * dt * 0.35;
+
+      this.mesh.position.y = ship.baseY + Math.sin(this.phase * ship.bobFrequency + this.wavePhase) * ship.bobAmplitude;
+      this.mesh.rotation.y = ship.heading;
+      this.mesh.rotation.z = Math.sin(this.phase * 1.35 + this.wavePhase) * ship.rollAmplitude;
+      this.mesh.rotation.x = Math.sin(this.phase * 1.05 + this.wavePhase * 1.6) * ship.pitchAmplitude;
+
+      this.phase += dt;
     }
 
     if (!this.canFire) return;

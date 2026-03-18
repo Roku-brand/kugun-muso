@@ -396,6 +396,14 @@ export class GameScene {
         speed: spec.speed,
         cooldown: 0.6 + index * 0.35,
         fireRange: 460 + index * 45,
+        heading: ship.rotation.y + Math.PI,
+        baseY: ship.position.y,
+        phase: Math.random() * Math.PI * 2,
+        bobAmplitude: 0.8 + Math.random() * 0.5,
+        bobFrequency: 0.85 + Math.random() * 0.35,
+        rollAmplitude: 0.08 + Math.random() * 0.04,
+        pitchAmplitude: 0.04 + Math.random() * 0.025,
+        turnRate: 0.34 + Math.random() * 0.1,
       };
     });
   }
@@ -459,14 +467,34 @@ export class GameScene {
     if (!this.allyFleet?.length) return;
 
     this.allyFleet.forEach((ship) => {
-      ship.mesh.position.z -= ship.speed * dt;
-      ship.mesh.position.x += Math.sin((this.last * 0.00045) + ship.mesh.position.z * 0.0008) * dt * 0.9;
-
       const target = this.getClosestLivingEnemy(ship.mesh.position, (enemy) => enemy.type !== 'fighter');
+      const desiredPoint = target?.mesh?.position
+        ? target.mesh.position.clone()
+        : this.player.position.clone().add(new THREE.Vector3(0, 0, -520));
+      desiredPoint.y = ship.mesh.position.y;
+      const toObjective = desiredPoint.sub(ship.mesh.position);
+      const desiredHeading = toObjective.lengthSq() > 1
+        ? Math.atan2(toObjective.x, toObjective.z)
+        : ship.heading;
+      const angleDelta = Math.atan2(Math.sin(desiredHeading - ship.heading), Math.cos(desiredHeading - ship.heading));
+      ship.heading += angleDelta * Math.min(1, ship.turnRate * dt);
+
+      const advance = ship.speed * dt * (0.86 + 0.14 * Math.sin(ship.phase * 0.6));
+      ship.mesh.position.x += Math.sin(ship.heading) * advance;
+      ship.mesh.position.z += Math.cos(ship.heading) * advance;
+      ship.mesh.position.y = ship.baseY + Math.sin(ship.phase * ship.bobFrequency) * ship.bobAmplitude;
+
+      ship.mesh.rotation.y = ship.heading;
+      ship.mesh.rotation.z = Math.sin(ship.phase * 1.3 + ship.baseY) * ship.rollAmplitude;
+      ship.mesh.rotation.x = Math.sin(ship.phase * 1.05 + ship.baseY * 0.8) * ship.pitchAmplitude;
+      ship.phase += dt;
+
       ship.cooldown -= dt;
       if (target && ship.cooldown <= 0 && ship.mesh.position.distanceTo(target.mesh.position) < ship.fireRange) {
         ship.cooldown = 1.3;
-        const shootPos = ship.mesh.position.clone().add(new THREE.Vector3(0, 5.8, -6.5));
+        const muzzleOffset = new THREE.Vector3(0, 5.8, -6.5)
+          .applyAxisAngle(new THREE.Vector3(0, 1, 0), ship.mesh.rotation.y - Math.PI);
+        const shootPos = ship.mesh.position.clone().add(muzzleOffset);
         const aim = target.mesh.position.clone().sub(shootPos).normalize();
         const navalShot = {
           pos: shootPos,
@@ -479,8 +507,13 @@ export class GameScene {
         navalShot.mesh.position.copy(navalShot.pos);
       }
 
-      if (ship.mesh.position.z < -2200) {
-        ship.mesh.position.z = 240;
+      if (ship.mesh.position.z < -2400 || ship.mesh.position.z > 380 || Math.abs(ship.mesh.position.x) > 1100) {
+        ship.mesh.position.set(
+          THREE.MathUtils.clamp(ship.mesh.position.x, -620, 620),
+          ship.baseY,
+          240,
+        );
+        ship.heading = Math.PI;
       }
     });
   }
