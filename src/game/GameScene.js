@@ -18,6 +18,13 @@ const TOTAL_WAR_MAX_ACTIVE_REINFORCEMENTS = {
   ship: 14,
   fighter: 24,
 };
+const LANDING_MAX_APPROACH_SPEED = 98;
+const LANDING_MAX_CLIMB_ANGLE = 0.22;
+const LANDING_TOUCHDOWN_HEIGHT_TOLERANCE = 5.2;
+const LANDING_HEAL_PER_SECOND = 8;
+const CARRIER_DECK_HEIGHT_OFFSET = 9.4;
+const CARRIER_LANDING_HALF_EXTENTS = { x: 21, z: 61 };
+const CARRIER_LAUNCH_COOLDOWN = 1.45;
 const ALLY_FLIGHT_BOUNDS = {
   minX: -320,
   maxX: 320,
@@ -97,6 +104,9 @@ export class GameScene {
     this.touchGunHeld = false;
     this.machineGunCooldown = 0;
     this.spawnerTimers = { port: 0, runway: 0 };
+    this.pendingCarrierLaunches = 0;
+    this.carrierLaunchCooldown = 0;
+    this.activeLandingZone = null;
     this.lastDamageCause = null;
     this.lastCollisionCause = null;
     this.lowAltitudeThreshold = 10;
@@ -379,6 +389,7 @@ export class GameScene {
       this.scene.add(ship);
       return {
         mesh: ship,
+        role: spec.role,
         speed: spec.speed,
       };
     });
@@ -458,6 +469,8 @@ export class GameScene {
     this.lowAltitudeWarningCooldown = Math.max(0, this.lowAltitudeWarningCooldown - dt);
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
     this.updateTotalWarSpawners(dt);
+    this.updateCarrierLaunches(dt);
+    this.updateLanding(dt);
 
     this.missiles.forEach((m) => {
       if (m.homing) {
@@ -569,6 +582,104 @@ export class GameScene {
     });
   }
 
+  getLandingZones() {
+    const zones = [];
+    this.stageManager.targets.forEach((target) => {
+      if (!this.isTargetActive(target)) return;
+
+      if (target.objective === 'runwaySpawner' && target.collisionHalfExtents) {
+        zones.push({
+          mesh: target.mesh,
+          halfX: Math.max(18, target.collisionHalfExtents.x * 0.72),
+          halfZ: Math.max(22, target.collisionHalfExtents.z * 0.88),
+          deckY: target.mesh.position.y + target.collisionHalfExtents.y,
+          kind: 'runway',
+        });
+      }
+
+      if (target.type === 'carrier') {
+        zones.push({
+          mesh: target.mesh,
+          halfX: CARRIER_LANDING_HALF_EXTENTS.x,
+          halfZ: CARRIER_LANDING_HALF_EXTENTS.z,
+          deckY: target.mesh.position.y + CARRIER_DECK_HEIGHT_OFFSET,
+          kind: 'carrier',
+        });
+      }
+    });
+
+    this.allyFleet?.forEach((allyShip) => {
+      if (allyShip.role !== 'carrier') return;
+      zones.push({
+        mesh: allyShip.mesh,
+        halfX: CARRIER_LANDING_HALF_EXTENTS.x,
+        halfZ: CARRIER_LANDING_HALF_EXTENTS.z,
+        deckY: allyShip.mesh.position.y + CARRIER_DECK_HEIGHT_OFFSET,
+        kind: 'carrier',
+      });
+    });
+
+    return zones;
+  }
+
+  getPlayerLandingZone() {
+    const zones = this.getLandingZones();
+    for (const zone of zones) {
+      const local = zone.mesh.worldToLocal(this.player.position.clone());
+      const insideDeck = Math.abs(local.x) <= zone.halfX && Math.abs(local.z) <= zone.halfZ;
+      if (!insideDeck) continue;
+      if (Math.abs(this.player.position.y - zone.deckY) > LANDING_TOUCHDOWN_HEIGHT_TOLERANCE) continue;
+      if (this.player.speed > LANDING_MAX_APPROACH_SPEED) continue;
+      if (this.player.forward.y > LANDING_MAX_CLIMB_ANGLE) continue;
+      return zone;
+    }
+    return null;
+  }
+
+  updateLanding(dt) {
+    const zone = this.getPlayerLandingZone();
+    this.activeLandingZone = zone;
+    if (!zone) return;
+
+    const groundedHeight = zone.deckY + PLAYER_COLLISION_RADIUS;
+    this.player.position.y = Math.max(this.player.position.y, groundedHeight);
+    this.player.armor = Math.min(this.player.maxArmor, this.player.armor + (LANDING_HEAL_PER_SECOND * dt));
+  }
+
+  isLandingOnTarget(targetMesh) {
+    return this.activeLandingZone?.mesh === targetMesh;
+  }
+
+  countAliveEnemyCarriers() {
+    return this.stageManager.targets.filter((target) => {
+      if (target.type !== 'carrier') return false;
+      return this.enemies.some((enemy) => enemy.alive && enemy.mesh === target.mesh);
+    }).length;
+  }
+
+  updateCarrierLaunches(dt) {
+    if (this.pendingCarrierLaunches <= 0) return;
+    if (this.countAliveEnemyCarriers() <= 0) {
+      this.pendingCarrierLaunches = 0;
+      return;
+    }
+
+    this.carrierLaunchCooldown -= dt;
+    if (this.carrierLaunchCooldown > 0) return;
+
+    const carriers = this.stageManager.targets.filter((target) => target.type === 'carrier'
+      && this.enemies.some((enemy) => enemy.alive && enemy.mesh === target.mesh));
+    if (!carriers.length) return;
+
+    const carrier = carriers[Math.floor(Math.random() * carriers.length)];
+    this.spawnReinforcementFighter(carrier.mesh.position.clone(), {
+      launchMesh: carrier.mesh,
+      fromCarrier: true,
+    });
+    this.pendingCarrierLaunches -= 1;
+    this.carrierLaunchCooldown = CARRIER_LAUNCH_COOLDOWN;
+  }
+
   spawnReinforcementShip(origin) {
     const ship = this.stageManager.makeShip(Math.random() > 0.5 ? 'destroyer' : 'frigate');
     ship.position.set(origin.x + (Math.random() - 0.5) * 120, 6, origin.z + 160 + Math.random() * 120);
@@ -582,23 +693,31 @@ export class GameScene {
     this.stageManager.targets.push({ mesh: ship, radius: 24, type: 'ship' });
   }
 
-  spawnReinforcementFighter(origin) {
+  spawnReinforcementFighter(origin, options = {}) {
     const fighter = this.stageManager.makeFighter();
-    fighter.position.set(origin.x + (Math.random() - 0.5) * 90, 92 + Math.random() * 32, origin.z + 10 + Math.random() * 55);
-    fighter.lookAt(this.player.position);
+    const { launchMesh = null, fromCarrier = false } = options;
+    if (launchMesh) {
+      const localLaunchPos = new THREE.Vector3((Math.random() - 0.5) * 5, CARRIER_DECK_HEIGHT_OFFSET + 1.7, -46 + Math.random() * 8);
+      fighter.position.copy(launchMesh.localToWorld(localLaunchPos));
+      const launchDir = new THREE.Vector3(0, 0, -1).applyQuaternion(launchMesh.quaternion).normalize();
+      fighter.lookAt(fighter.position.clone().add(launchDir.multiplyScalar(260)));
+    } else {
+      fighter.position.set(origin.x + (Math.random() - 0.5) * 90, 92 + Math.random() * 32, origin.z + 10 + Math.random() * 55);
+      fighter.lookAt(this.player.position);
+    }
     this.scene.add(fighter);
 
-    const spreadPoint = fighter.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 120, 60, -260));
+    const spreadPoint = fighter.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 120, fromCarrier ? 40 : 60, -260));
     const enemy = new Enemy({
       type: 'fighter',
       mesh: fighter,
       health: ENEMY_DURABILITY.fighter,
-      speed: 82 + Math.random() * 16,
+      speed: (fromCarrier ? 90 : 82) + Math.random() * 16,
       behavior: {
-        engageTime: 1.5 + Math.random() * 1.2,
+        engageTime: (fromCarrier ? 0.8 : 1.5) + Math.random() * 1.2,
         spreadWeight: 0.78,
         spreadPoint,
-        preferredRange: 280,
+        preferredRange: fromCarrier ? 250 : 280,
         rangeTolerance: 95,
       },
     });
@@ -806,6 +925,9 @@ export class GameScene {
     this.spawnExplosion(enemy.mesh.position, explosionColor);
     this.scene.remove(enemy.mesh);
     this.stageManager.targets = this.stageManager.targets.filter((target) => target.mesh !== enemy.mesh);
+    if (enemy.type === 'fighter' && this.countAliveEnemyCarriers() > 0) {
+      this.pendingCarrierLaunches += 1;
+    }
     this.onEnemyDestroyed?.(enemy.type);
   }
 
@@ -881,6 +1003,7 @@ export class GameScene {
 
     for (const enemy of this.enemies) {
       const enemyCollisionRadius = enemy.type === 'fighter' ? 6.8 : 8.2;
+      if (this.isLandingOnTarget(enemy.mesh)) continue;
       if (enemy.alive && enemy.mesh.position.distanceTo(this.player.position) < (enemyCollisionRadius + PLAYER_COLLISION_RADIUS)) {
         this.triggerPlayerCollision({ type: 'enemy', enemyType: enemy.type }, 0xff7676);
       }
@@ -888,6 +1011,7 @@ export class GameScene {
 
     for (const target of this.stageManager.targets) {
       if (!this.isTargetActive(target)) continue;
+      if (this.isLandingOnTarget(target.mesh)) continue;
       const box = target.collisionHalfExtents;
       if (box) {
         const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
