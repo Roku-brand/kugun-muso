@@ -186,13 +186,77 @@ body.force-landscape #app {
 }
 
 @media (max-width: 960px) {
+  .top-shell {
+    padding: calc(4px + env(safe-area-inset-top)) calc(6px + env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));
+  }
+
+  .home-shell {
+    gap: 6px;
+    border-radius: 12px;
+  }
+
+  .home-header {
+    gap: 8px;
+    padding: 6px 8px;
+  }
+
+  .resource-strip {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .resource-pill {
+    padding: 3px 7px;
+    font-size: 0.7rem;
+  }
+
+  .home-header h1 {
+    font-size: clamp(0.9rem, 2.8vw, 1.2rem);
+    letter-spacing: 0.06em;
+  }
+
+  .icon-setting,
+  .icon-mail {
+    width: 34px;
+    height: 30px;
+  }
+
+  .home-main {
+    padding: 0 8px 8px;
+  }
+
   .home-top-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) 220px;
+    grid-template-columns: minmax(104px, 128px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 8px;
   }
 
   .quadrant-tabs {
-    grid-auto-rows: minmax(56px, 1fr);
+    gap: 6px;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+
+  .quadrant-tab {
+    border-radius: 10px;
+    padding: 8px 6px;
+    font-size: 0.76rem;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .home-hero {
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-top-layout {
+    grid-template-columns: minmax(96px, 116px) minmax(0, 1fr);
+  }
+
+  .resource-pill {
+    padding: 2px 6px;
+    font-size: 0.64rem;
   }
 }
 
