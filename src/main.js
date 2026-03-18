@@ -222,6 +222,10 @@ function renderCombatPanel(panel) {
       <p class="combat-course-label">本格コース</p>
       <h3>${COMBAT_COURSE.title}</h3>
       <p class="combat-story">${COMBAT_COURSE.story}</p>
+      <figure class="combat-ally-visual">
+        <img src="./src/ayanishi-allied-force.svg" alt="綾西島奪還作戦に参加する味方の第5艦隊と西部航空隊5機の作戦図" />
+        <figcaption>味方の艦隊と戦闘機の展開イメージ</figcaption>
+      </figure>
       <div class="combat-fleet-grid">
         <section>
           <h4>敵戦力</h4>
