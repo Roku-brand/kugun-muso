@@ -8,7 +8,8 @@ const MAX_VISUAL_BANK_ANGLE = 0.42;
 const MAX_VISUAL_NOSE_ANGLE = 0.26;
 const VISUAL_ATTITUDE_RESPONSE = 7.5;
 const THROTTLE_ACCEL_RATE = 0.5;
-const THROTTLE_PASSIVE_DECEL_RATE = 0.18;
+const THROTTLE_PASSIVE_DECEL_RATE = 0.09;
+const THROTTLE_BRAKE_DECEL_RATE = 0.16;
 const BASE_FORWARD = new THREE.Vector3(1, 0, 0);
 const LOCAL_FORWARD_AXIS = new THREE.Vector3(1, 0, 0);
 const LOCAL_RIGHT_AXIS = new THREE.Vector3(0, 0, 1);
@@ -25,6 +26,7 @@ export class Player {
     this.pitch = 0;
     this.speed = 74;
     this.minSpeed = 42;
+    this.minSpeedOverride = null;
     this.maxSpeed = 165;
     this.throttle = 0.45;
     this.horizontalBound = DEFAULT_HORIZONTAL_BOUND;
@@ -71,10 +73,13 @@ export class Player {
 
     const throttleInput = this.input.throttle;
     this.throttle = THREE.MathUtils.clamp(this.throttle + throttleInput * dt * THROTTLE_ACCEL_RATE, 0, 1);
-    if (throttleInput <= 0) {
+    if (throttleInput < 0) {
+      this.throttle = Math.max(0, this.throttle - THROTTLE_BRAKE_DECEL_RATE * dt * Math.abs(throttleInput));
+    } else if (throttleInput === 0) {
       this.throttle = Math.max(0, this.throttle - THROTTLE_PASSIVE_DECEL_RATE * dt);
     }
-    this.speed = THREE.MathUtils.lerp(this.minSpeed, this.maxSpeed, this.throttle);
+    const minSpeed = this.minSpeedOverride ?? this.minSpeed;
+    this.speed = THREE.MathUtils.lerp(minSpeed, this.maxSpeed, this.throttle);
     this.position.addScaledVector(this.forward, this.speed * dt);
 
     this.position.x = THREE.MathUtils.clamp(this.position.x, -this.horizontalBound, this.horizontalBound);
@@ -104,6 +109,10 @@ export class Player {
   setHorizontalBound(bound) {
     this.horizontalBound = Math.max(DEFAULT_HORIZONTAL_BOUND, bound);
     this.position.x = THREE.MathUtils.clamp(this.position.x, -this.horizontalBound, this.horizontalBound);
+  }
+
+  setMinSpeedOverride(nextMinSpeed) {
+    this.minSpeedOverride = Number.isFinite(nextMinSpeed) ? Math.max(0, nextMinSpeed) : null;
   }
 
   syncCamera() {

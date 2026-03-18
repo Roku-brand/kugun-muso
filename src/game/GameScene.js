@@ -97,6 +97,7 @@ export class GameScene {
 
     this.keys = {};
     this.touchThrottle = 0;
+    this.currentThrottleInput = 0;
     this.touchStick = { x: 0, y: 0 };
     this.missiles = [];
     this.playerBullets = [];
@@ -156,6 +157,7 @@ export class GameScene {
     const yaw = (this.keys['arrowright'] ? 1 : 0) + (this.keys['arrowleft'] ? -1 : 0);
     const pitch = (this.keys['arrowup'] ? 1 : 0) + (this.keys['arrowdown'] ? -1 : 0);
     const throttle = (this.keys['shift'] ? 1 : 0) + (this.keys['control'] ? -1 : 0) + this.touchThrottle;
+    this.currentThrottleInput = throttle;
     this.player.setInput({ yaw: yaw + this.touchStick.x, pitch: pitch - this.touchStick.y, throttle });
 
     if (this.keys[' ']) {
@@ -746,10 +748,16 @@ export class GameScene {
   updateLanding(dt) {
     const zone = this.getPlayerLandingZone();
     this.activeLandingZone = zone;
+    this.player.setMinSpeedOverride(zone?.kind === 'carrier' ? 0 : null);
     if (!zone) return;
 
     const groundedHeight = zone.deckY + PLAYER_COLLISION_RADIUS;
     this.player.position.y = Math.max(this.player.position.y, groundedHeight);
+
+    if (zone.kind === 'carrier' && this.currentThrottleInput <= 0) {
+      this.player.throttle = Math.max(0, this.player.throttle - (0.24 * dt));
+    }
+
     this.player.armor = Math.min(this.player.maxArmor, this.player.armor + (LANDING_HEAL_PER_SECOND * dt));
   }
 
