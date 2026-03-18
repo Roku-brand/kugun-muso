@@ -30,6 +30,17 @@ html, body {
 
 #app { min-height: 100dvh; }
 
+body.force-landscape #app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--forced-landscape-width, 100dvh);
+  height: var(--forced-landscape-height, 100dvw);
+  min-height: 0;
+  transform-origin: top left;
+  transform: rotate(90deg) translateY(calc(-1 * var(--forced-landscape-height, 100dvw)));
+}
+
 .top-shell {
   margin: 0 auto;
   padding: calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
@@ -648,22 +659,6 @@ input[type='range'] { width: 100%; }
   .missile-fire-btn { width: 64px; height: 64px; }
   .gun-fire-btn { width: 56px; height: 56px; }
   .missile-icon { transform: rotate(35deg) scale(0.92); }
-}
-
-@media (orientation: portrait) {
-  body::before {
-    content: '横向きでプレイしてください';
-    position: fixed;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    text-align: center;
-    padding: 20px;
-    font-size: 1.1rem;
-    color: #dff7ff;
-    background: rgba(2, 10, 18, 0.96);
-    z-index: 9999;
-  }
 }
 
 @media (max-height: 440px) {

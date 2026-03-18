@@ -33,6 +33,19 @@ let settings = loadSettings();
 let currentPage = null;
 let records = loadRecords();
 let gameScene = null;
+const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+function applyForcedLandscapeLayout() {
+  if (!isTouchDevice) return;
+
+  const isPortrait = window.innerHeight > window.innerWidth;
+  document.body.classList.toggle('force-landscape', isPortrait);
+
+  if (!isPortrait) return;
+
+  document.documentElement.style.setProperty('--forced-landscape-width', `${window.innerHeight}px`);
+  document.documentElement.style.setProperty('--forced-landscape-height', `${window.innerWidth}px`);
+}
 
 window.addEventListener('gesturestart', (event) => {
   event.preventDefault();
@@ -45,6 +58,10 @@ window.addEventListener(
   },
   { passive: false },
 );
+
+window.addEventListener('resize', applyForcedLandscapeLayout);
+window.addEventListener('orientationchange', applyForcedLandscapeLayout);
+applyForcedLandscapeLayout();
 
 renderTop();
 
