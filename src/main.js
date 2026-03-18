@@ -336,6 +336,7 @@ function renderSettingPanel() {
             .map((v) => `<option value="${v}" ${settings.difficulty === v ? 'selected' : ''}>${labelDifficulty(v)}</option>`)
             .join('')}
         </select>
+        <small>※ 綾西島奪還作戦の味方艦隊・味方機は常時出撃し、難易度は追加調整として反映されます。</small>
       </label>
       <fieldset class="ui-offset-group">
         <legend>操縦UI位置（左下）</legend>

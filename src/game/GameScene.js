@@ -7,6 +7,13 @@ import { AudioManager } from '../audio/AudioManager.js';
 
 const COMBAT_SPEED_SCALE = 0.6;
 const DIFFICULTY_ALLY_COUNT = { easy: 3, normal: 1, hard: 0 };
+const TOTAL_WAR_DEFAULT_ALLY_FIGHTERS = 4;
+const TOTAL_WAR_DEFAULT_ALLY_FLEET = [
+  { role: 'carrier', offsetX: -210, offsetZ: -230, speed: 7.5 },
+  { role: 'cruiser', offsetX: -320, offsetZ: -320, speed: 9.5 },
+  { role: 'destroyer', offsetX: 230, offsetZ: -250, speed: 11.5 },
+  { role: 'frigate', offsetX: 340, offsetZ: -340, speed: 12.2 },
+];
 const TOTAL_WAR_MAX_ACTIVE_REINFORCEMENTS = {
   ship: 14,
   fighter: 24,
@@ -77,6 +84,7 @@ export class GameScene {
     this.missiles = [];
     this.playerBullets = [];
     this.allyBullets = [];
+    this.allyFleet = [];
     this.missileLockDistance = 360;
     this.enemyBullets = [];
     this.effects = [];
@@ -300,7 +308,9 @@ export class GameScene {
   }
 
   initAllies() {
-    const allyCount = DIFFICULTY_ALLY_COUNT[this.settings.difficulty] ?? DIFFICULTY_ALLY_COUNT.normal;
+    const difficultyAllyCount = DIFFICULTY_ALLY_COUNT[this.settings.difficulty] ?? DIFFICULTY_ALLY_COUNT.normal;
+    const defaultMissionAllies = this.stage === 'totalWar' ? TOTAL_WAR_DEFAULT_ALLY_FIGHTERS : 0;
+    const allyCount = defaultMissionAllies + difficultyAllyCount;
     this.allies = Array.from({ length: allyCount }, (_, index) => ({
       index,
       cooldown: 0.5 + index * 0.2,
@@ -344,6 +354,31 @@ export class GameScene {
       ally.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), ally.velocity.clone().normalize());
 
       this.scene.add(ally.mesh);
+    });
+
+    this.initAllyFleet();
+  }
+
+  initAllyFleet() {
+    if (this.stage !== 'totalWar') {
+      this.allyFleet = [];
+      return;
+    }
+
+    this.allyFleet = TOTAL_WAR_DEFAULT_ALLY_FLEET.map((spec, index) => {
+      const ship = this.stageManager.makeShip(spec.role);
+      ship.position.set(spec.offsetX, 6, 200 + spec.offsetZ);
+      ship.rotation.y = (Math.PI * 0.96) + (index - 1.5) * 0.05;
+      ship.traverse((part) => {
+        if (!part.isMesh || !part.material?.color) return;
+        part.material = part.material.clone();
+        part.material.color.offsetHSL(0.08, 0.18, 0.12);
+      });
+      this.scene.add(ship);
+      return {
+        mesh: ship,
+        speed: spec.speed,
+      };
     });
   }
 
@@ -402,8 +437,22 @@ export class GameScene {
     });
   }
 
+  updateAllyFleet(dt) {
+    if (!this.allyFleet?.length) return;
+
+    this.allyFleet.forEach((ship) => {
+      ship.mesh.position.z -= ship.speed * dt;
+      ship.mesh.position.x += Math.sin((this.last * 0.00045) + ship.mesh.position.z * 0.0008) * dt * 0.9;
+
+      if (ship.mesh.position.z < -2200) {
+        ship.mesh.position.z = 240;
+      }
+    });
+  }
+
   updateWorld(dt) {
     this.updateAltitudeShadow();
+    this.updateAllyFleet(dt);
     this.lowAltitudeWarningCooldown = Math.max(0, this.lowAltitudeWarningCooldown - dt);
     this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
     this.updateTotalWarSpawners(dt);
@@ -995,6 +1044,14 @@ export class GameScene {
       radarObjects.push({ x: THREE.MathUtils.clamp(rightDot * scale, -72, 72), y: THREE.MathUtils.clamp(-forwardDot * scale, -72, 72), kind: 'ally' });
     });
 
+    this.allyFleet?.forEach((allyShip) => {
+      const relative = allyShip.mesh.position.clone().sub(this.player.position);
+      const forwardDot = relative.dot(this.player.forward);
+      const rightDot = relative.dot(this.player.right);
+      const scale = 0.08;
+      radarObjects.push({ x: THREE.MathUtils.clamp(rightDot * scale, -72, 72), y: THREE.MathUtils.clamp(-forwardDot * scale, -72, 72), kind: 'ally' });
+    });
+
     const lockCandidate = this.getLockCandidate(this.player.position, this.player.forward);
     const enemyGauges = this.enemies
       .filter((enemy) => enemy.alive)
@@ -1090,6 +1147,7 @@ export class GameScene {
     this.playerBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.allyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     this.allies.forEach((ally) => ally.mesh && this.scene.remove(ally.mesh));
+    this.allyFleet?.forEach((allyShip) => allyShip.mesh && this.scene.remove(allyShip.mesh));
     this.enemyBullets.forEach((b) => b.mesh && this.scene.remove(b.mesh));
     if (this.playerMesh) this.scene.remove(this.playerMesh);
     if (this.playerShadow) {
