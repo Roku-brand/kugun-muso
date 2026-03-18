@@ -563,7 +563,13 @@ export class GameScene {
     this.updateAltitudeShadow();
     this.updateAllyFleet(dt);
     this.lowAltitudeWarningCooldown = Math.max(0, this.lowAltitudeWarningCooldown - dt);
-    this.enemies.forEach((enemy) => enemy.update(dt, this.player.position, this.enemyBullets, (kind) => this.makeEnemyBulletMesh(kind)));
+    this.enemies.forEach((enemy) => enemy.update(
+      dt,
+      this.player.position,
+      this.enemyBullets,
+      (kind) => this.makeEnemyBulletMesh(kind),
+      this.enemies,
+    ));
     this.updateTotalWarSpawners(dt);
     this.updateCarrierLaunches(dt);
     this.updateLanding(dt);
