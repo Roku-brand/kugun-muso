@@ -41,7 +41,8 @@ const PLAYER_HORIZONTAL_BOUNDS = {
   hokkaiNavalBattle: 1750,
 };
 const PLAYER_COLLISION_RADIUS = 2.6;
-const STRATEGIC_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture', 'hokkaiNavalBattle']);
+const ALLIED_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture', 'hokkaiNavalBattle']);
+const HQ_OBJECTIVE_STAGES = new Set(['totalWar', 'ayanishiRecapture']);
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
@@ -323,7 +324,7 @@ export class GameScene {
 
   initAllies() {
     const difficultyAllyCount = DIFFICULTY_ALLY_COUNT[this.settings.difficulty] ?? DIFFICULTY_ALLY_COUNT.normal;
-    const defaultMissionAllies = this.isStrategicOperationStage() ? TOTAL_WAR_DEFAULT_ALLY_FIGHTERS : 0;
+    const defaultMissionAllies = this.isAlliedOperationStage() ? TOTAL_WAR_DEFAULT_ALLY_FIGHTERS : 0;
     const allyCount = defaultMissionAllies + difficultyAllyCount;
     this.allies = Array.from({ length: allyCount }, (_, index) => ({
       index,
@@ -374,7 +375,7 @@ export class GameScene {
   }
 
   initAllyFleet() {
-    if (!this.isStrategicOperationStage()) {
+    if (!this.isAlliedOperationStage()) {
       this.allyFleet = [];
       return;
     }
@@ -579,7 +580,7 @@ export class GameScene {
 
 
   updateTotalWarSpawners(dt) {
-    if (!this.isStrategicOperationStage()) return;
+    if (!this.isHqObjectiveStage()) return;
 
     const port = this.findObjectiveTarget('portSpawner');
     const runway = this.findObjectiveTarget('runwaySpawner');
@@ -1123,7 +1124,7 @@ export class GameScene {
       return;
     }
 
-    if (this.isStrategicOperationStage()) {
+    if (this.isHqObjectiveStage()) {
       const hqAlive = this.enemies.some((enemy) => enemy.alive
         && this.stageManager.targets.some((target) => target.objective === 'hq' && target.mesh === enemy.mesh));
       if (!hqAlive) {
@@ -1146,7 +1147,7 @@ export class GameScene {
     this.overlayRoot.innerHTML = `
       <div class="result-panel ${success ? 'clear' : 'over'}">
         <h2>${title}</h2>
-        <p>${success ? (this.isStrategicOperationStage() ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : (detailMessage ?? '任務失敗。機体を喪失しました。')}</p>
+        <p>${success ? (this.isHqObjectiveStage() ? '軍事本部を破壊し、作戦目標を達成しました。' : '敵戦力を殲滅しました。') : (detailMessage ?? '任務失敗。機体を喪失しました。')}</p>
         <button id="retry">リトライ</button>
         <button id="back">トップへ戻る</button>
       </div>
@@ -1158,8 +1159,12 @@ export class GameScene {
     this.overlayRoot.querySelector('#back').addEventListener('click', this.onExit);
   }
 
-  isStrategicOperationStage() {
-    return STRATEGIC_OPERATION_STAGES.has(this.stage);
+  isAlliedOperationStage() {
+    return ALLIED_OPERATION_STAGES.has(this.stage);
+  }
+
+  isHqObjectiveStage() {
+    return HQ_OBJECTIVE_STAGES.has(this.stage);
   }
 
 
