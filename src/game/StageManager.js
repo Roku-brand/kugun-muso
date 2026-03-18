@@ -26,6 +26,7 @@ export class StageManager {
     this.cleanup();
     if (stage === 'air') this.createAirBattle();
     if (stage === 'sea') this.createSeaBattle();
+    if (stage === 'land') this.createLandBattle();
     if (stage === 'base') this.createBaseBattle();
     if (stage === 'totalWar') this.createTotalWarBattle();
     if (stage === 'ayanishiRecapture') this.createAyanishiRecaptureBattle();
@@ -489,6 +490,116 @@ export class StageManager {
           rangeTolerance: 90,
         },
       }));
+    });
+  }
+
+  createLandBattle() {
+    const areaScale = 1.4;
+    this.createSkyCommon();
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(8600 * areaScale, 8600 * areaScale, 96, 96),
+      new THREE.MeshStandardMaterial({ color: 0x486837, roughness: 0.95, metalness: 0.04 }),
+    );
+    ground.rotation.x = -Math.PI / 2;
+    this.scene.add(ground);
+    this.stageObjects.push(ground);
+
+    const highwayMain = new THREE.Mesh(
+      new THREE.PlaneGeometry(620 * areaScale, 3200 * areaScale),
+      new THREE.MeshStandardMaterial({ color: 0x4b4e52, roughness: 0.9, metalness: 0.1 }),
+    );
+    highwayMain.rotation.x = -Math.PI / 2;
+    highwayMain.position.set(0, 0.4, -720 * areaScale);
+    this.scene.add(highwayMain);
+    this.stageObjects.push(highwayMain);
+
+    const highwayCross = new THREE.Mesh(
+      new THREE.PlaneGeometry(2600 * areaScale, 340 * areaScale),
+      new THREE.MeshStandardMaterial({ color: 0x505458, roughness: 0.88, metalness: 0.1 }),
+    );
+    highwayCross.rotation.x = -Math.PI / 2;
+    highwayCross.position.set(0, 0.41, -1220 * areaScale);
+    this.scene.add(highwayCross);
+    this.stageObjects.push(highwayCross);
+
+    const laneMarkMaterial = new THREE.MeshStandardMaterial({ color: 0xd9d39a, roughness: 0.5, metalness: 0.25 });
+    for (let i = -20; i <= 20; i += 1) {
+      if (i % 2 === 0) continue;
+      const mark = new THREE.Mesh(new THREE.PlaneGeometry(12, 44), laneMarkMaterial);
+      mark.rotation.x = -Math.PI / 2;
+      mark.position.set(0, 0.42, (-720 * areaScale) + i * 70);
+      this.scene.add(mark);
+      this.stageObjects.push(mark);
+    }
+
+    const grovePositions = [
+      [-920, 0, -460],
+      [-760, 0, -1030],
+      [-890, 0, -1510],
+      [840, 0, -440],
+      [940, 0, -980],
+      [820, 0, -1540],
+      [-420, 0, -1760],
+      [420, 0, -1820],
+    ].map((point) => this.scalePoint(point, areaScale));
+
+    grovePositions.forEach((pos, index) => {
+      const grove = this.makeTreeCluster(7 + (index % 3));
+      grove.position.set(...pos);
+      this.scene.add(grove);
+      this.stageObjects.push(grove);
+      this.targets.push({ mesh: grove, radius: 70, collisionVerticalRadius: 46, type: 'terrain' });
+    });
+
+    const tankSpecs = [
+      { x: -180, z: -1480, speed: 16.5 },
+      { x: 0, z: -1540, speed: 17.3 },
+      { x: 180, z: -1490, speed: 16.8 },
+      { x: -280, z: -1760, speed: 17.6 },
+      { x: 300, z: -1730, speed: 17.1 },
+      { x: 40, z: -1870, speed: 18.2 },
+    ].map((spec) => ({ ...spec, x: spec.x * areaScale, z: spec.z * areaScale }));
+
+    tankSpecs.forEach((spec, index) => {
+      const tank = this.makeTankUnit();
+      tank.position.set(spec.x, 6, spec.z);
+      tank.rotation.y = Math.PI + (index - 2.5) * 0.05;
+      this.scene.add(tank);
+      this.enemies.push(new Enemy({ type: 'ship', mesh: tank, health: 48, speed: spec.speed }));
+      this.targets.push({ mesh: tank, radius: 18, collisionVerticalRadius: 10, type: 'tank' });
+    });
+
+    const samPositions = [
+      [-350, 12, -1320],
+      [330, 12, -1290],
+      [-500, 12, -1620],
+      [520, 12, -1660],
+      [0, 12, -1420],
+    ].map((point) => this.scalePoint(point, areaScale));
+
+    samPositions.forEach((pos) => {
+      const sam = this.makeSamBattery();
+      sam.position.set(...pos);
+      this.scene.add(sam);
+      this.enemies.push(new Enemy({ type: 'turret', mesh: sam, health: ENEMY_DURABILITY.turret }));
+      this.targets.push({ mesh: sam, radius: 11, collisionVerticalRadius: 8, type: 'building' });
+    });
+
+    const infantryColumns = [
+      { x: -120, z: -1160 },
+      { x: 140, z: -1130 },
+      { x: -240, z: -1380 },
+      { x: 260, z: -1360 },
+      { x: 0, z: -1680 },
+    ].map((spec) => ({ ...spec, x: spec.x * areaScale, z: spec.z * areaScale }));
+
+    infantryColumns.forEach((spec, index) => {
+      const battalion = this.makeInfantryBattalion();
+      battalion.position.set(spec.x, 5, spec.z);
+      battalion.rotation.y = Math.PI + (index % 2 ? 0.08 : -0.08);
+      this.scene.add(battalion);
+      this.enemies.push(new Enemy({ type: 'ship', mesh: battalion, health: 34, speed: 12.8 + index * 0.35 }));
+      this.targets.push({ mesh: battalion, radius: 16, collisionVerticalRadius: 9, type: 'infantry' });
     });
   }
 
@@ -1141,6 +1252,36 @@ export class StageManager {
     return group;
   }
 
+  makeTankUnit() {
+    const group = new THREE.Group();
+    const hull = new THREE.Mesh(
+      new THREE.BoxGeometry(16, 5, 9),
+      new THREE.MeshStandardMaterial({ color: 0x5d6653, roughness: 0.72, metalness: 0.18 }),
+    );
+    hull.position.y = 4;
+    const turret = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.4, 3.6, 2.8, 14),
+      new THREE.MeshStandardMaterial({ color: 0x6a725f, roughness: 0.66, metalness: 0.2 }),
+    );
+    turret.rotation.z = Math.PI / 2;
+    turret.position.set(2.5, 6.3, 0);
+    const cannon = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.6, 0.75, 11, 10),
+      new THREE.MeshStandardMaterial({ color: 0x3a4037, roughness: 0.52, metalness: 0.3 }),
+    );
+    cannon.rotation.z = Math.PI / 2;
+    cannon.position.set(8.2, 6.4, 0);
+
+    const trackMat = new THREE.MeshStandardMaterial({ color: 0x383b3b, roughness: 0.78, metalness: 0.15 });
+    const trackL = new THREE.Mesh(new THREE.BoxGeometry(15.5, 2.3, 2), trackMat);
+    trackL.position.set(0, 2.1, -4.1);
+    const trackR = trackL.clone();
+    trackR.position.z = 4.1;
+
+    group.add(hull, turret, cannon, trackL, trackR);
+    return group;
+  }
+
   makeSamBattery() {
     const group = new THREE.Group();
     const launcherMat = new THREE.MeshStandardMaterial({ color: 0x8d949d, roughness: 0.45, metalness: 0.4 });
@@ -1161,6 +1302,45 @@ export class StageManager {
     missileR.position.z = 2.1;
 
     group.add(base, rack, missileL, missileR);
+    return group;
+  }
+
+  makeInfantryBattalion() {
+    const group = new THREE.Group();
+    const armorMat = new THREE.MeshStandardMaterial({ color: 0x586347, roughness: 0.8, metalness: 0.1 });
+    const helmetMat = new THREE.MeshStandardMaterial({ color: 0x3d4337, roughness: 0.78, metalness: 0.08 });
+    for (let i = 0; i < 10; i += 1) {
+      const soldier = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.2, 0.8), armorMat);
+      body.position.y = 1.7;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 10), helmetMat);
+      head.position.y = 3.2;
+      soldier.add(body, head);
+      soldier.position.set(((i % 5) - 2) * 1.8, 0, (Math.floor(i / 5) - 0.5) * 2.5);
+      group.add(soldier);
+    }
+    return group;
+  }
+
+  makeTreeCluster(treeCount = 8) {
+    const group = new THREE.Group();
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5d4029, roughness: 0.9, metalness: 0.04 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x2f6b35, roughness: 0.86, metalness: 0.05 });
+    for (let i = 0; i < treeCount; i += 1) {
+      const tree = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.5, 12 + (i % 3) * 2, 8), trunkMat);
+      trunk.position.y = 6;
+      const leaves = new THREE.Mesh(new THREE.ConeGeometry(5.4 + (i % 2), 14 + (i % 3) * 2, 10), leafMat);
+      leaves.position.y = 14;
+      tree.add(trunk, leaves);
+      tree.position.set(
+        (Math.random() - 0.5) * 70,
+        0,
+        (Math.random() - 0.5) * 70,
+      );
+      tree.rotation.y = Math.random() * Math.PI * 2;
+      group.add(tree);
+    }
     return group;
   }
 

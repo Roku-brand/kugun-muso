@@ -4,6 +4,7 @@ import { SETTINGS_DEFAULTS, loadSettings, resetSettings, saveSettings } from './
 const STAGES = [
   { id: 'air', name: '空中戦', desc: '多数の敵戦闘機とドッグファイトを行う。' },
   { id: 'sea', name: '海上戦', desc: '敵艦隊を攻撃。海面と対空砲火に注意。' },
+  { id: 'land', name: '陸上戦', desc: '戦車・地対空ミサイル・歩兵大隊を前線突破前に殲滅する。' },
   { id: 'base', name: '要塞戦', desc: '島の基地と地対空防衛網を突破する。' },
   { id: 'totalWar', name: '総力戦', desc: '要塞島の港と滑走路を破壊し、軍事本部を撃破せよ。' },
 ];
