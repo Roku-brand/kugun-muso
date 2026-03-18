@@ -587,16 +587,99 @@ export class GameScene {
   }
 
   createPlayerVisual() {
-    const fighter = this.stageManager.makeFighter();
-    fighter.scale.setScalar(0.7);
-    fighter.traverse((part) => {
+    const aircraftModel = this.settings.aircraftModel ?? 'f35';
+    let mesh;
+    if (aircraftModel === 'f15') {
+      mesh = this.createF15Visual();
+    } else if (aircraftModel === 'b2') {
+      mesh = this.createB2Visual();
+    } else {
+      mesh = this.createF35Visual();
+    }
+
+    const aircraftColor = new THREE.Color(this.settings.aircraftColor ?? '#6cf4ff');
+    mesh.traverse((part) => {
       if (!part.isMesh || !part.material) return;
       part.material = part.material.clone();
-      if (part.material.color) {
-        part.material.color.offsetHSL(0.02, 0.22, 0.2);
-      }
+      if (!part.material.color) return;
+
+      const hsl = {};
+      aircraftColor.getHSL(hsl);
+      part.material.color.offsetHSL(hsl.h - 0.5, Math.max(-0.2, hsl.s - 0.5) * 0.6, (hsl.l - 0.5) * 0.7 + 0.1);
     });
+
+    mesh.scale.multiplyScalar(0.7);
+    return mesh;
+  }
+
+  createF35Visual() {
+    return this.stageManager.makeFighter();
+  }
+
+  createF15Visual() {
+    const fighter = this.stageManager.makeFighter();
+    const wingMat = new THREE.MeshStandardMaterial({ color: 0x4f5761, metalness: 0.65, roughness: 0.45 });
+    const spineMat = new THREE.MeshStandardMaterial({ color: 0x656f7a, metalness: 0.6, roughness: 0.42 });
+
+    const twinTailLeft = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.8, 0.16), wingMat);
+    twinTailLeft.position.set(-7.15, 2.2, -0.85);
+    twinTailLeft.rotation.x = 0.34;
+
+    const twinTailRight = twinTailLeft.clone();
+    twinTailRight.position.z = 0.85;
+    twinTailRight.rotation.x = -0.34;
+
+    const wingExtensionL = new THREE.Mesh(new THREE.BoxGeometry(7.3, 0.12, 7.8), wingMat);
+    wingExtensionL.position.set(-1.9, -0.01, -3.75);
+    wingExtensionL.rotation.y = -0.26;
+    const wingExtensionR = wingExtensionL.clone();
+    wingExtensionR.position.z = 3.75;
+    wingExtensionR.rotation.y = 0.26;
+
+    const dorsalSpine = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.5, 0.8), spineMat);
+    dorsalSpine.position.set(-2.45, 0.86, 0);
+
+    fighter.add(twinTailLeft, twinTailRight, wingExtensionL, wingExtensionR, dorsalSpine);
     return fighter;
+  }
+
+  createB2Visual() {
+    const bomber = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x414854, metalness: 0.72, roughness: 0.38 });
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0x1f2631, metalness: 0.5, roughness: 0.58 });
+
+    const center = new THREE.Mesh(new THREE.BoxGeometry(9.4, 1.05, 4.5), bodyMat);
+    center.position.set(0.2, 0.1, 0);
+
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.45, 9.6), bodyMat);
+    wingL.position.set(-2.4, 0, -6.2);
+    wingL.rotation.y = -0.3;
+    const wingR = wingL.clone();
+    wingR.position.z = 6.2;
+    wingR.rotation.y = 0.3;
+
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.35, 4.2, 4), edgeMat);
+    nose.position.set(6.7, 0.08, 0);
+    nose.rotation.z = -Math.PI / 2;
+
+    const trailingEdge = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.35, 15.2), edgeMat);
+    trailingEdge.position.set(-8.1, -0.08, 0);
+
+    const canopy = new THREE.Mesh(
+      new THREE.SphereGeometry(0.95, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x8eb4d7, transparent: true, opacity: 0.5, metalness: 0.35, roughness: 0.15 }),
+    );
+    canopy.scale.set(1.4, 0.45, 0.66);
+    canopy.position.set(3.35, 0.66, 0);
+
+    const engineGlowL = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.35, 1.5), edgeMat);
+    engineGlowL.position.set(-2.7, -0.16, -1.8);
+    const engineGlowR = engineGlowL.clone();
+    engineGlowR.position.z = 1.8;
+
+    bomber.add(center, wingL, wingR, nose, trailingEdge, canopy, engineGlowL, engineGlowR);
+    bomber.scale.setScalar(1.35);
+    return bomber;
   }
 
   createAltitudeShadow() {

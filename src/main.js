@@ -196,6 +196,17 @@ function renderCustomPanel(panel) {
   panel.innerHTML = `
     <h2>機体カスタマイズ</h2>
     <div class="setting-grid compact">
+      <label>機種
+        <select id="aircraftModel">
+          ${[
+            { value: 'f35', label: 'F-35系（ステルス戦闘機）' },
+            { value: 'f15', label: 'F-15系（制空戦闘機）' },
+            { value: 'b2', label: 'B-2爆撃機（重爆）' },
+          ]
+            .map((v) => `<option value="${v.value}" ${settings.aircraftModel === v.value ? 'selected' : ''}>${v.label}</option>`)
+            .join('')}
+        </select>
+      </label>
       <label>機体カラー
         <input type="color" id="aircraftColor" value="${settings.aircraftColor}" />
       </label>
@@ -305,6 +316,7 @@ function bindSettingInputs(root) {
       const settingSensitivity = document.getElementById('sensitivitySetting');
       settings = {
         ...settings,
+        aircraftModel: document.getElementById('aircraftModel')?.value ?? settings.aircraftModel,
         aircraftColor: document.getElementById('aircraftColor')?.value ?? settings.aircraftColor,
         missileColor: document.getElementById('missileColor')?.value ?? settings.missileColor,
         controlSensitivity: customSensitivity?.value ?? settingSensitivity?.value ?? settings.controlSensitivity,
