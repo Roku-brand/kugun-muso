@@ -35,6 +35,7 @@ const ALLY_FLIGHT_BOUNDS = {
 const PLAYER_HORIZONTAL_BOUNDS = {
   air: 900,
   sea: 1200,
+  land: 1500,
   base: 1100,
   totalWar: 1650,
   ayanishiRecapture: 1650,
@@ -43,6 +44,8 @@ const PLAYER_HORIZONTAL_BOUNDS = {
 const PLAYER_COLLISION_RADIUS = 2.6;
 const ALLIED_OPERATION_STAGES = new Set(['totalWar', 'ayanishiRecapture', 'hokkaiNavalBattle']);
 const HQ_OBJECTIVE_STAGES = new Set(['totalWar', 'ayanishiRecapture']);
+const LAND_DEFENSE_STAGE = 'land';
+const LAND_DEFENSE_FRONTLINE_Z = 230;
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
@@ -1202,6 +1205,14 @@ export class GameScene {
       return;
     }
 
+    if (this.stage === LAND_DEFENSE_STAGE) {
+      const crossedEnemy = this.enemies.find((enemy) => enemy.alive && enemy.mesh.position.z >= LAND_DEFENSE_FRONTLINE_Z);
+      if (crossedEnemy) {
+        this.finish(false, 'ミッション失敗', '敵部隊の一部が前線を突破しました。前線到達前に敵を殲滅してください。');
+        return;
+      }
+    }
+
     if (this.isHqObjectiveStage()) {
       const hqAlive = this.enemies.some((enemy) => enemy.alive
         && this.stageManager.targets.some((target) => target.objective === 'hq' && target.mesh === enemy.mesh));
@@ -1279,6 +1290,8 @@ export class GameScene {
       hq: '軍事本部施設',
       portSpawner: '港湾施設',
       runwaySpawner: '滑走路施設',
+      tank: '敵戦車部隊',
+      infantry: '敵歩兵部隊',
       ship: '艦艇',
       terrain: '地形障害物',
     };
