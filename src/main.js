@@ -291,8 +291,9 @@ function renderCustomPanel(panel) {
         <select id="aircraftModel">
           ${[
             { value: 'f35', label: 'F-35系（ステルス戦闘機）' },
-            { value: 'f15', label: 'F-15系（制空戦闘機）' },
-            { value: 'b2', label: 'B-2爆撃機（重爆）' },
+            { value: 'f15', label: 'F-15系（標準）' },
+            { value: 'b2', label: 'B-2爆撃機（ステルス性能）' },
+            { value: 'blackbird', label: 'ブラックバード（最高速500km）' },
           ]
             .map((v) => `<option value="${v.value}" ${settings.aircraftModel === v.value ? 'selected' : ''}>${v.label}</option>`)
             .join('')}
