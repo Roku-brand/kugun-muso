@@ -144,6 +144,7 @@ export class GameScene {
     this.lastCollisionCause = null;
     this.lowAltitudeThreshold = 10;
     this.lowAltitudeWarningCooldown = 0;
+    this.previousPlayerPosition = this.player.position.clone();
     this.last = performance.now();
     this.initAllies();
     this.bindEvents();
@@ -334,6 +335,7 @@ export class GameScene {
     if (!this.finished && !this.paused) {
       const combatDt = dt * COMBAT_SPEED_SCALE;
       this.readInput(combatDt);
+      this.previousPlayerPosition.copy(this.player.position);
       this.player.update(combatDt);
       this.fireMachineGun(combatDt);
       this.updateWorld(combatDt);
@@ -499,6 +501,11 @@ export class GameScene {
       ally.mesh.position.addScaledVector(ally.velocity, dt);
       ally.mesh.position.x = THREE.MathUtils.clamp(ally.mesh.position.x, ALLY_FLIGHT_BOUNDS.minX, ALLY_FLIGHT_BOUNDS.maxX);
       ally.mesh.position.y = THREE.MathUtils.clamp(ally.mesh.position.y, ALLY_FLIGHT_BOUNDS.minY, ALLY_FLIGHT_BOUNDS.maxY);
+      this.applyUnitObstacleAvoidance(ally, {
+        radius: 8.4,
+        clearance: 24,
+        verticalClearance: 16,
+      });
       ally.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), ally.velocity.clone().normalize());
     });
 
@@ -544,6 +551,11 @@ export class GameScene {
       ship.mesh.position.x += Math.sin(ship.heading) * advance;
       ship.mesh.position.z += Math.cos(ship.heading) * advance;
       ship.mesh.position.y = ship.baseY + Math.sin(ship.phase * ship.bobFrequency) * ship.bobAmplitude;
+      this.applyUnitObstacleAvoidance(ship, {
+        radius: 24,
+        clearance: 34,
+        verticalClearance: 9,
+      });
 
       ship.mesh.rotation.y = ship.heading;
       ship.mesh.rotation.z = Math.sin(ship.phase * 1.3 + ship.baseY) * ship.rollAmplitude;
@@ -625,6 +637,15 @@ export class GameScene {
       this.enemies,
       { playerStealthFactor: this.playerStealthFactor ?? 1 },
     ));
+    this.enemies.forEach((enemy) => {
+      if (!enemy.alive) return;
+      const isAircraft = enemy.type === 'fighter';
+      this.applyUnitObstacleAvoidance(enemy, {
+        radius: isAircraft ? 9 : 20,
+        clearance: isAircraft ? 28 : 30,
+        verticalClearance: isAircraft ? 16 : 8,
+      });
+    });
     this.updateTotalWarSpawners(dt);
     this.updateCarrierLaunches(dt);
     this.updateLanding(dt);
@@ -1181,6 +1202,101 @@ export class GameScene {
     this.audio.explosion();
   }
 
+  getCollisionTargetShape(target, padding = 0) {
+    const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
+    const center = new THREE.Vector3(
+      target.mesh.position.x + offset.x,
+      target.mesh.position.y + offset.y,
+      target.mesh.position.z + offset.z,
+    );
+    if (target.collisionHalfExtents) {
+      return {
+        kind: 'box',
+        center,
+        halfExtents: {
+          x: target.collisionHalfExtents.x + padding,
+          y: target.collisionHalfExtents.y + padding,
+          z: target.collisionHalfExtents.z + padding,
+        },
+      };
+    }
+    const radius = target.radius ?? 0;
+    const verticalRadius = target.collisionVerticalRadius ?? radius;
+    if (radius <= 0 || verticalRadius <= 0) return null;
+    return {
+      kind: 'ellipsoid',
+      center,
+      radius: radius + padding,
+      verticalRadius: verticalRadius + padding,
+    };
+  }
+
+  isPointInsideCollision(point, shape) {
+    if (!shape) return false;
+    if (shape.kind === 'box') {
+      const dx = Math.abs(point.x - shape.center.x);
+      const dy = Math.abs(point.y - shape.center.y);
+      const dz = Math.abs(point.z - shape.center.z);
+      return dx <= Math.max(0.1, shape.halfExtents.x)
+        && dy <= Math.max(0.1, shape.halfExtents.y)
+        && dz <= Math.max(0.1, shape.halfExtents.z);
+    }
+
+    const nx = (point.x - shape.center.x) / Math.max(0.1, shape.radius);
+    const ny = (point.y - shape.center.y) / Math.max(0.1, shape.verticalRadius);
+    const nz = (point.z - shape.center.z) / Math.max(0.1, shape.radius);
+    return (nx * nx) + (ny * ny) + (nz * nz) <= 1;
+  }
+
+  segmentIntersectsShape(start, end, shape) {
+    if (this.isPointInsideCollision(start, shape) || this.isPointInsideCollision(end, shape)) return true;
+    const steps = 6;
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const sample = start.clone().lerp(end, t);
+      if (this.isPointInsideCollision(sample, shape)) return true;
+    }
+    return false;
+  }
+
+  getBlockingTargets() {
+    return this.stageManager.targets.filter((target) => this.isTargetActive(target));
+  }
+
+  applyUnitObstacleAvoidance(unit, { radius, clearance, verticalClearance }) {
+    if (!unit?.mesh?.position || !unit.velocity) return;
+    const position = unit.mesh.position;
+    const avoid = new THREE.Vector3();
+    const blockingTargets = this.getBlockingTargets();
+    for (const target of blockingTargets) {
+      if (target.mesh === unit.mesh) continue;
+      const shape = this.getCollisionTargetShape(target, radius);
+      if (!shape) continue;
+
+      const toUnit = position.clone().sub(shape.center);
+      if (Math.abs(toUnit.y) > verticalClearance + (shape.halfExtents?.y ?? shape.verticalRadius ?? 0)) continue;
+      if (toUnit.lengthSq() > (clearance + (shape.halfExtents?.x ?? shape.radius ?? 0)) ** 2) continue;
+
+      if (shape.kind === 'box') {
+        const escape = new THREE.Vector3(
+          toUnit.x / Math.max(shape.halfExtents.x, 1),
+          toUnit.y / Math.max(shape.halfExtents.y, 1),
+          toUnit.z / Math.max(shape.halfExtents.z, 1),
+        );
+        if (escape.lengthSq() > 0) avoid.add(escape.normalize());
+      } else if (toUnit.lengthSq() > 1e-4) {
+        avoid.add(toUnit.normalize());
+      }
+    }
+
+    if (avoid.lengthSq() > 1e-4) {
+      const away = avoid.normalize();
+      const steer = unit.velocity.clone().normalize().lerp(away, 0.45).normalize();
+      unit.velocity.copy(steer.multiplyScalar(unit.velocity.length()));
+      position.addScaledVector(away, Math.max(0.8, clearance * 0.02));
+    }
+  }
+
   handleCollisions(dt) {
     this.missiles.forEach((m) => {
       this.enemies.forEach((enemy) => {
@@ -1260,39 +1376,9 @@ export class GameScene {
     for (const target of this.stageManager.targets) {
       if (!this.isTargetActive(target)) continue;
       if (this.isLandingOnTarget(target.mesh)) continue;
-      const box = target.collisionHalfExtents;
-      if (box) {
-        const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
-        const centerX = target.mesh.position.x + offset.x;
-        const centerY = target.mesh.position.y + offset.y;
-        const centerZ = target.mesh.position.z + offset.z;
-        const dx = Math.abs(this.player.position.x - centerX);
-        const dy = Math.abs(this.player.position.y - centerY);
-        const dz = Math.abs(this.player.position.z - centerZ);
-        if (
-          dx < Math.max(0.1, box.x - PLAYER_COLLISION_RADIUS)
-          && dy < Math.max(0.1, box.y - PLAYER_COLLISION_RADIUS)
-          && dz < Math.max(0.1, box.z - PLAYER_COLLISION_RADIUS)
-        ) {
-          this.triggerPlayerCollision({ type: 'object', objective: target.objective ?? target.type ?? 'terrain' });
-          break;
-        }
-        continue;
-      }
-
-      const radius = target.radius ?? 0;
-      const verticalRadius = target.collisionVerticalRadius ?? radius;
-      if (radius <= 0 || verticalRadius <= 0) continue;
-      const effectiveRadius = Math.max(0.1, radius - PLAYER_COLLISION_RADIUS);
-      const effectiveVerticalRadius = Math.max(0.1, verticalRadius - PLAYER_COLLISION_RADIUS);
-      const offset = target.collisionOffset ?? { x: 0, y: 0, z: 0 };
-      const cx = target.mesh.position.x + offset.x;
-      const cy = target.mesh.position.y + offset.y;
-      const cz = target.mesh.position.z + offset.z;
-      const nx = (this.player.position.x - cx) / effectiveRadius;
-      const ny = (this.player.position.y - cy) / effectiveVerticalRadius;
-      const nz = (this.player.position.z - cz) / effectiveRadius;
-      if ((nx * nx) + (ny * ny) + (nz * nz) < 1) {
+      const shape = this.getCollisionTargetShape(target, PLAYER_COLLISION_RADIUS);
+      if (!shape) continue;
+      if (this.segmentIntersectsShape(this.previousPlayerPosition, this.player.position, shape)) {
         this.triggerPlayerCollision({ type: 'object', objective: target.objective ?? target.type ?? 'terrain' });
         break;
       }
