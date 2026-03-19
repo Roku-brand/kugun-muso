@@ -15,6 +15,13 @@ const HOME_TABS = [
   { id: 'combat', label: '3. 実戦' },
   { id: 'records', label: '4. 記録' },
 ];
+const AIRCRAFT_OPTIONS = [
+  { value: 'f35', label: 'F-35系（ステルス戦闘機）', maxMissiles: 15, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'あり' },
+  { value: 'f15', label: 'F-15系（標準）', maxMissiles: 5, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'なし' },
+  { value: 'b2', label: 'B-2爆撃機（ステルス性能）', maxMissiles: 5, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'あり' },
+  { value: 'blackbird', label: 'ブラックバード（最高速500km）', maxMissiles: 5, speed: 500, minSpeed: 42, armor: '1.0x', stealth: 'なし' },
+  { value: 'phoenix', label: 'フェニックス（新型）', maxMissiles: 100, speed: 800, minSpeed: 100, armor: '2.0x', stealth: 'あり' },
+];
 
 const COMBAT_COURSES = [
   {
@@ -289,12 +296,7 @@ function renderCustomPanel(panel) {
     <div class="setting-grid compact">
       <label>機種
         <select id="aircraftModel">
-          ${[
-            { value: 'f35', label: 'F-35系（ステルス戦闘機）' },
-            { value: 'f15', label: 'F-15系（標準）' },
-            { value: 'b2', label: 'B-2爆撃機（ステルス性能）' },
-            { value: 'blackbird', label: 'ブラックバード（最高速500km）' },
-          ]
+          ${AIRCRAFT_OPTIONS
             .map((v) => `<option value="${v.value}" ${settings.aircraftModel === v.value ? 'selected' : ''}>${v.label}</option>`)
             .join('')}
         </select>
@@ -319,8 +321,24 @@ function renderCustomPanel(panel) {
         <input type="range" id="seVolume" min="0" max="1" step="0.01" value="${settings.seVolume}" />
       </label>
     </div>
+    <h3 class="custom-spec-title">機体性能一覧</h3>
+    <div class="aircraft-spec-grid">
+      ${AIRCRAFT_OPTIONS.map((aircraft) => `
+        <article class="aircraft-spec-card ${settings.aircraftModel === aircraft.value ? 'is-selected' : ''}">
+          <h4>${aircraft.label}</h4>
+          <ul>
+            <li>ミサイル: ${aircraft.maxMissiles} 発</li>
+            <li>速度: ${aircraft.speed} km/h（最低 ${aircraft.minSpeed} km/h）</li>
+            <li>装甲強度: ${aircraft.armor}</li>
+            <li>ステルス: ${aircraft.stealth}</li>
+          </ul>
+        </article>
+      `).join('')}
+    </div>
   `;
   bindSettingInputs(panel);
+  const aircraftSelect = panel.querySelector('#aircraftModel');
+  aircraftSelect?.addEventListener('change', () => renderCustomPanel(panel));
 }
 
 function renderRecordsPanel(panel) {
