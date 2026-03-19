@@ -187,22 +187,22 @@ export class StageManager {
     });
 
     const fortress = this.makeFortressComplex();
-    fortress.position.set(0, 66, -1180 * areaScale);
+    fortress.position.set(0, 48, -1180 * areaScale);
     this.scene.add(fortress);
     this.stageObjects.push(fortress);
 
     const reinforcedWalls = this.makeReinforcedWallRing();
-    reinforcedWalls.position.set(0, 67, -1180 * areaScale);
+    reinforcedWalls.position.set(0, 49, -1180 * areaScale);
     this.scene.add(reinforcedWalls);
     this.stageObjects.push(reinforcedWalls);
 
     const fortressVanguard = this.makeFortressVanguardHarbor();
-    fortressVanguard.position.set(0, 54, -1060 * areaScale);
+    fortressVanguard.position.set(0, 49, -1060 * areaScale);
     this.scene.add(fortressVanguard);
     this.stageObjects.push(fortressVanguard);
 
     const rearRunway = this.makeRearWingRunwayComplex();
-    rearRunway.position.set(0, 56, -1310 * areaScale);
+    rearRunway.position.set(0, 50, -1310 * areaScale);
     this.scene.add(rearRunway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: rearRunway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -214,14 +214,14 @@ export class StageManager {
     });
 
     const hq = this.makeHeadquarters();
-    hq.position.set(0, 74, -1240 * areaScale);
+    hq.position.set(0, 58, -1240 * areaScale);
     hq.scale.setScalar(1.35);
     this.scene.add(hq);
     this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: ENEMY_DURABILITY.headquarters }));
     this.targets.push({ mesh: hq, radius: 56, collisionVerticalRadius: 30, type: 'building', objective: 'hq' });
 
     const port = this.makeMegaPortFacility();
-    port.position.set(-240 * areaScale, 52, -1090 * areaScale);
+    port.position.set(-240 * areaScale, 49, -1090 * areaScale);
     this.scene.add(port);
     this.enemies.push(new Enemy({ type: 'turret', mesh: port, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -233,7 +233,7 @@ export class StageManager {
     });
 
     const runway = this.makeAirfieldRunway();
-    runway.position.set(132 * areaScale, 49, -1110 * areaScale);
+    runway.position.set(132 * areaScale, 48, -1110 * areaScale);
     this.scene.add(runway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -245,7 +245,7 @@ export class StageManager {
     });
 
     const airportSupport = this.makeAirportSupportFacilities();
-    airportSupport.position.set(180 * areaScale, 50, -1210 * areaScale);
+    airportSupport.position.set(180 * areaScale, 48, -1210 * areaScale);
     this.scene.add(airportSupport);
     this.enemies.push(new Enemy({ type: 'turret', mesh: airportSupport, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -257,18 +257,18 @@ export class StageManager {
     });
 
     const defensePositions = [
-      [-220, 64, -1190],
-      [-130, 64, -1320],
-      [130, 64, -1325],
-      [230, 64, -1190],
-      [-40, 64, -1360],
-      [50, 64, -980],
-      [-280, 65, -1240],
-      [-180, 65, -980],
-      [185, 65, -980],
-      [285, 65, -1240],
-      [-20, 65, -1460],
-      [30, 65, -900],
+      [-220, 50, -1190],
+      [-130, 50, -1320],
+      [130, 50, -1325],
+      [230, 50, -1190],
+      [-40, 50, -1360],
+      [50, 50, -980],
+      [-280, 51, -1240],
+      [-180, 51, -980],
+      [185, 51, -980],
+      [285, 51, -1240],
+      [-20, 51, -1460],
+      [30, 51, -900],
     ].map((point) => this.scalePoint(point, areaScale));
 
     defensePositions.forEach((pos) => {
@@ -280,16 +280,16 @@ export class StageManager {
     });
 
     const samPositions = [
-      [-210, 66, -1040],
-      [-140, 66, -980],
-      [120, 66, -980],
-      [220, 66, -1040],
-      [-100, 66, -1360],
-      [110, 66, -1360],
-      [-250, 66, -1140],
-      [250, 66, -1140],
-      [-150, 66, -1420],
-      [155, 66, -1420],
+      [-210, 52, -1040],
+      [-140, 52, -980],
+      [120, 52, -980],
+      [220, 52, -1040],
+      [-100, 52, -1360],
+      [110, 52, -1360],
+      [-250, 52, -1140],
+      [250, 52, -1140],
+      [-150, 52, -1420],
+      [155, 52, -1420],
     ].map((point) => this.scalePoint(point, areaScale));
 
     samPositions.forEach((pos) => {
@@ -301,10 +301,10 @@ export class StageManager {
     });
 
     const guardTowerPositions = [
-      [-310, 68, -1060],
-      [320, 68, -1060],
-      [-310, 68, -1320],
-      [320, 68, -1320],
+      [-310, 54, -1060],
+      [320, 54, -1060],
+      [-310, 54, -1320],
+      [320, 54, -1320],
     ].map((point) => this.scalePoint(point, areaScale));
 
     guardTowerPositions.forEach((pos) => {
@@ -379,22 +379,23 @@ export class StageManager {
   }
 
   createAyanishiRecaptureBattle() {
+    const areaScale = 1.3;
     this.createTotalWarBattle();
 
     const hqTarget = this.targets.find((target) => target.objective === 'hq');
     if (hqTarget?.mesh) {
-      hqTarget.mesh.position.x = 230;
-      hqTarget.mesh.position.z -= 120;
+      hqTarget.mesh.position.x = 230 * areaScale;
+      hqTarget.mesh.position.z -= 120 * areaScale;
     }
 
     const additionalDefensePositions = [
-      [-360, 66, -1040],
-      [-320, 66, -1180],
-      [320, 66, -1180],
-      [360, 66, -1040],
-      [-240, 66, -900],
-      [240, 66, -900],
-    ];
+      [-360, 52, -1040],
+      [-320, 52, -1180],
+      [320, 52, -1180],
+      [360, 52, -1040],
+      [-240, 52, -900],
+      [240, 52, -900],
+    ].map((point) => this.scalePoint(point, areaScale));
 
     additionalDefensePositions.forEach((pos) => {
       const turret = this.makeGroundTurret();
@@ -404,12 +405,12 @@ export class StageManager {
       this.targets.push({ mesh: turret, radius: 14, collisionVerticalRadius: 10, type: 'building' });
     });
 
-    const rapidFleetSpecs = [
-      { role: 'destroyer', x: -380, z: -780, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 14, radius: 26 },
-      { role: 'frigate', x: 360, z: -760, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 13, radius: 24 },
-      { role: 'cruiser', x: -120, z: -690, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 11, radius: 32 },
-      { role: 'destroyer', x: 140, z: -670, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 14, radius: 26 },
-    ];
+    const rapidFleetSpecs = this.scaleFleetSpecs([
+      { role: 'destroyer', x: -620, z: -820, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 14, radius: 26, collisionVerticalRadius: 14 },
+      { role: 'frigate', x: 620, z: -810, health: ENEMY_DURABILITY.shipByRole.frigate, speed: 13, radius: 24, collisionVerticalRadius: 13 },
+      { role: 'cruiser', x: -820, z: -980, health: ENEMY_DURABILITY.shipByRole.cruiser, speed: 11, radius: 32, collisionVerticalRadius: 16 },
+      { role: 'destroyer', x: 820, z: -980, health: ENEMY_DURABILITY.shipByRole.destroyer, speed: 14, radius: 26, collisionVerticalRadius: 14 },
+    ], areaScale);
 
     rapidFleetSpecs.forEach((spec, index) => {
       const ship = this.makeShip(spec.role);
@@ -417,7 +418,7 @@ export class StageManager {
       ship.rotation.y = Math.PI * 0.9 + (index - 1.5) * 0.07;
       this.scene.add(ship);
       this.enemies.push(new Enemy({ type: 'ship', mesh: ship, health: spec.health, speed: spec.speed }));
-      this.targets.push({ mesh: ship, radius: spec.radius, type: spec.role });
+      this.targets.push({ mesh: ship, radius: spec.radius, collisionVerticalRadius: spec.collisionVerticalRadius ?? 14, type: spec.role });
     });
   }
 
@@ -886,16 +887,16 @@ export class StageManager {
 
   addIslandCollisionTarget({ x, z, areaScale, radiusX, radiusZ, height }) {
     const collisionAnchor = new THREE.Object3D();
-    collisionAnchor.position.set(x, Math.max(24, height * 0.55), z);
+    collisionAnchor.position.set(x, Math.max(18, height * 0.35), z);
     this.stageObjects.push(collisionAnchor);
 
     this.targets.push({
       mesh: collisionAnchor,
       type: 'terrain',
       collisionHalfExtents: {
-        x: radiusX * areaScale * 0.94,
-        y: Math.max(32, height),
-        z: radiusZ * areaScale * 0.94,
+        x: radiusX * areaScale * 0.84,
+        y: Math.max(20, height * 0.58),
+        z: radiusZ * areaScale * 0.84,
       },
     });
   }
