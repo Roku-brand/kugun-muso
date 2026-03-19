@@ -856,15 +856,6 @@ export class StageManager {
       ));
     }
 
-    const islandTop = new THREE.Mesh(
-      new THREE.ShapeGeometry(new THREE.Shape(contour)),
-      new THREE.MeshStandardMaterial({ color: 0x4d5d3f, roughness: 0.9, metalness: 0.05 }),
-    );
-    islandTop.rotation.x = -Math.PI / 2;
-    islandTop.position.set(x, height, z);
-    this.scene.add(islandTop);
-    islandAssets.push(islandTop);
-
     const shelfDepth = Math.max(height + 6, 24);
     const islandShelf = new THREE.Mesh(
       new THREE.ExtrudeGeometry(new THREE.Shape(contour), {
@@ -881,7 +872,7 @@ export class StageManager {
     this.scene.add(islandShelf);
     islandAssets.push(islandShelf);
 
-    this.addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height, islandAssets, seed });
+    this.addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height: height - 1, islandAssets, seed });
     return islandAssets;
   }
 
