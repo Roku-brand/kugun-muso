@@ -93,7 +93,7 @@ export class Enemy {
     return { key: 'enemyMachineGun', speed: 90, damage: 8, radius: 1.4, cooldown: 0.35 };
   }
 
-  update(dt, playerPos, bullets, createBulletMesh, allEnemies = null) {
+  update(dt, playerPos, bullets, createBulletMesh, allEnemies = null, options = {}) {
     if (!this.alive) return;
     this.elapsed += dt;
 
@@ -228,10 +228,12 @@ export class Enemy {
 
     this.cooldown -= dt;
     const shotDistance = playerPos.distanceTo(this.mesh.position);
-    const inFiringRange = this.type !== 'fighter' || (shotDistance > 130 && shotDistance < 420);
+    const playerStealthFactor = THREE.MathUtils.clamp(options.playerStealthFactor ?? 1, 0.3, 1);
+    const effectiveDistance = shotDistance / playerStealthFactor;
+    const inFiringRange = this.type !== 'fighter' || (effectiveDistance > 130 && effectiveDistance < 420);
     if (this.cooldown <= 0 && inFiringRange) {
       const weapon = this.getWeaponProfile(shotDistance);
-      this.cooldown = weapon.cooldown;
+      this.cooldown = weapon.cooldown / playerStealthFactor;
       const dir = playerPos.clone().sub(this.mesh.position).normalize();
       bullets.push({
         pos: this.mesh.position.clone(),

@@ -49,6 +49,28 @@ const EASTERN_FRONT_STAGE = 'easternFront';
 const EASTERN_FRONT_FORTRESS_FALL_Z = 220;
 const LAND_DEFENSE_STAGE = 'land';
 const LAND_DEFENSE_FRONTLINE_Z = 230;
+const AIRCRAFT_TRAITS = {
+  f15: {
+    maxMissiles: 5,
+    maxSpeed: 165,
+    stealthFactor: 1,
+  },
+  f35: {
+    maxMissiles: 15,
+    maxSpeed: 165,
+    stealthFactor: 1,
+  },
+  b2: {
+    maxMissiles: 5,
+    maxSpeed: 165,
+    stealthFactor: 0.58,
+  },
+  blackbird: {
+    maxMissiles: 5,
+    maxSpeed: 500,
+    stealthFactor: 1,
+  },
+};
 
 export class GameScene {
   constructor({ canvas, hudRoot, overlayRoot, stage, settings, onExit, onEnemyDestroyed, onBattleFinished }) {
@@ -71,6 +93,7 @@ export class GameScene {
 
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 12000);
     this.player = new Player(this.camera, settings);
+    this.applyAircraftTraits();
     this.player.setHorizontalBound(PLAYER_HORIZONTAL_BOUNDS[stage] ?? 900);
 
     this.stageManager = new StageManager(this.scene);
@@ -124,6 +147,16 @@ export class GameScene {
     this.last = performance.now();
     this.initAllies();
     this.bindEvents();
+  }
+
+  applyAircraftTraits() {
+    const aircraftModel = this.settings.aircraftModel ?? 'f35';
+    const traits = AIRCRAFT_TRAITS[aircraftModel] ?? AIRCRAFT_TRAITS.f15;
+    this.player.maxMissiles = traits.maxMissiles;
+    this.player.missiles = Math.min(this.player.missiles, this.player.maxMissiles);
+    if (this.player.missiles < this.player.maxMissiles) this.player.missiles = this.player.maxMissiles;
+    this.player.maxSpeed = traits.maxSpeed;
+    this.playerStealthFactor = traits.stealthFactor;
   }
 
   start() {
@@ -590,6 +623,7 @@ export class GameScene {
       this.enemyBullets,
       (kind) => this.makeEnemyBulletMesh(kind),
       this.enemies,
+      { playerStealthFactor: this.playerStealthFactor ?? 1 },
     ));
     this.updateTotalWarSpawners(dt);
     this.updateCarrierLaunches(dt);
@@ -914,6 +948,8 @@ export class GameScene {
       mesh = this.createF15Visual();
     } else if (aircraftModel === 'b2') {
       mesh = this.createB2Visual();
+    } else if (aircraftModel === 'blackbird') {
+      mesh = this.createBlackbirdVisual();
     } else {
       mesh = this.createF35Visual();
     }
@@ -1001,6 +1037,42 @@ export class GameScene {
     bomber.add(center, wingL, wingR, nose, trailingEdge, canopy, engineGlowL, engineGlowR);
     bomber.scale.setScalar(1.35);
     return bomber;
+  }
+
+  createBlackbirdVisual() {
+    const blackbird = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1f2228, metalness: 0.76, roughness: 0.34 });
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0x101318, metalness: 0.6, roughness: 0.4 });
+
+    const fuselage = new THREE.Mesh(new THREE.BoxGeometry(16.5, 1.2, 2.2), bodyMat);
+    fuselage.position.set(-0.3, 0.2, 0);
+
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.9, 6.2, 12), edgeMat);
+    nose.position.set(11.2, 0.2, 0);
+    nose.rotation.z = -Math.PI / 2;
+
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.26, 6), bodyMat);
+    wingL.position.set(-1.4, 0.08, -3.1);
+    wingL.rotation.y = -0.22;
+    const wingR = wingL.clone();
+    wingR.position.z = 3.1;
+    wingR.rotation.y = 0.22;
+
+    const tailL = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.8, 0.16), edgeMat);
+    tailL.position.set(-7.1, 1.9, -0.65);
+    tailL.rotation.x = 0.33;
+    const tailR = tailL.clone();
+    tailR.position.z = 0.65;
+    tailR.rotation.x = -0.33;
+
+    const engineL = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.56, 1.2), edgeMat);
+    engineL.position.set(-2.5, -0.12, -1.45);
+    const engineR = engineL.clone();
+    engineR.position.z = 1.45;
+
+    blackbird.add(fuselage, nose, wingL, wingR, tailL, tailR, engineL, engineR);
+    blackbird.scale.setScalar(1.12);
+    return blackbird;
   }
 
   createAltitudeShadow() {
