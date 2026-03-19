@@ -133,19 +133,45 @@ export class GameScene {
   }
 
   bindEvents() {
+    const normalizeKey = (e) => {
+      switch (e.code) {
+        case 'Space':
+          return 'space';
+        case 'KeyX':
+          return 'x';
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          return 'shift';
+        case 'ControlLeft':
+        case 'ControlRight':
+          return 'control';
+        case 'ArrowUp':
+          return 'arrowup';
+        case 'ArrowDown':
+          return 'arrowdown';
+        case 'ArrowLeft':
+          return 'arrowleft';
+        case 'ArrowRight':
+          return 'arrowright';
+        default:
+          return e.key.toLowerCase();
+      }
+    };
+
     this.onResize = () => {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     };
     this.onDown = (e) => {
-      const key = e.key.toLowerCase();
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'x'].includes(key)) e.preventDefault();
+      const key = normalizeKey(e);
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'space', 'x'].includes(key)) e.preventDefault();
       this.keys[key] = true;
+      if (key === 'space' && !e.repeat) this.fireMissile();
     };
     this.onUp = (e) => {
-      const key = e.key.toLowerCase();
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'x'].includes(key)) e.preventDefault();
+      const key = normalizeKey(e);
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'space', 'x'].includes(key)) e.preventDefault();
       this.keys[key] = false;
     };
     window.addEventListener('resize', this.onResize);
@@ -159,11 +185,6 @@ export class GameScene {
     const throttle = (this.keys['shift'] ? 1 : 0) + (this.keys['control'] ? -1 : 0) + this.touchThrottle;
     this.currentThrottleInput = throttle;
     this.player.setInput({ yaw: yaw + this.touchStick.x, pitch: pitch - this.touchStick.y, throttle });
-
-    if (this.keys[' ']) {
-      this.fireMissile();
-      this.keys[' '] = false;
-    }
 
     this.gunTriggerHeld = Boolean(this.keys.x || this.touchGunHeld);
 
