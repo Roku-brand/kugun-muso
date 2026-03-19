@@ -22,8 +22,8 @@ export class HUD {
       </div>
       <div class="hud top-status">
         <div>装甲: <span id="armorText">100%</span></div>
-        <div>ミサイル: <span id="missiles">5</span>/5</div>
-        <div>機関銃: <span id="mgAmmo">100</span>/100</div>
+        <div>ミサイル: <span id="missiles">5</span>/<span id="missilesMax">5</span></div>
+        <div>機関銃: <span id="mgAmmo">100</span>/<span id="mgAmmoMax">100</span></div>
         <div>速度: <span id="speed">0</span> km/h</div>
         <div>高度: <span id="altitude">0</span> m</div>
       </div>
@@ -64,7 +64,9 @@ export class HUD {
       speed: this.root.querySelector('#speed'),
       altitude: this.root.querySelector('#altitude'),
       missiles: this.root.querySelector('#missiles'),
+      missilesMax: this.root.querySelector('#missilesMax'),
       mgAmmo: this.root.querySelector('#mgAmmo'),
+      mgAmmoMax: this.root.querySelector('#mgAmmoMax'),
       armorText: this.root.querySelector('#armorText'),
       armorGaugeFill: this.root.querySelector('#armorGaugeFill'),
       throttle: this.root.querySelector('#throttle'),
@@ -164,7 +166,9 @@ export class HUD {
     this.elements.speed.textContent = Math.round(state.speed);
     this.elements.altitude.textContent = Math.round(state.altitude);
     this.elements.missiles.textContent = state.missiles;
+    this.elements.missilesMax.textContent = state.missileMax ?? state.missiles;
     this.elements.mgAmmo.textContent = state.machineGunAmmo;
+    this.elements.mgAmmoMax.textContent = state.machineGunAmmoMax ?? state.machineGunAmmo;
     const armorRatio = state.armor / Math.max(1, state.armorMax);
     this.elements.armorText.textContent = `${Math.round(armorRatio * 100)}%`;
     this.elements.armorGaugeFill.style.width = `${Math.round(armorRatio * 100)}%`;

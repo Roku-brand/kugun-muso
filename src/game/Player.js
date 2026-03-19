@@ -31,9 +31,11 @@ export class Player {
     this.throttle = 0.45;
     this.horizontalBound = DEFAULT_HORIZONTAL_BOUND;
     this.maxArmor = 100;
+    this.baseMaxArmor = this.maxArmor;
     this.armor = this.maxArmor;
     this.maxMissiles = 5;
     this.missiles = this.maxMissiles;
+    this.missileReloadInterval = 6;
     this.maxMachineGunAmmo = 100;
     this.machineGunAmmo = this.maxMachineGunAmmo;
     this.missileReloadTimer = 0;
@@ -92,7 +94,7 @@ export class Player {
     this.visualNosePitch = THREE.MathUtils.lerp(this.visualNosePitch, targetNosePitch, visualBlend);
 
     this.missileReloadTimer += dt;
-    if (this.missiles < this.maxMissiles && this.missileReloadTimer >= 6) {
+    if (this.missiles < this.maxMissiles && this.missileReloadTimer >= this.missileReloadInterval) {
       this.missiles += 1;
       this.missileReloadTimer = 0;
     }

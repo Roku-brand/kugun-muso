@@ -53,22 +53,37 @@ const AIRCRAFT_TRAITS = {
   f15: {
     maxMissiles: 5,
     maxSpeed: 165,
+    minSpeed: 42,
+    armorMultiplier: 1,
     stealthFactor: 1,
   },
   f35: {
     maxMissiles: 15,
     maxSpeed: 165,
+    minSpeed: 42,
+    armorMultiplier: 1,
     stealthFactor: 1,
   },
   b2: {
     maxMissiles: 5,
     maxSpeed: 165,
+    minSpeed: 42,
+    armorMultiplier: 1,
     stealthFactor: 0.58,
   },
   blackbird: {
     maxMissiles: 5,
     maxSpeed: 500,
+    minSpeed: 42,
+    armorMultiplier: 1,
     stealthFactor: 1,
+  },
+  phoenix: {
+    maxMissiles: 100,
+    maxSpeed: 800,
+    minSpeed: 100,
+    armorMultiplier: 2,
+    stealthFactor: 0.45,
   },
 };
 
@@ -156,7 +171,11 @@ export class GameScene {
     this.player.maxMissiles = traits.maxMissiles;
     this.player.missiles = Math.min(this.player.missiles, this.player.maxMissiles);
     if (this.player.missiles < this.player.maxMissiles) this.player.missiles = this.player.maxMissiles;
+    this.player.missileReloadInterval = Math.max(0.25, 6 * (5 / Math.max(1, this.player.maxMissiles)));
     this.player.maxSpeed = traits.maxSpeed;
+    this.player.minSpeed = traits.minSpeed ?? this.player.minSpeed;
+    this.player.maxArmor = this.player.baseMaxArmor * (traits.armorMultiplier ?? 1);
+    this.player.armor = this.player.maxArmor;
     this.playerStealthFactor = traits.stealthFactor;
   }
 
@@ -971,6 +990,8 @@ export class GameScene {
       mesh = this.createB2Visual();
     } else if (aircraftModel === 'blackbird') {
       mesh = this.createBlackbirdVisual();
+    } else if (aircraftModel === 'phoenix') {
+      mesh = this.createPhoenixVisual();
     } else {
       mesh = this.createF35Visual();
     }
@@ -1094,6 +1115,33 @@ export class GameScene {
     blackbird.add(fuselage, nose, wingL, wingR, tailL, tailR, engineL, engineR);
     blackbird.scale.setScalar(1.12);
     return blackbird;
+  }
+
+  createPhoenixVisual() {
+    const fighter = this.createF35Visual();
+    const flameMat = new THREE.MeshStandardMaterial({ color: 0xff6b2d, emissive: 0x802000, metalness: 0.35, roughness: 0.38 });
+    const wingMat = new THREE.MeshStandardMaterial({ color: 0x5d6770, metalness: 0.72, roughness: 0.35 });
+
+    const crest = new THREE.Mesh(new THREE.ConeGeometry(0.58, 2.8, 5), flameMat);
+    crest.position.set(1.6, 1.35, 0);
+    crest.rotation.z = -Math.PI / 2;
+
+    const wingFlareL = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.16, 1.6), wingMat);
+    wingFlareL.position.set(-1.2, 0.12, -4.8);
+    wingFlareL.rotation.y = -0.28;
+    const wingFlareR = wingFlareL.clone();
+    wingFlareR.position.z = 4.8;
+    wingFlareR.rotation.y = 0.28;
+
+    const tailL = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.9, 0.18), flameMat);
+    tailL.position.set(-7.0, 1.2, -1.15);
+    tailL.rotation.x = 0.34;
+    const tailR = tailL.clone();
+    tailR.position.z = 1.15;
+    tailR.rotation.x = -0.34;
+
+    fighter.add(crest, wingFlareL, wingFlareR, tailL, tailR);
+    return fighter;
   }
 
   createAltitudeShadow() {
@@ -1575,7 +1623,9 @@ export class GameScene {
       speed: this.player.speed,
       altitude: this.player.position.y,
       missiles: this.player.missiles,
+      missileMax: this.player.maxMissiles,
       machineGunAmmo: this.player.machineGunAmmo,
+      machineGunAmmoMax: this.player.maxMachineGunAmmo,
       armor: this.player.armor,
       armorMax: this.player.maxArmor,
       throttle: this.player.throttle,
