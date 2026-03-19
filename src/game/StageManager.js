@@ -156,6 +156,7 @@ export class StageManager {
 
   createTotalWarBattle() {
     const areaScale = 1.3;
+    const islandTop = 15;
     this.createSkyCommon();
 
     const sea = new THREE.Mesh(
@@ -172,9 +173,9 @@ export class StageManager {
       areaScale,
       radiusX: 420,
       radiusZ: 320,
-      height: 48,
+      height: islandTop,
       seed: 17,
-      shorelineTilt: 0.28,
+      shorelineTilt: 0.16,
     });
     this.stageObjects.push(...islandCore);
     this.addIslandCollisionTarget({
@@ -183,26 +184,26 @@ export class StageManager {
       areaScale,
       radiusX: 420,
       radiusZ: 320,
-      height: 48,
+      height: islandTop,
     });
 
     const fortress = this.makeFortressComplex();
-    fortress.position.set(0, 48, -1180 * areaScale);
+    fortress.position.set(0, islandTop, -1180 * areaScale);
     this.scene.add(fortress);
     this.stageObjects.push(fortress);
 
     const reinforcedWalls = this.makeReinforcedWallRing();
-    reinforcedWalls.position.set(0, 49, -1180 * areaScale);
+    reinforcedWalls.position.set(0, islandTop + 1, -1180 * areaScale);
     this.scene.add(reinforcedWalls);
     this.stageObjects.push(reinforcedWalls);
 
     const fortressVanguard = this.makeFortressVanguardHarbor();
-    fortressVanguard.position.set(0, 49, -1060 * areaScale);
+    fortressVanguard.position.set(0, islandTop + 1, -1060 * areaScale);
     this.scene.add(fortressVanguard);
     this.stageObjects.push(fortressVanguard);
 
     const rearRunway = this.makeRearWingRunwayComplex();
-    rearRunway.position.set(0, 50, -1310 * areaScale);
+    rearRunway.position.set(0, islandTop + 1, -1310 * areaScale);
     this.scene.add(rearRunway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: rearRunway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -214,14 +215,14 @@ export class StageManager {
     });
 
     const hq = this.makeHeadquarters();
-    hq.position.set(0, 58, -1240 * areaScale);
+    hq.position.set(0, islandTop + 10, -1240 * areaScale);
     hq.scale.setScalar(1.35);
     this.scene.add(hq);
     this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: ENEMY_DURABILITY.headquarters }));
     this.targets.push({ mesh: hq, radius: 56, collisionVerticalRadius: 30, type: 'building', objective: 'hq' });
 
     const port = this.makeMegaPortFacility();
-    port.position.set(-240 * areaScale, 49, -1090 * areaScale);
+    port.position.set(-240 * areaScale, islandTop + 1, -1090 * areaScale);
     this.scene.add(port);
     this.enemies.push(new Enemy({ type: 'turret', mesh: port, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -233,7 +234,7 @@ export class StageManager {
     });
 
     const runway = this.makeAirfieldRunway();
-    runway.position.set(132 * areaScale, 48, -1110 * areaScale);
+    runway.position.set(132 * areaScale, islandTop, -1110 * areaScale);
     this.scene.add(runway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -245,7 +246,7 @@ export class StageManager {
     });
 
     const airportSupport = this.makeAirportSupportFacilities();
-    airportSupport.position.set(180 * areaScale, 48, -1210 * areaScale);
+    airportSupport.position.set(180 * areaScale, islandTop, -1210 * areaScale);
     this.scene.add(airportSupport);
     this.enemies.push(new Enemy({ type: 'turret', mesh: airportSupport, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -257,18 +258,18 @@ export class StageManager {
     });
 
     const defensePositions = [
-      [-220, 50, -1190],
-      [-130, 50, -1320],
-      [130, 50, -1325],
-      [230, 50, -1190],
-      [-40, 50, -1360],
-      [50, 50, -980],
-      [-280, 51, -1240],
-      [-180, 51, -980],
-      [185, 51, -980],
-      [285, 51, -1240],
-      [-20, 51, -1460],
-      [30, 51, -900],
+      [-220, islandTop + 1, -1190],
+      [-130, islandTop + 1, -1320],
+      [130, islandTop + 1, -1325],
+      [230, islandTop + 1, -1190],
+      [-40, islandTop + 1, -1360],
+      [50, islandTop + 1, -980],
+      [-280, islandTop + 2, -1240],
+      [-180, islandTop + 2, -980],
+      [185, islandTop + 2, -980],
+      [285, islandTop + 2, -1240],
+      [-20, islandTop + 2, -1460],
+      [30, islandTop + 2, -900],
     ].map((point) => this.scalePoint(point, areaScale));
 
     defensePositions.forEach((pos) => {
@@ -280,16 +281,16 @@ export class StageManager {
     });
 
     const samPositions = [
-      [-210, 52, -1040],
-      [-140, 52, -980],
-      [120, 52, -980],
-      [220, 52, -1040],
-      [-100, 52, -1360],
-      [110, 52, -1360],
-      [-250, 52, -1140],
-      [250, 52, -1140],
-      [-150, 52, -1420],
-      [155, 52, -1420],
+      [-210, islandTop + 3, -1040],
+      [-140, islandTop + 3, -980],
+      [120, islandTop + 3, -980],
+      [220, islandTop + 3, -1040],
+      [-100, islandTop + 3, -1360],
+      [110, islandTop + 3, -1360],
+      [-250, islandTop + 3, -1140],
+      [250, islandTop + 3, -1140],
+      [-150, islandTop + 3, -1420],
+      [155, islandTop + 3, -1420],
     ].map((point) => this.scalePoint(point, areaScale));
 
     samPositions.forEach((pos) => {
@@ -301,10 +302,10 @@ export class StageManager {
     });
 
     const guardTowerPositions = [
-      [-310, 54, -1060],
-      [320, 54, -1060],
-      [-310, 54, -1320],
-      [320, 54, -1320],
+      [-310, islandTop + 5, -1060],
+      [320, islandTop + 5, -1060],
+      [-310, islandTop + 5, -1320],
+      [320, islandTop + 5, -1320],
     ].map((point) => this.scalePoint(point, areaScale));
 
     guardTowerPositions.forEach((pos) => {
@@ -752,6 +753,7 @@ export class StageManager {
 
   createBaseBattle() {
     const areaScale = 1.35;
+    const islandTop = 13;
     this.createSkyCommon();
     const sea = new THREE.Mesh(
       new THREE.PlaneGeometry(9000 * areaScale, 9000 * areaScale),
@@ -767,9 +769,9 @@ export class StageManager {
       areaScale,
       radiusX: 430,
       radiusZ: 320,
-      height: 68,
+      height: islandTop,
       seed: 9,
-      shorelineTilt: 0.33,
+      shorelineTilt: 0.18,
     });
     this.stageObjects.push(...islandCore);
     this.addIslandCollisionTarget({
@@ -778,16 +780,16 @@ export class StageManager {
       areaScale,
       radiusX: 430,
       radiusZ: 320,
-      height: 68,
+      height: islandTop,
     });
     const hq = this.makeHeadquarters();
-    hq.position.set(0, 82, -930 * areaScale);
+    hq.position.set(0, islandTop + 14, -930 * areaScale);
     this.scene.add(hq);
     this.enemies.push(new Enemy({ type: 'turret', mesh: hq, health: ENEMY_DURABILITY.headquarters }));
     this.targets.push({ mesh: hq, radius: 42, collisionVerticalRadius: 24, type: 'building' });
 
     const port = this.makePortFacility();
-    port.position.set(0, 70, -790 * areaScale);
+    port.position.set(0, islandTop + 1, -790 * areaScale);
     this.scene.add(port);
     this.targets.push({
       mesh: port,
@@ -797,10 +799,10 @@ export class StageManager {
     });
 
     const towerPositions = [
-      [-155, 74, -855],
-      [160, 74, -870],
-      [-145, 74, -1020],
-      [150, 74, -1015],
+      [-155, islandTop + 4, -855],
+      [160, islandTop + 4, -870],
+      [-145, islandTop + 4, -1020],
+      [150, islandTop + 4, -1015],
     ].map((point) => this.scalePoint(point, areaScale));
 
     towerPositions.forEach((pos) => {
@@ -813,19 +815,19 @@ export class StageManager {
 
     for (let i = 0; i < 4; i++) {
       const turret = this.makeGroundTurret();
-      turret.position.set((-88 + i * 56) * areaScale, 74, (-925 + (i % 2) * 76) * areaScale);
+      turret.position.set((-88 + i * 56) * areaScale, islandTop + 4, (-925 + (i % 2) * 76) * areaScale);
       this.scene.add(turret);
       this.enemies.push(new Enemy({ type: 'turret', mesh: turret, health: ENEMY_DURABILITY.turret }));
       this.targets.push({ mesh: turret, radius: 14, collisionVerticalRadius: 10, type: 'building' });
     }
 
     const samPositions = [
-      [-130, 80, -835],
-      [-48, 80, -838],
-      [34, 80, -837],
-      [116, 80, -836],
-      [-92, 80, -1068],
-      [86, 80, -1070],
+      [-130, islandTop + 8, -835],
+      [-48, islandTop + 8, -838],
+      [34, islandTop + 8, -837],
+      [116, islandTop + 8, -836],
+      [-92, islandTop + 8, -1068],
+      [86, islandTop + 8, -1070],
     ].map((point) => this.scalePoint(point, areaScale));
 
     samPositions.forEach((pos) => {
@@ -841,36 +843,61 @@ export class StageManager {
   createFortifiedIslandTerrain({ x, z, areaScale, radiusX, radiusZ, height, seed, shorelineTilt = 0.25 }) {
     const islandAssets = [];
     const contour = [];
-    const segments = 48;
+    const segments = 64;
 
     for (let i = 0; i < segments; i += 1) {
       const t = i / segments;
       const angle = t * Math.PI * 2;
       const warp = 1
-        + Math.sin(angle * 2.7 + seed) * 0.13
-        + Math.sin(angle * 5.1 + seed * 0.73) * 0.08
-        + Math.cos(angle * 4.2 + seed * 0.33) * shorelineTilt;
+        + Math.sin(angle * 2.2 + seed) * 0.09
+        + Math.sin(angle * 4.6 + seed * 0.73) * 0.05
+        + Math.cos(angle * 3.2 + seed * 0.33) * shorelineTilt;
       contour.push(new THREE.Vector2(
         Math.cos(angle) * radiusX * warp * areaScale,
         Math.sin(angle) * radiusZ * warp * areaScale,
       ));
     }
 
-    const shelfDepth = Math.max(height + 6, 24);
+    const shelfDepth = Math.max(height + 11, 20);
     const islandShelf = new THREE.Mesh(
       new THREE.ExtrudeGeometry(new THREE.Shape(contour), {
         depth: shelfDepth,
-        bevelEnabled: true,
+        bevelEnabled: false,
         bevelSegments: 2,
-        bevelSize: 16 * areaScale,
-        bevelThickness: 8,
+        bevelSize: 0,
+        bevelThickness: 0,
       }),
-      new THREE.MeshStandardMaterial({ color: 0x8d846f, roughness: 0.94, metalness: 0.04 }),
+      new THREE.MeshStandardMaterial({ color: 0x6a7f59, roughness: 0.96, metalness: 0.02 }),
     );
     islandShelf.rotation.x = -Math.PI / 2;
     islandShelf.position.set(x, (height - 1) - shelfDepth, z);
     this.scene.add(islandShelf);
     islandAssets.push(islandShelf);
+
+    const beach = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(new THREE.Shape(contour), {
+        depth: 2.2,
+        bevelEnabled: false,
+      }),
+      new THREE.MeshStandardMaterial({ color: 0xc3b081, roughness: 0.93, metalness: 0.02 }),
+    );
+    beach.rotation.x = -Math.PI / 2;
+    beach.position.set(x, height - 2.2, z);
+    this.scene.add(beach);
+    islandAssets.push(beach);
+
+    const inland = contour.map((point) => point.clone().multiplyScalar(0.84));
+    const inlandPlateau = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(new THREE.Shape(inland), {
+        depth: 3.6,
+        bevelEnabled: false,
+      }),
+      new THREE.MeshStandardMaterial({ color: 0x4f6a44, roughness: 0.9, metalness: 0.03 }),
+    );
+    inlandPlateau.rotation.x = -Math.PI / 2;
+    inlandPlateau.position.set(x, height, z);
+    this.scene.add(inlandPlateau);
+    islandAssets.push(inlandPlateau);
 
     this.addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height: height - 1, islandAssets, seed });
     return islandAssets;
@@ -893,14 +920,25 @@ export class StageManager {
   }
 
   addIslandScatterElements({ x, z, areaScale, radiusX, radiusZ, height, islandAssets, seed }) {
-    const sand = new THREE.MeshStandardMaterial({ color: 0xbca97f, roughness: 0.92, metalness: 0.02 });
-    const road = new THREE.MeshStandardMaterial({ color: 0x5d5e5a, roughness: 0.85, metalness: 0.08 });
+    const road = new THREE.MeshStandardMaterial({ color: 0x676862, roughness: 0.88, metalness: 0.06 });
     const houseWall = new THREE.MeshStandardMaterial({ color: 0xc7c2b6, roughness: 0.78, metalness: 0.06 });
     const houseRoof = new THREE.MeshStandardMaterial({ color: 0x7b4135, roughness: 0.72, metalness: 0.1 });
-    const treeLeaf = new THREE.MeshStandardMaterial({ color: 0x436a3f, roughness: 0.88, metalness: 0.04 });
+    const treeLeaf = new THREE.MeshStandardMaterial({ color: 0x3f6d3c, roughness: 0.88, metalness: 0.04 });
     const treeTrunk = new THREE.MeshStandardMaterial({ color: 0x6b4a33, roughness: 0.9, metalness: 0.04 });
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a7d78, roughness: 0.96, metalness: 0.04 });
+    const houseBandRadius = radiusX * areaScale * 0.34;
 
-    for (let i = 0; i < 12; i += 1) {
+    const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(radiusX * areaScale * 1.24, 0.4, 8), road);
+    mainRoad.position.set(x, height + 0.6, z - radiusZ * areaScale * 0.05);
+    this.scene.add(mainRoad);
+    islandAssets.push(mainRoad);
+
+    const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(8, 0.4, radiusZ * areaScale * 1.16), road);
+    crossRoad.position.set(x + radiusX * areaScale * 0.04, height + 0.62, z);
+    this.scene.add(crossRoad);
+    islandAssets.push(crossRoad);
+
+    for (let i = 0; i < 14; i += 1) {
       const house = new THREE.Group();
       const base = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 12), houseWall);
       base.position.y = 4;
@@ -908,26 +946,49 @@ export class StageManager {
       roof.position.y = 11;
       roof.rotation.y = Math.PI * 0.25;
       house.add(base, roof);
-      const angle = (i / 12) * Math.PI * 2 + seed * 0.2;
-      const r = (radiusX * 0.24 + (i % 3) * 24) * areaScale;
+      const angle = (i / 14) * Math.PI * 2 + seed * 0.2;
+      const r = houseBandRadius + (i % 4) * 18 * areaScale;
       house.position.set(x + Math.cos(angle) * r, height + 1, z + Math.sin(angle) * r * (radiusZ / radiusX));
       house.rotation.y = -angle + Math.PI * 0.5;
       this.scene.add(house);
       islandAssets.push(house);
     }
 
-    for (let i = 0; i < 36; i += 1) {
+    for (let i = 0; i < 44; i += 1) {
       const tree = new THREE.Group();
       const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 7, 6), treeTrunk);
       trunk.position.y = 3.5;
       const crown = new THREE.Mesh(new THREE.SphereGeometry(4.8, 8, 8), treeLeaf);
       crown.position.y = 8.6;
       tree.add(trunk, crown);
-      const angle = (i / 36) * Math.PI * 2 + seed * 0.5;
-      const radial = (0.3 + (i % 9) * 0.055) * radiusX * areaScale;
+      const angle = (i / 44) * Math.PI * 2 + seed * 0.5;
+      const radial = (0.38 + (i % 9) * 0.05) * radiusX * areaScale;
       tree.position.set(x + Math.cos(angle) * radial, height + 1, z + Math.sin(angle) * radial * (radiusZ / radiusX));
       this.scene.add(tree);
       islandAssets.push(tree);
+    }
+
+    for (let i = 0; i < 20; i += 1) {
+      const rock = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(4 + (i % 3) * 2, 0),
+        rockMat,
+      );
+      const angle = (i / 20) * Math.PI * 2 + 0.2;
+      const ringRadius = (0.7 + (i % 4) * 0.06) * radiusX * areaScale;
+      rock.position.set(x + Math.cos(angle) * ringRadius, height + 0.5, z + Math.sin(angle) * ringRadius * (radiusZ / radiusX));
+      rock.rotation.set(i * 0.3, i * 0.15, i * 0.2);
+      this.scene.add(rock);
+      islandAssets.push(rock);
+    }
+
+    for (let i = 0; i < 6; i += 1) {
+      const coastalGun = this.makeCoastalGunBattery();
+      const angle = -Math.PI * 0.18 + i * (Math.PI * 0.11);
+      const ringRadius = radiusX * areaScale * 0.73;
+      coastalGun.position.set(x + Math.cos(angle) * ringRadius, height + 1, z + Math.sin(angle) * ringRadius * (radiusZ / radiusX));
+      coastalGun.rotation.y = -angle + Math.PI * 0.5;
+      this.scene.add(coastalGun);
+      islandAssets.push(coastalGun);
     }
   }
 
@@ -1021,43 +1082,43 @@ export class StageManager {
 
   makeFortressComplex() {
     const group = new THREE.Group();
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x787f87, roughness: 0.72, metalness: 0.18 });
-    const bunkerMat = new THREE.MeshStandardMaterial({ color: 0x676f78, roughness: 0.66, metalness: 0.22 });
+    const slabMat = new THREE.MeshStandardMaterial({ color: 0x76807f, roughness: 0.76, metalness: 0.15 });
+    const bunkerMat = new THREE.MeshStandardMaterial({ color: 0x646d6f, roughness: 0.7, metalness: 0.2 });
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x425f3d, roughness: 0.9, metalness: 0.02 });
 
-    const outerWall = new THREE.Mesh(new THREE.BoxGeometry(420, 26, 320), wallMat);
-    outerWall.position.y = 13;
-    const innerCut = new THREE.Mesh(new THREE.BoxGeometry(340, 28, 240), wallMat);
-    innerCut.position.y = 14;
-    innerCut.material = new THREE.MeshStandardMaterial({ color: 0x425f3d, roughness: 0.9, metalness: 0.02 });
+    const baseSlab = new THREE.Mesh(new THREE.BoxGeometry(420, 7, 320), slabMat);
+    baseSlab.position.y = 3.5;
+    const innerField = new THREE.Mesh(new THREE.BoxGeometry(350, 1.8, 250), grassMat);
+    innerField.position.y = 7.8;
 
-    const bunkerL = new THREE.Mesh(new THREE.BoxGeometry(64, 24, 52), bunkerMat);
-    bunkerL.position.set(-140, 12, 95);
+    const bunkerL = new THREE.Mesh(new THREE.BoxGeometry(66, 14, 48), bunkerMat);
+    bunkerL.position.set(-138, 7, 94);
     const bunkerR = bunkerL.clone();
     bunkerR.position.x = 140;
-    const center = new THREE.Mesh(new THREE.BoxGeometry(92, 30, 70), bunkerMat);
-    center.position.set(0, 15, -70);
+    const center = new THREE.Mesh(new THREE.BoxGeometry(102, 16, 74), bunkerMat);
+    center.position.set(0, 8, -72);
 
-    group.add(outerWall, innerCut, bunkerL, bunkerR, center);
+    group.add(baseSlab, innerField, bunkerL, bunkerR, center);
     return group;
   }
 
   makeReinforcedWallRing() {
     const group = new THREE.Group();
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x656d76, roughness: 0.74, metalness: 0.2 });
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x687179, roughness: 0.78, metalness: 0.16 });
     const gateMat = new THREE.MeshStandardMaterial({ color: 0x4f5861, roughness: 0.62, metalness: 0.34 });
 
-    const northWall = new THREE.Mesh(new THREE.BoxGeometry(500, 18, 22), wallMat);
-    northWall.position.set(0, 9, -182);
+    const northWall = new THREE.Mesh(new THREE.BoxGeometry(500, 8, 20), wallMat);
+    northWall.position.set(0, 4, -182);
     const southWall = northWall.clone();
     southWall.position.z = 182;
 
-    const westWall = new THREE.Mesh(new THREE.BoxGeometry(22, 18, 350), wallMat);
-    westWall.position.set(-260, 9, 0);
+    const westWall = new THREE.Mesh(new THREE.BoxGeometry(20, 8, 350), wallMat);
+    westWall.position.set(-260, 4, 0);
     const eastWall = westWall.clone();
     eastWall.position.x = 260;
 
-    const northGate = new THREE.Mesh(new THREE.BoxGeometry(100, 16, 18), gateMat);
-    northGate.position.set(0, 8, -182);
+    const northGate = new THREE.Mesh(new THREE.BoxGeometry(100, 7, 18), gateMat);
+    northGate.position.set(0, 3.5, -182);
     const southGate = northGate.clone();
     southGate.position.z = 182;
 
@@ -1080,6 +1141,23 @@ export class StageManager {
     });
 
     group.add(northWall, southWall, westWall, eastWall, northGate, southGate);
+    return group;
+  }
+
+  makeCoastalGunBattery() {
+    const group = new THREE.Group();
+    const concrete = new THREE.MeshStandardMaterial({ color: 0x74787e, roughness: 0.82, metalness: 0.12 });
+    const gunMat = new THREE.MeshStandardMaterial({ color: 0x586068, roughness: 0.58, metalness: 0.32 });
+
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(7.4, 8.2, 2.8, 16), concrete);
+    base.position.y = 1.4;
+    const turret = new THREE.Mesh(new THREE.BoxGeometry(10, 3.8, 7.6), gunMat);
+    turret.position.y = 4.4;
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.95, 16, 10), gunMat);
+    barrel.rotation.z = Math.PI / 2;
+    barrel.position.set(8, 5.4, 0);
+
+    group.add(base, turret, barrel);
     return group;
   }
 
