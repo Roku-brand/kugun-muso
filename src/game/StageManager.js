@@ -643,6 +643,19 @@ export class StageManager {
 
   createLandBattle() {
     const areaScale = 1.4;
+    const playerReference = {
+      length: 13.2,
+      wingspan: 8.4,
+    };
+    const roadSizing = {
+      mainWidth: playerReference.wingspan * 14,
+      mainLength: playerReference.length * 340,
+      crossWidth: playerReference.wingspan * 8.5,
+      crossLength: playerReference.length * 280,
+      laneMarkerWidth: playerReference.wingspan * 0.35,
+      laneMarkerLength: playerReference.length * 2.5,
+      laneMarkerSpacing: playerReference.length * 5.3,
+    };
     this.createSkyCommon();
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(8600 * areaScale, 8600 * areaScale, 96, 96),
@@ -653,7 +666,7 @@ export class StageManager {
     this.stageObjects.push(ground);
 
     const highwayMain = new THREE.Mesh(
-      new THREE.PlaneGeometry(620 * areaScale, 3200 * areaScale),
+      new THREE.PlaneGeometry(roadSizing.mainWidth * areaScale, roadSizing.mainLength * areaScale),
       new THREE.MeshStandardMaterial({ color: 0x4b4e52, roughness: 0.9, metalness: 0.1 }),
     );
     highwayMain.rotation.x = -Math.PI / 2;
@@ -662,7 +675,7 @@ export class StageManager {
     this.stageObjects.push(highwayMain);
 
     const highwayCross = new THREE.Mesh(
-      new THREE.PlaneGeometry(2600 * areaScale, 340 * areaScale),
+      new THREE.PlaneGeometry(roadSizing.crossLength * areaScale, roadSizing.crossWidth * areaScale),
       new THREE.MeshStandardMaterial({ color: 0x505458, roughness: 0.88, metalness: 0.1 }),
     );
     highwayCross.rotation.x = -Math.PI / 2;
@@ -671,11 +684,15 @@ export class StageManager {
     this.stageObjects.push(highwayCross);
 
     const laneMarkMaterial = new THREE.MeshStandardMaterial({ color: 0xd9d39a, roughness: 0.5, metalness: 0.25 });
-    for (let i = -20; i <= 20; i += 1) {
+    const laneMarkCount = Math.floor((roadSizing.mainLength * 0.9) / roadSizing.laneMarkerSpacing);
+    for (let i = -laneMarkCount; i <= laneMarkCount; i += 1) {
       if (i % 2 === 0) continue;
-      const mark = new THREE.Mesh(new THREE.PlaneGeometry(12, 44), laneMarkMaterial);
+      const mark = new THREE.Mesh(
+        new THREE.PlaneGeometry(roadSizing.laneMarkerWidth, roadSizing.laneMarkerLength),
+        laneMarkMaterial,
+      );
       mark.rotation.x = -Math.PI / 2;
-      mark.position.set(0, 0.42, (-720 * areaScale) + i * 70);
+      mark.position.set(0, 0.42, (-720 * areaScale) + i * roadSizing.laneMarkerSpacing);
       this.scene.add(mark);
       this.stageObjects.push(mark);
     }
