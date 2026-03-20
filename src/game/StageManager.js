@@ -203,7 +203,7 @@ export class StageManager {
     this.stageObjects.push(fortressVanguard);
 
     const rearRunway = this.makeRearWingRunwayComplex();
-    rearRunway.position.set(0, islandTop + 1, -1310 * areaScale);
+    rearRunway.position.set(220 * areaScale, islandTop + 1, -1310 * areaScale);
     this.scene.add(rearRunway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: rearRunway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -234,7 +234,7 @@ export class StageManager {
     });
 
     const runway = this.makeAirfieldRunway();
-    runway.position.set(132 * areaScale, islandTop, -1110 * areaScale);
+    runway.position.set(360 * areaScale, islandTop, -1110 * areaScale);
     this.scene.add(runway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: runway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
@@ -246,7 +246,7 @@ export class StageManager {
     });
 
     const airportSupport = this.makeAirportSupportFacilities();
-    airportSupport.position.set(180 * areaScale, islandTop, -1210 * areaScale);
+    airportSupport.position.set(430 * areaScale, islandTop, -1210 * areaScale);
     this.scene.add(airportSupport);
     this.enemies.push(new Enemy({ type: 'turret', mesh: airportSupport, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
