@@ -14,7 +14,16 @@ const HOME_TABS = [
   { id: 'practice', label: '2. 練習' },
   { id: 'combat', label: '3. 実戦' },
   { id: 'records', label: '4. 記録' },
+  { id: 'military', label: '5. 軍事情報' },
 ];
+
+const MILITARY_ORG = {
+  commander: '統合司令官',
+  joint: ['統合参謀本部'],
+  army: ['中央護衛軍', '第1方面軍', '第2方面軍', '第3方面軍', '第4方面軍', '特殊作戦団'],
+  navy: ['北部総監部', '東部総監部', '南部総監部', '西部総監部', '補給船団'],
+  air: ['北部方面隊', '東部方面隊', '南部方面隊', '西部方面隊', '補給飛行隊'],
+};
 const AIRCRAFT_OPTIONS = [
   { value: 'f35', label: 'F-35系（ステルス戦闘機）', maxMissiles: 15, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'あり' },
   { value: 'f15', label: 'F-15系（標準）', maxMissiles: 5, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'なし' },
@@ -204,6 +213,11 @@ function renderDashboard() {
     return;
   }
 
+  if (currentPage === 'military') {
+    renderMilitaryPanel(content);
+    return;
+  }
+
   renderRecordsPanel(content);
 }
 
@@ -357,6 +371,40 @@ function renderRecordsPanel(panel) {
       <div class="record-pill"><span>敵艦艇</span><strong>${records.enemyKills.ship}</strong></div>
       <div class="record-pill"><span>対空砲台</span><strong>${records.enemyKills.turret}</strong></div>
     </div>
+  `;
+}
+
+function renderMilitaryPanel(panel) {
+  panel.innerHTML = `
+    <div class="panel-title-row">
+      <h2>軍事情報 / 組織図</h2>
+    </div>
+    <article class="org-chart">
+      <div class="org-node org-top">${MILITARY_ORG.commander}</div>
+      <div class="org-branch">
+        ${MILITARY_ORG.joint.map((unit) => `<div class="org-node">${unit}</div>`).join('')}
+      </div>
+      <div class="org-grid">
+        <section class="org-group">
+          <h3>陸軍</h3>
+          <ul>
+            ${MILITARY_ORG.army.map((unit) => `<li>${unit}</li>`).join('')}
+          </ul>
+        </section>
+        <section class="org-group">
+          <h3>海軍</h3>
+          <ul>
+            ${MILITARY_ORG.navy.map((unit) => `<li>${unit}</li>`).join('')}
+          </ul>
+        </section>
+        <section class="org-group">
+          <h3>空軍</h3>
+          <ul>
+            ${MILITARY_ORG.air.map((unit) => `<li>${unit}</li>`).join('')}
+          </ul>
+        </section>
+      </div>
+    </article>
   `;
 }
 

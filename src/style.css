@@ -333,6 +333,62 @@ body.force-landscape #app {
   gap: 3px;
   font-size: 0.72rem;
 }
+
+.org-chart {
+  display: grid;
+  gap: 10px;
+}
+
+.org-branch {
+  display: grid;
+  justify-items: center;
+}
+
+.org-node {
+  border: 1px solid rgba(144, 154, 167, 0.75);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(160deg, rgba(235, 241, 247, 0.95), rgba(170, 181, 194, 0.95));
+  font-weight: 700;
+  text-align: center;
+}
+
+.org-node.org-top {
+  background: linear-gradient(160deg, rgba(247, 251, 255, 0.96), rgba(180, 192, 206, 0.96));
+}
+
+.org-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.org-group {
+  border: 1px solid rgba(147, 157, 170, 0.7);
+  border-radius: 10px;
+  background: rgba(226, 233, 242, 0.78);
+  padding: 8px 10px;
+}
+
+.org-group h3 {
+  margin: 0 0 5px;
+  font-size: 0.86rem;
+}
+
+.org-group ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 900px) {
+  .org-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; color: #111827; font-size: 0.82rem; }
 input, select, button { font: inherit; }
 input[type='range'] { width: 100%; }
