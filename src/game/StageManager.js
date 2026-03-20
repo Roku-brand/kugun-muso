@@ -203,7 +203,7 @@ export class StageManager {
     this.stageObjects.push(fortressVanguard);
 
     const rearRunway = this.makeRearWingRunwayComplex();
-    rearRunway.position.set(0, islandTop + 1, -1310 * areaScale);
+    rearRunway.position.set(220 * areaScale, islandTop + 1, -1310 * areaScale);
     this.scene.add(rearRunway);
     this.enemies.push(new Enemy({ type: 'turret', mesh: rearRunway, health: ENEMY_DURABILITY.fortress, canFire: false }));
     this.targets.push({
