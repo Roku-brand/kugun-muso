@@ -52,22 +52,22 @@ const LAND_DEFENSE_FRONTLINE_Z = 230;
 const AIRCRAFT_TRAITS = {
   f15: {
     maxMissiles: 5,
-    maxSpeed: 165,
-    minSpeed: 42,
+    maxSpeed: 300,
+    minSpeed: 120,
     armorMultiplier: 1,
     stealthFactor: 1,
   },
   f35: {
     maxMissiles: 15,
-    maxSpeed: 165,
-    minSpeed: 42,
+    maxSpeed: 300,
+    minSpeed: 120,
     armorMultiplier: 1,
     stealthFactor: 1,
   },
   b2: {
     maxMissiles: 5,
-    maxSpeed: 165,
-    minSpeed: 42,
+    maxSpeed: 300,
+    minSpeed: 120,
     armorMultiplier: 1,
     stealthFactor: 0.58,
   },
