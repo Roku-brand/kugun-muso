@@ -25,9 +25,9 @@ const MILITARY_ORG = {
   air: ['北部方面隊', '東部方面隊', '南部方面隊', '西部方面隊', '補給飛行隊'],
 };
 const AIRCRAFT_OPTIONS = [
-  { value: 'f35', label: 'F-35系（ステルス戦闘機）', maxMissiles: 15, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'あり' },
-  { value: 'f15', label: 'F-15系（標準）', maxMissiles: 5, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'なし' },
-  { value: 'b2', label: 'B-2爆撃機（ステルス性能）', maxMissiles: 5, speed: 165, minSpeed: 42, armor: '1.0x', stealth: 'あり' },
+  { value: 'f35', label: 'F-35系（ステルス戦闘機）', maxMissiles: 15, speed: 300, minSpeed: 120, armor: '1.0x', stealth: 'あり' },
+  { value: 'f15', label: 'F-15系（標準）', maxMissiles: 5, speed: 300, minSpeed: 120, armor: '1.0x', stealth: 'なし' },
+  { value: 'b2', label: 'B-2爆撃機（ステルス性能）', maxMissiles: 5, speed: 300, minSpeed: 120, armor: '1.0x', stealth: 'あり' },
   { value: 'blackbird', label: 'ブラックバード（最高速500km）', maxMissiles: 5, speed: 500, minSpeed: 42, armor: '1.0x', stealth: 'なし' },
   { value: 'phoenix', label: 'フェニックス（新型）', maxMissiles: 100, speed: 800, minSpeed: 100, armor: '2.0x', stealth: 'あり' },
 ];
