@@ -31,6 +31,9 @@ const ALLY_FLIGHT_BOUNDS = {
   minY: 40,
   maxY: 430,
 };
+const NAVAL_SHELL_GRAVITY = 18;
+const NAVAL_SHELL_TRAIL_INTERVAL = 0.028;
+const SEA_LEVEL_Y = 6.2;
 
 const PLAYER_HORIZONTAL_BOUNDS = {
   air: 900,
@@ -593,6 +596,7 @@ export class GameScene {
           vel: aim.multiplyScalar(270),
           life: 3.2,
           damage: 20,
+          trailTimer: 0,
           mesh: this.makeAllyNavalShellMesh(),
         };
         this.allyFleetBullets.push(navalShot);
@@ -710,11 +714,21 @@ export class GameScene {
       }
     });
     this.allyFleetBullets.forEach((b) => {
+      b.vel.y -= NAVAL_SHELL_GRAVITY * dt;
       b.pos.addScaledVector(b.vel, dt);
       b.life -= dt;
+      b.trailTimer = (b.trailTimer ?? 0) + dt;
+      if (b.trailTimer >= NAVAL_SHELL_TRAIL_INTERVAL) {
+        b.trailTimer = 0;
+        this.spawnNavalShellTrail(b.pos, b.vel);
+      }
       if (b.mesh) {
         b.mesh.position.copy(b.pos);
         b.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), b.vel.clone().normalize());
+      }
+      if (b.pos.y <= SEA_LEVEL_Y) {
+        this.spawnNavalImpact(b.pos, { hitTarget: false });
+        b.life = 0;
       }
     });
     this.updateEffects(dt);
@@ -973,12 +987,55 @@ export class GameScene {
   }
 
   makeAllyNavalShellMesh() {
-    const shell = new THREE.Mesh(
-      new THREE.SphereGeometry(1.1, 10, 10),
-      new THREE.MeshBasicMaterial({ color: 0x8be4ff }),
+    const shell = new THREE.Group();
+
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.42, 0.5, 3.3, 14),
+      new THREE.MeshStandardMaterial({ color: 0x4e5864, metalness: 0.88, roughness: 0.3 }),
     );
+    body.rotation.z = Math.PI / 2;
+    shell.add(body);
+
+    const tip = new THREE.Mesh(
+      new THREE.ConeGeometry(0.42, 1.1, 14),
+      new THREE.MeshStandardMaterial({ color: 0x8d98a6, metalness: 0.76, roughness: 0.36 }),
+    );
+    tip.rotation.z = -Math.PI / 2;
+    tip.position.x = 2.1;
+    shell.add(tip);
+
+    const tracer = new THREE.Mesh(
+      new THREE.SphereGeometry(0.48, 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0x9ae6ff, transparent: true, opacity: 0.85 }),
+    );
+    tracer.position.x = -2;
+    shell.add(tracer);
+
     this.scene.add(shell);
     return shell;
+  }
+
+  spawnNavalShellTrail(pos, velocity) {
+    const trail = new THREE.Mesh(
+      new THREE.SphereGeometry(0.68, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xbdf4ff, transparent: true, opacity: 0.52 }),
+    );
+    trail.position.copy(pos).addScaledVector(velocity.clone().normalize(), -0.8);
+    this.scene.add(trail);
+    this.effects.push({ mesh: trail, life: 0.22, maxLife: 0.22 });
+  }
+
+  spawnNavalImpact(pos, { hitTarget = true } = {}) {
+    const impactColor = hitTarget ? 0xa5efff : 0xcdefff;
+    this.spawnExplosion(pos, impactColor);
+
+    const splash = new THREE.Mesh(
+      new THREE.SphereGeometry(hitTarget ? 5.4 : 4.4, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0xe6f9ff, transparent: true, opacity: 0.72 }),
+    );
+    splash.position.copy(pos);
+    this.scene.add(splash);
+    this.effects.push({ mesh: splash, life: hitTarget ? 0.42 : 0.34, maxLife: hitTarget ? 0.42 : 0.34 });
   }
 
   createPlayerVisual() {
@@ -1406,6 +1463,7 @@ export class GameScene {
         if (b.pos.distanceTo(enemy.mesh.position) < (enemy.type === 'fighter' ? 6 : 15)) {
           this.applyEnemyDamage(enemy, b.damage, { requiresPlayerFinisher: true });
           b.life = 0;
+          this.spawnNavalImpact(b.pos, { hitTarget: true });
           if (!enemy.alive) {
             this.destroyEnemy(enemy, 0x9be9ff);
           }
